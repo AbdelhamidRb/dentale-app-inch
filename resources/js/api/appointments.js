@@ -22,6 +22,12 @@ export const appointmentsApi = {
         return handle(res);
     },
 
+    // ─── RDV d'une plage de dates (vue semaine) ────────────────────
+    async getByWeek(startDate, endDate) {
+        const res = await fetch(`${BASE}?start_date=${startDate}&end_date=${endDate}`, { headers: headers() });
+        return handle(res);
+    },
+
     // ─── Créer un RDV ─────────────────────────────────────────────
     async create(data) {
         const res = await fetch(BASE, {

@@ -1,16 +1,37 @@
 import { ref, computed } from "vue";
 import { appointmentsApi } from "../api/appointments";
 
+// Retourne le lundi de la semaine contenant `date`
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=dim, 1=lun...
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split("T")[0];
+}
+
+// Retourne le dimanche (6 jours après lundi)
+function getWeekEnd(mondayStr) {
+    const d = new Date(mondayStr + "T00:00:00");
+    d.setDate(d.getDate() + 6);
+    return d.toISOString().split("T")[0];
+}
+
 export function useAppointments() {
     // ─── État principal ────────────────────────────────────────────
     const appointments = ref([]);
     const catalogActs = ref([]);
     const stats = ref({ total: 0, termine: 0, en_cours: 0, annule: 0 });
     const loading = ref(false);
+    const weekLoading = ref(false);
     const error = ref(null);
 
     // ─── Date sélectionnée (aujourd'hui par défaut) ────────────────
     const selectedDate = ref(new Date().toISOString().split("T")[0]);
+
+    // ─── Semaine : RDV groupés par date { "YYYY-MM-DD": [...] } ───
+    const weekAppointments = ref({});
+    const weekStartDate = ref(getWeekStart(new Date()));
 
     // ─── Créneaux de la timeline : 08:00 → 19:30 par pas de 30min ─
     // Calculé une seule fois, jamais recalculé (performance)
@@ -100,11 +121,8 @@ export function useAppointments() {
     // ─── Changer le statut ────────────────────────────────────────
     async function changeStatus(id, status) {
         const res = await appointmentsApi.updateStatus(id, status);
-        // Met à jour seulement la ligne concernée dans la liste
         const idx = appointments.value.findIndex((a) => a.id === id);
         if (idx !== -1) appointments.value[idx] = res.appointment;
-        // Met à jour les stats
-        await fetchAppointments(selectedDate.value);
         return res;
     }
 
@@ -114,6 +132,52 @@ export function useAppointments() {
         // Suppression physique → retire de la liste directement
         appointments.value = appointments.value.filter((a) => a.id !== id);
         stats.value.total--;
+    }
+
+    // ─── Les 7 jours de la semaine courante ───────────────────────
+    const weekDays = computed(() => {
+        const days = [];
+        const start = new Date(weekStartDate.value + "T00:00:00");
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(start);
+            d.setDate(d.getDate() + i);
+            days.push(d.toISOString().split("T")[0]);
+        }
+        return days;
+    });
+
+    // ─── Charge les RDV d'une semaine ────────────────────────────
+    async function fetchWeek(mondayStr = weekStartDate.value) {
+        weekLoading.value = true;
+        try {
+            const endDate = getWeekEnd(mondayStr);
+            const res = await appointmentsApi.getByWeek(mondayStr, endDate);
+            // La réponse peut être un objet {} ou un tableau [] si vide
+            weekAppointments.value = Array.isArray(res.appointments) ? {} : res.appointments;
+        } catch (e) {
+            error.value = e.message;
+        } finally {
+            weekLoading.value = false;
+        }
+    }
+
+    function previousWeek() {
+        const d = new Date(weekStartDate.value + "T00:00:00");
+        d.setDate(d.getDate() - 7);
+        weekStartDate.value = d.toISOString().split("T")[0];
+        fetchWeek(weekStartDate.value);
+    }
+
+    function nextWeek() {
+        const d = new Date(weekStartDate.value + "T00:00:00");
+        d.setDate(d.getDate() + 7);
+        weekStartDate.value = d.toISOString().split("T")[0];
+        fetchWeek(weekStartDate.value);
+    }
+
+    function goToTodayWeek() {
+        weekStartDate.value = getWeekStart(new Date());
+        fetchWeek(weekStartDate.value);
     }
 
     // ─── Date formatée lisible ────────────────────────────────────
@@ -134,6 +198,7 @@ export function useAppointments() {
         catalogActs,
         stats,
         loading,
+        weekLoading,
         error,
         selectedDate,
         formattedDate,
@@ -149,5 +214,13 @@ export function useAppointments() {
         updateAppointment,
         changeStatus,
         cancelAppointment,
+        // semaine
+        weekAppointments,
+        weekStartDate,
+        weekDays,
+        fetchWeek,
+        previousWeek,
+        nextWeek,
+        goToTodayWeek,
     };
 }

@@ -8,48 +8,91 @@
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <!-- Navigation jour -->
-                    <button
-                        @click="previousDay"
-                        class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                    >
-                        <ChevronLeft class="w-4 h-4" />
-                    </button>
-
-                    <div>
-                        <h1
-                            class="text-base font-semibold text-slate-800 capitalize"
+                    <template v-if="viewMode === 'day'">
+                        <button
+                            @click="previousDay"
+                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
                         >
-                            {{ formattedDate }}
-                        </h1>
-                        <p class="text-xs text-slate-400 mt-0.5">
-                            {{ stats.total }} rendez-vous
-                            <span v-if="stats.termine > 0">
-                                · {{ stats.termine }} terminés</span
-                            >
-                            <span v-if="stats.en_cours > 0">
-                                · {{ stats.en_cours }} en cours</span
-                            >
-                        </p>
-                    </div>
+                            <ChevronLeft class="w-4 h-4" />
+                        </button>
 
-                    <button
-                        @click="nextDay"
-                        class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                    >
-                        <ChevronRight class="w-4 h-4" />
-                    </button>
+                        <div>
+                            <h1 class="text-base font-semibold text-slate-800 capitalize">
+                                {{ formattedDate }}
+                            </h1>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                {{ stats.total }} rendez-vous
+                                <span v-if="stats.termine > 0"> · {{ stats.termine }} terminés</span>
+                                <span v-if="stats.en_cours > 0"> · {{ stats.en_cours }} en cours</span>
+                            </p>
+                        </div>
+
+                        <button
+                            @click="nextDay"
+                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
+                        >
+                            <ChevronRight class="w-4 h-4" />
+                        </button>
+                    </template>
+
+                    <!-- Navigation semaine -->
+                    <template v-else>
+                        <button
+                            @click="previousWeek"
+                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
+                        >
+                            <ChevronLeft class="w-4 h-4" />
+                        </button>
+
+                        <div>
+                            <h1 class="text-base font-semibold text-slate-800 capitalize">
+                                {{ formattedWeekRange }}
+                            </h1>
+                            <p class="text-xs text-slate-400 mt-0.5">Vue semaine</p>
+                        </div>
+
+                        <button
+                            @click="nextWeek"
+                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
+                        >
+                            <ChevronRight class="w-4 h-4" />
+                        </button>
+                    </template>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- Sélecteur date -->
+                    <!-- Toggle Jour / Semaine -->
+                    <div class="flex border border-slate-300 rounded-lg overflow-hidden text-sm">
+                        <button
+                            @click="viewMode = 'day'"
+                            :class="[
+                                'px-3 py-2 transition-colors',
+                                viewMode === 'day'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-slate-600 hover:bg-slate-50',
+                            ]"
+                        >Jour</button>
+                        <button
+                            @click="viewMode = 'week'"
+                            :class="[
+                                'px-3 py-2 transition-colors border-l border-slate-300',
+                                viewMode === 'week'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-slate-600 hover:bg-slate-50',
+                            ]"
+                        >Semaine</button>
+                    </div>
+
+                    <!-- Sélecteur date (vue jour uniquement) -->
                     <input
+                        v-if="viewMode === 'day'"
                         type="date"
                         v-model="selectedDate"
                         @change="fetchAppointments(selectedDate)"
                         class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
-                        @click="goToToday"
+                        @click="viewMode === 'day' ? goToToday() : goToTodayWeek()"
                         class="px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-white transition-colors"
                     >
                         Aujourd'hui
@@ -92,20 +135,131 @@
             <!-- ══════════════════════════════════════════════════════════
            <!-- TIMELINE PRINCIPALE -->
             <div
-                class="flex-1 bg-white rounded-xl border border-slate-200 overflow-y-auto"
+                ref="timelineEl"
+                class="flex-1 bg-white rounded-xl border border-slate-200 overflow-auto"
                 style="max-height: calc(100vh - 180px)"
             >
-                <!-- Skeleton -->
-                <template v-if="loading">
+                <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
+                <template v-if="loading && viewMode === 'day'">
                     <div
                         v-for="i in 6"
                         :key="i"
                         class="flex gap-4 p-4 border-b border-slate-50 animate-pulse"
                     >
-                        <div
-                            class="w-12 h-3 bg-slate-100 rounded shrink-0 mt-1"
-                        ></div>
+                        <div class="w-12 h-3 bg-slate-100 rounded shrink-0 mt-1"></div>
                         <div class="flex-1 h-16 bg-slate-100 rounded-xl"></div>
+                    </div>
+                </template>
+
+                <!-- ══════════════════════════════════════════════════════════
+                     VUE SEMAINE
+                ══════════════════════════════════════════════════════════ -->
+                <template v-else-if="viewMode === 'week'">
+                    <!-- Indicateur de chargement discret (ne masque pas la grille) -->
+                    <div
+                        v-if="weekLoading"
+                        class="sticky top-0 z-30 h-0.5 bg-blue-500 animate-pulse"
+                    ></div>
+
+                    <!-- En-tête colonnes jours (sticky) -->
+                    <div class="flex sticky top-0 z-20 bg-white border-b border-slate-200">
+                        <!-- Espace colonne heures -->
+                        <div class="w-16 shrink-0"></div>
+                        <!-- Colonnes jours -->
+                        <div
+                            v-for="day in weekDays"
+                            :key="day"
+                            class="flex-1 min-w-0 px-1 py-2 text-center border-l border-slate-100"
+                        >
+                            <span
+                                :class="[
+                                    'text-xs font-semibold capitalize block',
+                                    isToday(day) ? 'text-blue-600' : 'text-slate-500',
+                                ]"
+                            >{{ formatDayHeader(day) }}</span>
+                            <span
+                                v-if="weekAppointments[day]?.length"
+                                class="text-[10px] text-slate-400"
+                            >{{ weekAppointments[day].length }} RDV</span>
+                        </div>
+                    </div>
+
+                    <!-- Corps : grille heures × jours -->
+                    <div class="flex">
+                        <!-- Colonne heures (sticky à gauche) -->
+                        <div
+                            class="w-16 shrink-0 relative sticky left-0 bg-white z-10"
+                            :style="`height: ${totalHeight}px`"
+                        >
+                            <div
+                                v-for="slot in workHours"
+                                :key="slot"
+                                class="absolute right-0 pr-3 text-right"
+                                :style="`top: ${slotTop(slot)}px`"
+                            >
+                                <span
+                                    class="text-xs font-mono leading-none"
+                                    :class="slot.endsWith(':00') ? 'text-slate-400' : 'text-slate-200'"
+                                >{{ slot }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 7 colonnes jours -->
+                        <div
+                            v-for="day in weekDays"
+                            :key="day"
+                            class="flex-1 min-w-0 border-l border-slate-100 relative"
+                            :class="isToday(day) ? 'bg-blue-50/30' : ''"
+                            :style="`height: ${totalHeight}px`"
+                        >
+                            <!-- Lignes de fond -->
+                            <div
+                                v-for="slot in workHours"
+                                :key="slot"
+                                class="absolute left-0 right-0 border-t"
+                                :class="slot.endsWith(':00') ? 'border-slate-100' : 'border-slate-50'"
+                                :style="`top: ${slotTop(slot)}px`"
+                            ></div>
+
+                            <!-- Cartes RDV -->
+                            <div
+                                v-for="appt in dayLayout(day)"
+                                :key="appt.id"
+                                @click="openPanel(appt)"
+                                :class="[
+                                    'absolute rounded-lg px-2 py-1 cursor-pointer z-10',
+                                    'border transition-all duration-150 hover:shadow-md hover:z-20',
+                                    colorConfig(appt.color).card,
+                                ]"
+                                :style="`
+                                    top: ${apptTop(appt)}px;
+                                    height: ${apptHeight(appt)}px;
+                                    min-height: 36px;
+                                    left: calc(${(appt.col / appt.maxCols) * 100}% + 2px);
+                                    width: calc(${(1 / appt.maxCols) * 100}% - 4px);
+                                `"
+                            >
+                                <div class="overflow-hidden h-full flex flex-col">
+                                    <span
+                                        :class="['text-[11px] font-semibold truncate leading-tight', colorConfig(appt.color).title]"
+                                    >{{ appt.patient.full_name }}</span>
+                                    <span class="text-[10px] text-slate-500 font-mono leading-tight">
+                                        {{ appt.start_time }}
+                                    </span>
+                                    <span
+                                        v-if="apptHeight(appt) > 60"
+                                        :class="['text-[10px] font-medium px-1 rounded-full self-start mt-0.5', colorConfig(appt.color).badge]"
+                                    >{{ statusLabel(appt.status) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Zone cliquable pour créer un RDV ce jour -->
+                            <div
+                                class="absolute inset-0"
+                                style="z-index: 0"
+                                @click.self="openModal(null, null, day)"
+                            ></div>
+                        </div>
                     </div>
                 </template>
 
@@ -321,7 +475,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { authStore } from '../stores/auth'
 const isDentist = computed(() => authStore.isDentist())
 import {
@@ -341,6 +495,7 @@ const {
     catalogActs,
     stats,
     loading,
+    weekLoading,
     error,
     selectedDate,
     formattedDate,
@@ -353,17 +508,33 @@ const {
     updateAppointment,
     changeStatus,
     cancelAppointment,
+    weekAppointments,
+    weekStartDate,
+    weekDays,
+    fetchWeek,
+    previousWeek,
+    nextWeek,
+    goToTodayWeek,
 } = useAppointments();
 
+// ─── Mode vue : jour ou semaine ───────────────────────────────────
+const viewMode = ref("day");
+
 // ─── État local ───────────────────────────────────────────────────
+const timelineEl = ref(null);
 const showModal = ref(false);
 const modalSlot = ref(null);
 const editingAppointment = ref(null);
 const selectedAppointment = ref(null);
 
 onMounted(async () => {
-    await fetchAppointments();
-    await fetchCatalogActs();
+    await Promise.all([fetchAppointments(), fetchCatalogActs(), fetchWeek()]);
+});
+
+// Rafraîchit les données au changement de vue
+watch(viewMode, (mode) => {
+    if (mode === 'week') fetchWeek();
+    else fetchAppointments();
 });
 //
 // ─── Constantes timeline ──────────────────────────────────────────
@@ -390,50 +561,7 @@ function timeToMinutes(time) {
     return (h - START_HOUR) * 60 + m;
 }
 // ─── Calcul des colonnes pour les RDV qui se chevauchent ─────────
-// Inspiré de Google Calendar : les RDV qui se chevauchent
-// sont affichés côte à côte au lieu de se superposer
-const appointmentsWithLayout = computed(() => {
-    // Convertit les heures en minutes pour faciliter les comparaisons
-    const appts = appointments.value
-        .map((a) => {
-            const [sh, sm] = a.start_time.slice(0, 5).split(":").map(Number);
-            const [eh, em] = a.end_time.slice(0, 5).split(":").map(Number);
-            return { ...a, startMin: sh * 60 + sm, endMin: eh * 60 + em };
-        })
-        .sort((a, b) => a.startMin - b.startMin);
-
-    // Pour chaque RDV, trouve ceux qui se chevauchent avec lui
-    const withOverlap = appts.map((appt) => ({
-        ...appt,
-        overlapping: appts.filter(
-            (o) =>
-                o.id !== appt.id &&
-                o.startMin < appt.endMin &&
-                o.endMin > appt.startMin,
-        ),
-    }));
-
-    // Assigne une colonne à chaque RDV
-    const assigned = {};
-    for (const appt of withOverlap) {
-        const takenCols = appt.overlapping
-            .filter((o) => assigned[o.id] !== undefined)
-            .map((o) => assigned[o.id]);
-        let col = 0;
-        while (takenCols.includes(col)) col++;
-        assigned[appt.id] = col;
-    }
-
-    // Calcule le nombre max de colonnes dans chaque groupe
-    return withOverlap.map((appt) => {
-        const groupCols = new Set([assigned[appt.id]]);
-        appt.overlapping.forEach((o) => {
-            if (assigned[o.id] !== undefined) groupCols.add(assigned[o.id]);
-        });
-        const maxCols = Math.max(...groupCols) + 1;
-        return { ...appt, col: assigned[appt.id], maxCols };
-    });
-});
+const appointmentsWithLayout = computed(() => computeLayout(appointments.value));
 // Position top d'un slot (en px)
 function slotTop(slot) {
     return timeToMinutes(slot) * (SLOT_HEIGHT / 30);
@@ -453,9 +581,11 @@ function apptHeight(appt) {
 }
 
 // ─── Ouvrir modal ─────────────────────────────────────────────────
-function openModal(slot, appointment = null) {
+function openModal(slot, appointment = null, date = null) {
     modalSlot.value = slot;
     editingAppointment.value = appointment;
+    // En vue semaine, pré-sélectionne la date de la colonne cliquée
+    if (date) selectedDate.value = date;
     showModal.value = true;
 }
 
@@ -471,30 +601,135 @@ const modalError = ref(null);
 async function handleSaved(data, isEdit) {
     modalError.value = null;
     try {
-        if (isEdit) await updateAppointment(data.id, data);
-        else await createAppointment(data);
-        showModal.value = false; // ferme seulement si succès
-        modalError.value = null;
+        let saved;
+        if (isEdit) saved = await updateAppointment(data.id, data);
+        else saved = await createAppointment(data);
+        showModal.value = false;
+        const appt = saved.appointment;
+        syncWeekApptAfterSave(appt, isEdit);
+        // Rafraîchit le panneau ouvert si c'était ce RDV
+        if (isEdit && selectedAppointment.value?.id === appt.id) {
+            selectedAppointment.value = { ...appt };
+        }
     } catch (e) {
-        // Passe l'erreur à la modal → elle l'affiche
         modalError.value = e.message;
     }
 }
 
+// Met à jour weekAppointments directement après création ou édition
+function syncWeekApptAfterSave(appt, isEdit) {
+    const date = appt.scheduled_date;
+    if (isEdit) {
+        for (const d of Object.keys(weekAppointments.value)) {
+            const idx = weekAppointments.value[d].findIndex((a) => a.id === appt.id);
+            if (idx !== -1) { weekAppointments.value[d].splice(idx, 1); break; }
+        }
+    }
+    if (weekDays.value.includes(date)) {
+        // Date dans la semaine affichée → insertion directe
+        if (!weekAppointments.value[date]) weekAppointments.value[date] = [];
+        weekAppointments.value[date].push(appt);
+        weekAppointments.value[date].sort((a, b) => a.start_time.localeCompare(b.start_time));
+    } else {
+        // Date hors semaine → navigate vers la semaine de la nouvelle date
+        const newMonday = getWeekStartLocal(new Date(date + "T00:00:00"));
+        weekStartDate.value = newMonday;
+        fetchWeek(newMonday);
+    }
+}
+
+function getWeekStartLocal(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().split("T")[0];
+}
+
 // ─── Changer statut ───────────────────────────────────────────────
 async function handleStatusChange(id, status) {
-    await changeStatus(id, status);
-    // Rafraîchit le panneau ouvert avec les nouvelles données
-    const updated = appointments.value.find((a) => a.id === id);
-    if (updated) selectedAppointment.value = { ...updated };
+    const scrollTop = timelineEl.value?.scrollTop ?? 0;
+    const res = await changeStatus(id, status);
+    const appt = res.appointment;
+    // Met à jour weekAppointments directement depuis la réponse
+    for (const d of Object.keys(weekAppointments.value)) {
+        const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
+        if (idx !== -1) { weekAppointments.value[d][idx] = appt; break; }
+    }
+    // Met à jour le panneau ouvert
+    if (selectedAppointment.value?.id === id) selectedAppointment.value = { ...appt };
+    await nextTick();
+    if (timelineEl.value) timelineEl.value.scrollTop = scrollTop;
 }
 
 // ─── Annuler ─────────────────────────────────────────────────────
 async function handleCancel(id) {
-    if (!confirm("Annuler ce rendez-vous ?")) return;
     await cancelAppointment(id);
     selectedAppointment.value = null;
+    // Retire directement de weekAppointments sans re-fetch
+    for (const d of Object.keys(weekAppointments.value)) {
+        const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
+        if (idx !== -1) { weekAppointments.value[d].splice(idx, 1); break; }
+    }
 }
+
+// ─── Calcul layout pour une liste de RDV (réutilisé par vue semaine) ─
+function computeLayout(apptList) {
+    const appts = apptList
+        .map((a) => {
+            const [sh, sm] = a.start_time.slice(0, 5).split(":").map(Number);
+            const [eh, em] = a.end_time.slice(0, 5).split(":").map(Number);
+            return { ...a, startMin: sh * 60 + sm, endMin: eh * 60 + em };
+        })
+        .sort((a, b) => a.startMin - b.startMin);
+
+    const withOverlap = appts.map((appt) => ({
+        ...appt,
+        overlapping: appts.filter(
+            (o) => o.id !== appt.id && o.startMin < appt.endMin && o.endMin > appt.startMin,
+        ),
+    }));
+
+    const assigned = {};
+    for (const appt of withOverlap) {
+        const takenCols = appt.overlapping.filter((o) => assigned[o.id] !== undefined).map((o) => assigned[o.id]);
+        let col = 0;
+        while (takenCols.includes(col)) col++;
+        assigned[appt.id] = col;
+    }
+
+    return withOverlap.map((appt) => {
+        const groupCols = new Set([assigned[appt.id]]);
+        appt.overlapping.forEach((o) => { if (assigned[o.id] !== undefined) groupCols.add(assigned[o.id]); });
+        return { ...appt, col: assigned[appt.id], maxCols: Math.max(...groupCols) + 1 };
+    });
+}
+
+// RDV avec layout pour un jour donné de la semaine
+function dayLayout(dateStr) {
+    return computeLayout(weekAppointments.value[dateStr] || []);
+}
+
+// Formate l'en-tête de colonne : "lun. 19"
+function formatDayHeader(dateStr) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" });
+}
+
+// Vérifie si une date est aujourd'hui
+function isToday(dateStr) {
+    return dateStr === new Date().toISOString().split("T")[0];
+}
+
+// Plage de la semaine affichée : "19 – 25 mai 2026"
+const formattedWeekRange = computed(() => {
+    if (!weekDays.value.length) return "";
+    const first = new Date(weekDays.value[0] + "T00:00:00");
+    const last  = new Date(weekDays.value[6] + "T00:00:00");
+    const opts  = { day: "numeric", month: "long" };
+    const optsY = { day: "numeric", month: "long", year: "numeric" };
+    return `${first.toLocaleDateString("fr-FR", opts)} – ${last.toLocaleDateString("fr-FR", optsY)}`;
+});
 
 // ─── Config couleurs par statut ───────────────────────────────────
 function colorConfig(color) {

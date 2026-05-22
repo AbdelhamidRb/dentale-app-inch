@@ -281,6 +281,14 @@
                             ></div>
                         </div>
 
+                        <!-- Erreur réseau -->
+                        <p
+                            v-else-if="consultError"
+                            class="text-xs text-red-500 italic text-center py-2"
+                        >
+                            {{ consultError }}
+                        </p>
+
                         <!-- Aucune EN_COURS -->
                         <p
                             v-else-if="!enCoursConsultations.length"
@@ -335,7 +343,7 @@
             <!-- Supprimer — dentiste uniquement -->
             <button
                 v-if="isDentist"
-                @click="$emit('cancelled', appointment.id)"
+                @click="confirmDelete"
                 class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
                        text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
             >
@@ -344,6 +352,48 @@
             </button>
         </div>
     </div>
+
+    <!-- Modal de confirmation de suppression -->
+    <Teleport to="body">
+        <div
+            v-if="showDeleteConfirm"
+            class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
+            @click.self="showDeleteConfirm = false"
+        >
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                <!-- Icône d'avertissement -->
+                <div class="flex flex-col items-center px-6 pt-6 pb-4 text-center">
+                    <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                        <Trash2 class="w-7 h-7 text-red-500" />
+                    </div>
+                    <h3 class="font-semibold text-slate-800 text-base mb-1">
+                        Supprimer ce rendez-vous ?
+                    </h3>
+                    <p class="text-sm text-slate-500">
+                        Le rendez-vous de
+                        <span class="font-medium text-slate-700">{{ appointment.patient.full_name }}</span>
+                        sera définitivement supprimé. Cette action est irréversible.
+                    </p>
+                </div>
+                <!-- Boutons -->
+                <div class="flex border-t border-slate-100">
+                    <button
+                        @click="showDeleteConfirm = false"
+                        class="flex-1 py-3.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        @click="doDelete"
+                        class="flex-1 py-3.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
+
     <ConsultationModal
         v-model="showConsultationModal"
         :appointment-patient="appointment?.patient"
@@ -433,11 +483,6 @@ const availableStatuses = [
         classes: "bg-slate-50 text-slate-700 hover:bg-slate-100",
     },
     {
-        value: "CONFIRME",
-        label: "Confirmé",
-        classes: "bg-blue-50 text-blue-700 hover:bg-blue-100",
-    },
-    {
         value: "TERMINE",
         label: "Terminé",
         classes: "bg-green-50 text-green-700 hover:bg-green-100",
@@ -460,6 +505,7 @@ const loadingConsult = ref(false);
 async function openConsultOptions() {
     showConsultOptions.value = true;
     enCoursConsultations.value = [];
+    consultError.value = null;
     loadingConsult.value = true;
     try {
         const patientId = props.appointment?.patient?.id;
@@ -476,12 +522,16 @@ async function openConsultOptions() {
         const data = await res.json();
         enCoursConsultations.value = data.data ?? [];
     } catch {
+        enCoursConsultations.value = [];
+        // Affiche un message dans la zone "Aucune consultation"
+        consultError.value = "Impossible de charger les consultations.";
     } finally {
         loadingConsult.value = false;
     }
 }
 
-const continuationSuccess = ref(null); // nom de la consultation continuée
+const consultError = ref(null);
+const continuationSuccess = ref(null);
 const continuationError = ref(null);
 const continuationLoading = ref(false);
 
@@ -534,6 +584,17 @@ const isDentist = computed(() => {
     }
 });
 
+const showDeleteConfirm = ref(false);
+
+function confirmDelete() {
+    showDeleteConfirm.value = true;
+}
+
+function doDelete() {
+    showDeleteConfirm.value = false;
+    emit('cancelled', props.appointment.id);
+}
+
 // Charge le catalogue une fois au montage
 onMounted(async () => {
     try {
@@ -544,10 +605,7 @@ onMounted(async () => {
             },
         });
         const data = await res.json();
-        catalogActs.value = Array.isArray(data)
-            ? data
-            : (data.catalog_acts ?? []);
-        console.log("catalogActs chargés:", catalogActs.value.length); // à supprimer après vérif
+        catalogActs.value = Array.isArray(data) ? data : [];
     } catch {}
 });
 </script>

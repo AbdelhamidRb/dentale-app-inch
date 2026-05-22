@@ -15,6 +15,35 @@ class AppointmentController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function index(Request $request)
     {
+        // ─── Mode semaine : start_date + end_date ─────────────────────
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $request->validate([
+                'start_date' => 'required|date',
+                'end_date'   => 'required|date|after_or_equal:start_date',
+            ]);
+
+            $appointments = Appointment::whereBetween('scheduled_date', [$request->start_date, $request->end_date])
+                ->with([
+                    'patient:id,first_name,last_name,phone',
+                    'catalogActs:id,name,code',
+                    'creator:id,name,role',
+                ])
+                ->orderBy('scheduled_date')
+                ->orderBy('start_time')
+                ->get();
+
+            $grouped = $appointments
+                ->groupBy(fn($a) => $a->scheduled_date->format('Y-m-d'))
+                ->map(fn($group) => $group->map(fn($a) => $this->formatAppointment($a))->values());
+
+            return response()->json([
+                'start_date'   => $request->start_date,
+                'end_date'     => $request->end_date,
+                'appointments' => $grouped,
+            ]);
+        }
+
+        // ─── Mode jour : date unique ───────────────────────────────────
         $request->validate([
             'date' => 'required|date'
         ]);
@@ -55,11 +84,21 @@ class AppointmentController extends Controller
             'patient_id'     => 'required|exists:patients,id',
             'scheduled_date' => 'required|date',
             'start_time'     => 'required|date_format:H:i|after_or_equal:09:00|before:18:00',
-            'end_time'       => 'required|date_format:H:i|after:start_time|before_or_equal:18:00',
+            'end_time'       => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:18:00',
+                function ($attr, $value, $fail) use ($request) {
+                    if ($request->start_time && str_contains($value, ':') && str_contains($request->start_time, ':')) {
+                        [$sh, $sm] = explode(':', $request->start_time);
+                        [$eh, $em] = explode(':', $value);
+                        if (((int)$eh * 60 + (int)$em) - ((int)$sh * 60 + (int)$sm) < 15) {
+                            $fail('La durée minimale est de 15 minutes.');
+                        }
+                    }
+                },
+            ],
             'notes'          => 'nullable|string',
-            // IDs des actes prévus (optionnel)
             'act_ids'        => 'nullable|array',
             'act_ids.*'      => 'exists:catalog_acts,id',
+            'status'         => 'nullable|in:PLANIFIE,CONFIRME',
         ]);
 
         // ─── Vérification chevauchement ───────────────────────────
@@ -111,7 +150,17 @@ class AppointmentController extends Controller
         $request->validate([
             'scheduled_date' => 'required|date',
             'start_time'     => 'required|date_format:H:i|after_or_equal:09:00|before:18:00',
-            'end_time'       => 'required|date_format:H:i|after:start_time|before_or_equal:18:00',
+            'end_time'       => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:18:00',
+                function ($attr, $value, $fail) use ($request) {
+                    if ($request->start_time && str_contains($value, ':') && str_contains($request->start_time, ':')) {
+                        [$sh, $sm] = explode(':', $request->start_time);
+                        [$eh, $em] = explode(':', $value);
+                        if (((int)$eh * 60 + (int)$em) - ((int)$sh * 60 + (int)$sm) < 15) {
+                            $fail('La durée minimale est de 15 minutes.');
+                        }
+                    }
+                },
+            ],
             'notes'          => 'nullable|string',
             'act_ids'        => 'nullable|array',
             'act_ids.*'      => 'exists:catalog_acts,id',
