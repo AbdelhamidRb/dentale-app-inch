@@ -1,53 +1,54 @@
-// Composable — toute la logique patients en dehors du composant
-// Le composant Vue ne fait qu'afficher, ce fichier pense
-
 import { ref, reactive, computed, watch } from "vue";
 import { patientsApi } from "../api/patients";
 
 export function usePatients() {
     // ─── État principal ─────────────────────────────────────────────
-    const patients = ref([]); // liste courante
-    const selected = ref(null); // patient ouvert dans le panneau
-    const loading = ref(false); // skeleton pendant le chargement
-    const error = ref(null); // message d'erreur global
+    const patients     = ref([]);
+    const selected     = ref(null);
+    const loading      = ref(false);
+    const panelLoading = ref(false);
+    const error        = ref(null);
 
     // ─── Pagination ─────────────────────────────────────────────────
     const meta = reactive({ current_page: 1, last_page: 1, total: 0 });
 
     // ─── Filtres ────────────────────────────────────────────────────
     const filters = reactive({
-        search: "",
-        status: "",
+        search:   "",
+        status:   "",
         archived: false,
-        page: 1,
+        page:     1,
     });
 
-    // ─── Debounce : attend 350ms après la frappe avant d'appeler l'API
-    // Évite un appel API à chaque lettre tapée
+    // ─── Debounce recherche ─────────────────────────────────────────
     let debounceTimer = null;
     watch(
         () => filters.search,
         () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                filters.page = 1; // retour page 1 à chaque nouvelle recherche
+                filters.page = 1;
                 fetchPatients();
             }, 350);
         },
     );
 
-    // Recharge quand le statut ou la page change (immédiatement)
+    // Réinitialise la page sur changement de filtre status/archived
     watch(
-        [() => filters.status, () => filters.archived, () => filters.page],
+        [() => filters.status, () => filters.archived],
         () => {
+            filters.page = 1;
             fetchPatients();
         },
     );
 
+    // Changement de page seul (pas de reset)
+    watch(() => filters.page, () => fetchPatients());
+
     // ─── Chargement de la liste ─────────────────────────────────────
     async function fetchPatients() {
         loading.value = true;
-        error.value = null;
+        error.value   = null;
         try {
             const res = await patientsApi.list(filters);
             patients.value = res.data;
@@ -61,11 +62,15 @@ export function usePatients() {
 
     // ─── Ouvrir la fiche complète d'un patient ──────────────────────
     async function openPatient(id) {
+        panelLoading.value = true;
+        selected.value     = null;
         try {
-            const res = await patientsApi.get(id);
+            const res      = await patientsApi.get(id);
             selected.value = res;
         } catch (e) {
             error.value = e.message;
+        } finally {
+            panelLoading.value = false;
         }
     }
 
@@ -77,19 +82,16 @@ export function usePatients() {
     // ─── Créer un patient ──────────────────────────────────────────
     async function createPatient(data) {
         const res = await patientsApi.create(data);
-        // Insère en tête de liste sans recharger toute la page
         patients.value.unshift(res.patient);
         meta.total++;
-        return res; // retourne le doublon éventuel
+        return res;
     }
 
     // ─── Modifier un patient ───────────────────────────────────────
     async function updatePatient(id, data) {
         const res = await patientsApi.update(id, data);
-        // Met à jour uniquement la ligne concernée dans la liste (pas de rechargement)
         const idx = patients.value.findIndex((p) => p.id === id);
         if (idx !== -1) patients.value[idx] = res.patient;
-        // Met à jour aussi le panneau si ce patient est ouvert
         if (selected.value?.patient?.id === id) {
             selected.value.patient = res.patient;
         }
@@ -99,7 +101,14 @@ export function usePatients() {
     // ─── Archiver un patient ───────────────────────────────────────
     async function archivePatient(id) {
         await patientsApi.archive(id);
-        // Retire de la liste sans recharger
+        patients.value = patients.value.filter((p) => p.id !== id);
+        meta.total--;
+        if (selected.value?.patient?.id === id) closePanel();
+    }
+
+    // ─── Réactiver un patient archivé ─────────────────────────────
+    async function restorePatient(id) {
+        await patientsApi.restore(id);
         patients.value = patients.value.filter((p) => p.id !== id);
         meta.total--;
         if (selected.value?.patient?.id === id) closePanel();
@@ -110,9 +119,8 @@ export function usePatients() {
         const res = await patientsApi.addAlert(patientId, data);
         if (selected.value?.medical_alerts) {
             selected.value.medical_alerts.unshift(res.alert);
+            _updatePatientFlagsLocally(patientId);
         }
-        // Met à jour le flag has_critical_alerts dans la liste
-        _refreshPatientFlags(patientId);
         return res;
     }
 
@@ -120,10 +128,11 @@ export function usePatients() {
     async function deleteAlert(patientId, alertId) {
         await patientsApi.deleteAlert(patientId, alertId);
         if (selected.value?.medical_alerts) {
-            selected.value.medical_alerts =
-                selected.value.medical_alerts.filter((a) => a.id !== alertId);
+            selected.value.medical_alerts = selected.value.medical_alerts.filter(
+                (a) => a.id !== alertId,
+            );
+            _updatePatientFlagsLocally(patientId);
         }
-        _refreshPatientFlags(patientId);
     }
 
     // ─── Uploader un document ──────────────────────────────────────
@@ -145,63 +154,44 @@ export function usePatients() {
         }
     }
 
-    // ─── Helper : rafraîchit les flags d'un patient dans la liste ──
-    // Appelé après ajout/suppression d'alerte pour mettre à jour l'icône
-    async function _refreshPatientFlags(patientId) {
+    // ─── Met à jour les flags d'alerte localement sans appel API ──
+    // Utilise les alertes déjà chargées dans selected.value.medical_alerts
+    function _updatePatientFlagsLocally(patientId) {
         const idx = patients.value.findIndex((p) => p.id === patientId);
         if (idx === -1) return;
-        const res = await patientsApi.get(patientId);
-        patients.value[idx] = { ...patients.value[idx], ...res.patient };
+        const alerts = selected.value?.medical_alerts ?? [];
+        patients.value[idx] = {
+            ...patients.value[idx],
+            has_critical_alerts: alerts.some((a) => a.severity === 'ROUGE'),
+            alerts_count: alerts.length,
+        };
     }
 
-    // ─── Stats rapides calculées côté client ───────────────────────
+    // ─── Stats rapides côté client ─────────────────────────────────
     const stats = computed(() => ({
-        total: meta.total,
+        total:      meta.total,
         withAlerts: patients.value.filter((p) => p.has_critical_alerts).length,
     }));
 
-    async function restorePatient(id) {
-        await patientsApi.restore(id);
-        patients.value = patients.value.filter((p) => p.id !== id);
-        meta.total--;
-        if (selected.value?.patient?.id === id) closePanel();
-    }
-    async function createAppointment(data) {
-        // Si l'API retourne une erreur (ex: créneau occupé),
-        // elle sera propagée jusqu'à handleSaved → modal reste ouverte
-        const res = await appointmentsApi.create({
-            ...data,
-            scheduled_date: selectedDate.value,
-        });
-        appointments.value.push(res.appointment);
-        appointments.value.sort((a, b) =>
-            a.start_time.localeCompare(b.start_time),
-        );
-        stats.value.total++;
-        return res;
-    }
-
     return {
-        // État
         patients,
         selected,
         loading,
+        panelLoading,
         error,
         meta,
         filters,
         stats,
-        // Actions
         fetchPatients,
         openPatient,
         closePanel,
         createPatient,
         updatePatient,
         archivePatient,
+        restorePatient,
         addAlert,
         deleteAlert,
         uploadDocument,
         deleteDocument,
-        restorePatient,
-        createAppointment,
     };
 }

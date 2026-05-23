@@ -21,9 +21,16 @@ class PatientController extends Controller
     // Liste paginée avec recherche et filtres
     public function index(Request $request)
     {
-        $query = Patient::active()
-            ->with(['medicalAlerts', 'criticalAlerts'])
-            ->latest();
+        // Base : archivés OU actifs — construit en premier pour que search/status s'appliquent dans les deux cas
+        if ($request->boolean('archived')) {
+            $query = Patient::where('is_archived', true)
+                ->withCount(['medicalAlerts', 'criticalAlerts'])
+                ->latest();
+        } else {
+            $query = Patient::active()
+                ->withCount(['medicalAlerts', 'criticalAlerts'])
+                ->latest();
+        }
 
         // Recherche par nom, téléphone, numéro dossier
         if ($request->filled('search')) {
@@ -33,11 +40,6 @@ class PatientController extends Controller
         // Filtre par statut
         if ($request->filled('status')) {
             $query->where('status', $request->status);
-        }
-
-        // Filtre patients archivés
-        if ($request->boolean('archived')) {
-            $query = Patient::where('is_archived', true)->latest();
         }
 
         $patients = $query->paginate(15);
@@ -103,15 +105,34 @@ class PatientController extends Controller
     }
 
     // ─── GET /api/patients/{id} ───────────────────────────────────
-    // Fiche complète d'un patient
+    // Fiche complète d'un patient (inclut le solde pour éviter un 2e appel API)
     public function show(Patient $patient)
     {
         $patient->load(['medicalAlerts', 'documents']);
+
+        // Solde calculé en SQL (2 sous-requêtes agrégées) — évite un 2e appel GET /api/payments/{id}
+        $totalConsultations = (float) $patient->consultations()
+            ->whereNotIn('status', ['BROUILLON'])
+            ->sum('total_price');
+        $totalPaid  = (float) $patient->paymentTransactions()->sum('amount');
+        $balance    = $totalPaid - $totalConsultations;
+
+        $balanceStatus = match (true) {
+            $balance >  0.01 => 'AVANCE',
+            $balance < -0.01 => 'PARTIEL',
+            default          => 'PAYÉ',
+        };
 
         return response()->json([
             'patient'        => $this->formatPatient($patient),
             'medical_alerts' => $patient->medicalAlerts->map(fn($a) => $this->formatAlert($a)),
             'documents'      => $patient->documents->map(fn($d) => $this->formatDocument($d)),
+            'balance'        => [
+                'total_consultations' => $totalConsultations,
+                'total_paid'          => $totalPaid,
+                'balance'             => round($balance, 2),
+                'balance_status'      => $balanceStatus,
+            ],
         ]);
     }
 
@@ -288,8 +309,9 @@ class PatientController extends Controller
             'status'          => $p->status,
             'is_archived'     => $p->is_archived,
             'no_show_count'   => $p->no_show_count,
-            'has_critical_alerts' => $p->criticalAlerts->count() > 0,
-            'alerts_count'    => $p->medicalAlerts->count(),
+            // withCount génère critical_alerts_count et medical_alerts_count
+            'has_critical_alerts' => ($p->critical_alerts_count ?? $p->criticalAlerts->count()) > 0,
+            'alerts_count'        => $p->medical_alerts_count ?? $p->medicalAlerts->count(),
             'created_at'      => $p->created_at->format('d/m/Y'),
         ];
     }

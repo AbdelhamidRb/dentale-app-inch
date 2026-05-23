@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Consultation;
 use App\Models\ConsultationAct;
-use App\Models\CatalogAct;
 use Illuminate\Http\Request;
 
 class ConsultationController extends Controller
@@ -17,11 +16,13 @@ class ConsultationController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function index(Request $request)
     {
+        // En liste : on charge seulement les 2 premiers actes pour le résumé + le count total
+        // La fiche complète (show) charge tous les actes en détail
         $query = Consultation::with([
             'patient:id,first_name,last_name,phone',
             'dentist:id,name',
-            'acts.catalogAct:id,code,name',
-        ])->latest();
+            'acts' => fn($q) => $q->with('catalogAct:id,code,name')->limit(3),
+        ])->withCount('acts')->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);

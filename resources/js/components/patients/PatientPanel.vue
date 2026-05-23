@@ -23,7 +23,7 @@
 
                     <!-- Badge solde -->
                     <div
-                        v-if="balance && !balanceLoading"
+                        v-if="balance"
                         :class="[
                             'inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg border text-xs font-medium',
                             balanceColor,
@@ -47,10 +47,6 @@
                         </svg>
                         {{ balanceLabel }}
                     </div>
-                    <div
-                        v-else-if="balanceLoading"
-                        class="mt-1.5 w-24 h-4 bg-slate-100 rounded animate-pulse"
-                    ></div>
                 </div>
             </div>
 
@@ -229,18 +225,21 @@
                         <option value="ORANGE">🟠 Modéré</option>
                         <option value="JAUNE">🟡 Information</option>
                     </select>
+                    <!-- Erreur ajout alerte -->
+                    <p v-if="alertError" class="text-xs text-red-500">{{ alertError }}</p>
                     <div class="flex gap-2">
                         <button
-                            @click="showAlertForm = false"
+                            @click="showAlertForm = false; alertError = null"
                             class="flex-1 py-1.5 border border-slate-300 rounded text-xs text-slate-600"
                         >
                             Annuler
                         </button>
                         <button
                             @click="submitAlert"
-                            class="flex-1 py-1.5 bg-blue-600 text-white rounded text-xs"
+                            :disabled="alertSubmitting"
+                            class="flex-1 py-1.5 bg-blue-600 text-white rounded text-xs disabled:opacity-50"
                         >
-                            Ajouter
+                            {{ alertSubmitting ? "Ajout..." : "Ajouter" }}
                         </button>
                     </div>
                 </div>
@@ -277,10 +276,9 @@
                             </p>
                         </div>
                         <button
-                            @click="
-                                $emit('alert-deleted', patient.id, alert.id)
-                            "
+                            @click="handleDeleteAlert(alert.id)"
                             class="text-slate-300 hover:text-red-400 transition-colors shrink-0"
+                            title="Supprimer cette alerte"
                         >
                             <X class="w-3 h-3" />
                         </button>
@@ -309,6 +307,7 @@
                         <Upload class="w-3 h-3" />
                         Uploader
                         <input
+                            ref="fileInput"
                             type="file"
                             class="hidden"
                             accept=".jpg,.jpeg,.png,.pdf,.webp"
@@ -324,6 +323,7 @@
                 >
                     <p class="text-xs text-slate-600 font-medium">
                         {{ uploadingFile.name }}
+                        <span class="text-slate-400 font-normal ml-1">({{ (uploadingFile.size / 1024 / 1024).toFixed(1) }} Mo)</span>
                     </p>
                     <select
                         v-model="docType"
@@ -335,9 +335,11 @@
                         <option value="PDF">Document PDF</option>
                         <option value="AUTRE">Autre</option>
                     </select>
+                    <!-- Erreur upload -->
+                    <p v-if="uploadError" class="text-xs text-red-500">{{ uploadError }}</p>
                     <div class="flex gap-2">
                         <button
-                            @click="uploadingFile = null"
+                            @click="cancelUpload"
                             class="flex-1 py-1.5 border border-slate-300 rounded text-xs"
                         >
                             Annuler
@@ -359,7 +361,6 @@
                         :key="doc.id"
                         class="border border-slate-200 rounded-lg overflow-hidden group"
                     >
-                        <!-- @click sur le conteneur entier, pas sur l'image seule -->
                         <div
                             v-if="['RADIO', 'PHOTO'].includes(doc.type)"
                             class="aspect-video bg-slate-100 relative cursor-pointer"
@@ -370,7 +371,6 @@
                                 :alt="doc.original_name"
                                 class="w-full h-full object-cover"
                             />
-                            <!-- pointer-events-none → l'overlay ne bloque plus le clic -->
                             <div
                                 class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none"
                             >
@@ -378,7 +378,7 @@
                             </div>
                         </div>
 
-                        <!-- Aperçu PDF -->
+                        <!-- Aperçu PDF / autre -->
                         <div
                             v-else
                             class="aspect-video bg-slate-50 flex items-center justify-center"
@@ -399,14 +399,9 @@
                                 </p>
                             </div>
                             <button
-                                @click="
-                                    $emit(
-                                        'document-deleted',
-                                        patient.id,
-                                        doc.id,
-                                    )
-                                "
+                                @click="handleDeleteDocument(doc.id)"
                                 class="text-slate-300 hover:text-red-400 transition-colors shrink-0 ml-1"
+                                title="Supprimer ce document"
                             >
                                 <X class="w-3 h-3" />
                             </button>
@@ -422,8 +417,7 @@
                 </p>
             </div>
 
-            <!-- ── Section : Historique consultations (placeholder) ───── -->
-            <!-- ── Section : Solde & consultations ───────────────────── -->
+            <!-- ── Section : Récapitulatif financier ──────────────────── -->
             <div v-if="balance">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -441,46 +435,27 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="text-center p-2 bg-slate-50 rounded-xl">
                         <p class="text-sm font-bold text-slate-800">
-                            {{
-                                Number(
-                                    balance.total_consultations ?? 0,
-                                ).toFixed(0)
-                            }}
+                            {{ Number(balance.total_consultations ?? 0).toFixed(0) }}
                         </p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">
-                            Total MAD
-                        </p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Total MAD</p>
                     </div>
                     <div class="text-center p-2 bg-emerald-50 rounded-xl">
                         <p class="text-sm font-bold text-emerald-700">
                             {{ Number(balance.total_paid ?? 0).toFixed(0) }}
                         </p>
-                        <p class="text-[10px] text-emerald-500 mt-0.5">
-                            Payé MAD
-                        </p>
+                        <p class="text-[10px] text-emerald-500 mt-0.5">Payé MAD</p>
                     </div>
                     <div
                         class="text-center p-2 rounded-xl"
-                        :class="
-                            (balance.balance ?? 0) < 0
-                                ? 'bg-red-50'
-                                : 'bg-blue-50'
-                        "
+                        :class="(balance.balance ?? 0) < 0 ? 'bg-red-50' : 'bg-blue-50'"
                     >
                         <p
                             class="text-sm font-bold"
-                            :class="
-                                (balance.balance ?? 0) < 0
-                                    ? 'text-red-600'
-                                    : 'text-blue-600'
-                            "
+                            :class="(balance.balance ?? 0) < 0 ? 'text-red-600' : 'text-blue-600'"
                         >
-                            {{ (balance.balance ?? 0) > 0 ? "+" : ""
-                            }}{{ Number(balance.balance ?? 0).toFixed(0) }}
+                            {{ (balance.balance ?? 0) > 0 ? "+" : "" }}{{ Number(balance.balance ?? 0).toFixed(0) }}
                         </p>
-                        <p class="text-[10px] mt-0.5 text-slate-400">
-                            Solde MAD
-                        </p>
+                        <p class="text-[10px] mt-0.5 text-slate-400">Solde MAD</p>
                     </div>
                 </div>
             </div>
@@ -488,7 +463,6 @@
         <!-- fin onglet fiche -->
 
         <!-- ── Aperçu image fullscreen ─────────────────────────────── -->
-        <!-- Teleport → sort du DOM du composant → z-index illimité -->
         <Teleport to="body">
             <div
                 v-if="previewDoc"
@@ -512,18 +486,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import ToothChart from './ToothChart.vue';
-
-const router = useRouter()
-
-function goToPayments() {
-    router.push({
-        name: 'paiements',
-        query: { patient_id: props.data?.patient?.id }
-    })
-}
+import { ref, computed, watch } from "vue";
+import { useRouter } from "vue-router";
 import {
     X,
     Pencil,
@@ -532,65 +496,40 @@ import {
     Upload,
     Eye,
     FileText,
-    RotateCcw,
     AlertTriangle,
-    Bell,
-    FileImage,
 } from "lucide-vue-next";
+import ToothChart from "./ToothChart.vue";
 
-// ─── Props (DOIT être en premier) ─────────────────────────────────
+const router = useRouter();
+
+// ─── Props ────────────────────────────────────────────────────────
 const props = defineProps({
-    data: { type: Object, required: true },
+    data:           { type: Object,   required: true },
+    uploadDocument: { type: Function, required: true },
+    deleteDocument: { type: Function, required: true },
+    addAlert:       { type: Function, required: true },
+    deleteAlert:    { type: Function, required: true },
 });
 
-const emit = defineEmits([
-    "close",
-    "edit",
-    "archive",
-    "alert-added",
-    "alert-deleted",
-    "document-uploaded",
-    "document-deleted",
-]);
+const emit = defineEmits(["close", "edit", "archive"]);
 
 // ─── Onglet actif ─────────────────────────────────────────────────
-const activeTab = ref('fiche');
-watch(() => props.data?.patient?.id, () => { activeTab.value = 'fiche'; });
+const activeTab = ref("fiche");
 
 const patient = computed(() => props.data.patient);
 
-// ─── Solde patient ────────────────────────────────────────────────
-const balance = ref(null);
-const balanceLoading = ref(false);
+// ─── Solde patient — fourni par GET /api/patients/{id}, pas d'appel séparé ──
+const balance = computed(() => props.data.balance ?? null);
 
-async function fetchBalance() {
-    const id = props.data?.patient?.id;
-    if (!id) return;
-    balanceLoading.value = true;
-    balance.value = null;
-    try {
-        const res = await fetch(`/api/payments/${id}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                Accept: "application/json",
-            },
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        balance.value = json.patient ?? null;
-    } catch (e) {
-        console.error("Balance fetch error:", e);
-    } finally {
-        balanceLoading.value = false;
-    }
-}
+// Reset onglet au changement de patient
+watch(() => props.data?.patient?.id, () => { activeTab.value = "fiche"; });
 
 const balanceColor = computed(
     () =>
         ({
             PARTIEL: "text-red-600 bg-red-50 border-red-200",
-            PAYÉ: "text-emerald-600 bg-emerald-50 border-emerald-200",
-            AVANCE: "text-blue-600 bg-blue-50 border-blue-200",
+            PAYÉ:    "text-emerald-600 bg-emerald-50 border-emerald-200",
+            AVANCE:  "text-blue-600 bg-blue-50 border-blue-200",
         })[balance.value?.balance_status] ??
         "text-slate-500 bg-slate-50 border-slate-200",
 );
@@ -599,20 +538,15 @@ const balanceLabel = computed(() => {
     if (!balance.value) return null;
     const b = balance.value.balance;
     if (b < -0.01) return `Doit ${Math.abs(b).toFixed(0)} MAD`;
-    if (b > 0.01) return `Avance ${b.toFixed(0)} MAD`;
+    if (b > 0.01)  return `Avance ${b.toFixed(0)} MAD`;
     return "Compte soldé";
 });
 
-onMounted(() => fetchBalance());
+function goToPayments() {
+    router.push({ name: "paiements", query: { patient_id: patient.value?.id } });
+}
 
-watch(
-    () => props.data?.patient?.id,
-    (newId) => {
-        if (newId) fetchBalance();
-    },
-);
-
-// Initiales
+// ─── Initiales ────────────────────────────────────────────────────
 const initials = computed(() =>
     patient.value.full_name
         .split(" ")
@@ -622,48 +556,86 @@ const initials = computed(() =>
         .slice(0, 2),
 );
 
-// Alertes critiques
-const criticalAlerts = computed(
-    () =>
-        props.data.medical_alerts?.filter((a) => a.severity === "ROUGE") || [],
+// ─── Alertes critiques ────────────────────────────────────────────
+const criticalAlerts   = computed(() =>
+    props.data.medical_alerts?.filter((a) => a.severity === "ROUGE") || [],
 );
 const hasCriticalAlerts = computed(() => criticalAlerts.value.length > 0);
 
-// ─── Alertes ──────────────────────────────────────────────────────
-const showAlertForm = ref(false);
-const alertForm = ref({ type: "ALLERGIE", description: "", severity: "ROUGE" });
+// ─── Alertes médicales ────────────────────────────────────────────
+const showAlertForm   = ref(false);
+const alertSubmitting = ref(false);
+const alertError      = ref(null);
+const alertForm       = ref({ type: "ALLERGIE", description: "", severity: "ROUGE" });
 
 async function submitAlert() {
-    // Bloque si description vide
     if (!alertForm.value.description.trim()) {
-        alert("La description est obligatoire.");
+        alertError.value = "La description est obligatoire.";
         return;
     }
-    emit("alert-added", patient.value.id, alertForm.value);
-    showAlertForm.value = false;
-    alertForm.value = { type: "ALLERGIE", description: "", severity: "ROUGE" };
+    alertSubmitting.value = true;
+    alertError.value      = null;
+    try {
+        await props.addAlert(patient.value.id, { ...alertForm.value });
+        showAlertForm.value = false;
+        alertForm.value     = { type: "ALLERGIE", description: "", severity: "ROUGE" };
+    } catch (e) {
+        alertError.value = e.message || "Erreur lors de l'ajout.";
+    } finally {
+        alertSubmitting.value = false;
+    }
+}
+
+async function handleDeleteAlert(alertId) {
+    if (!confirm("Supprimer cette alerte médicale ?")) return;
+    await props.deleteAlert(patient.value.id, alertId);
 }
 
 // ─── Documents ────────────────────────────────────────────────────
+const fileInput    = ref(null);
 const uploadingFile = ref(null);
-const docType = ref("RADIO");
-const uploading = ref(false);
-const previewDoc = ref(null);
+const docType      = ref("RADIO");
+const uploading    = ref(false);
+const uploadError  = ref(null);
+const previewDoc   = ref(null);
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mo
 
 function handleUpload(e) {
-    uploadingFile.value = e.target.files[0];
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+        alert(`Fichier trop volumineux (max 10 Mo). Taille : ${(file.size / 1024 / 1024).toFixed(1)} Mo`);
+        e.target.value = "";
+        return;
+    }
+    uploadingFile.value = file;
+    uploadError.value   = null;
+}
+
+function cancelUpload() {
+    uploadingFile.value = null;
+    uploadError.value   = null;
+    if (fileInput.value) fileInput.value.value = "";
 }
 
 async function confirmUpload() {
     if (!uploadingFile.value) return;
-    uploading.value = true;
-    emit(
-        "document-uploaded",
-        patient.value.id,
-        uploadingFile.value,
-        docType.value,
-    );
-    uploading.value = false;
-    uploadingFile.value = null;
+    uploading.value   = true;
+    uploadError.value = null;
+    try {
+        await props.uploadDocument(patient.value.id, uploadingFile.value, docType.value);
+        uploadingFile.value = null;
+        if (fileInput.value) fileInput.value.value = "";
+    } catch (e) {
+        uploadError.value = e.message || "Erreur lors de l'upload.";
+    } finally {
+        uploading.value = false;
+    }
+}
+
+async function handleDeleteDocument(docId) {
+    if (!confirm("Supprimer ce document ?")) return;
+    await props.deleteDocument(patient.value.id, docId);
 }
 </script>

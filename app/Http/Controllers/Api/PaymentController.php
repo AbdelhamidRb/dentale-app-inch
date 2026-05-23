@@ -5,78 +5,78 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\PaymentTransaction;
-use App\Models\Consultation;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     // ═══════════════════════════════════════════════════════════════
     // GET /api/payments
-    // Liste des patients avec leur solde
-    // Filtre : status (AVANCE / PAYÉ / PARTIEL), search
+    // Liste des patients avec leur solde — calcul en SQL via withSum
     // ═══════════════════════════════════════════════════════════════
     public function index(Request $request)
     {
-        $patients = Patient::whereHas('consultations')
-            ->with([
-                'consultations'       => fn($q) => $q->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
-                'paymentTransactions' => fn($q) => $q->orderBy('date', 'desc')->select('id', 'patient_id', 'amount', 'date'),
-            ])
-            ->get()
-            ->map(fn($p) => $this->formatPatientBalance($p));
+        $query = Patient::select('id', 'first_name', 'last_name', 'phone', 'couverture')
+            ->where('is_archived', false)
+            // Seulement les patients qui ont au moins une consultation non-brouillon
+            ->whereHas('consultations', fn($q) => $q->whereNotIn('status', ['BROUILLON']))
+            // Totaux calculés en SQL (sous-requêtes) au lieu de charger les collections
+            ->withSum(
+                ['consultations as total_consultations' => fn($q) => $q->whereNotIn('status', ['BROUILLON'])],
+                'total_price'
+            )
+            ->withSum('paymentTransactions as total_paid', 'amount');
 
-        // ─── Filtres ──────────────────────────────────────────────
-        if ($request->filled('status')) {
-            $patients = $patients->filter(
-                fn($p) => $p['balance_status'] === $request->status
-            );
-        }
-
+        // Recherche en SQL (avant get())
         if ($request->filled('search')) {
-            $search = strtolower($request->search);
-            $patients = $patients->filter(
-                fn($p) => str_contains(strtolower($p['full_name']), $search)
+            $s = $request->search;
+            $query->where(fn($q) => $q
+                ->where('first_name', 'like', "%{$s}%")
+                ->orWhere('last_name',  'like', "%{$s}%")
+                ->orWhere('phone',      'like', "%{$s}%")
             );
         }
 
-        // ─── Stats globales ───────────────────────────────────────
+        $rows = $query->get();
+
+        // Calcul du solde + statut — sur la collection déjà réduite (pas toute la BDD)
+        $patients = $rows->map(fn($p) => $this->formatBalance($p));
+
+        // Filtre statut en PHP (dépend d'une valeur calculée, pas filtrable en SQL simplement)
+        if ($request->filled('status')) {
+            $patients = $patients->filter(fn($p) => $p['balance_status'] === $request->status);
+        }
+
         $all = $patients->values();
 
         $stats = [
-            'total_du'      => $all->sum('total_consultations'),
+            'total_du'       => $all->sum('total_consultations'),
             'total_encaisse' => $all->sum('total_paid'),
-            'total_restant' => $all->sum(fn($p) => max(0, -$p['balance'])),
-            'count_partiel' => $all->where('balance_status', 'PARTIEL')->count(),
-            'count_paye'    => $all->where('balance_status', 'PAYÉ')->count(),
-            'count_avance'  => $all->where('balance_status', 'AVANCE')->count(),
+            'total_restant'  => $all->sum(fn($p) => max(0, -$p['balance'])),
+            'count_partiel'  => $all->where('balance_status', 'PARTIEL')->count(),
+            'count_paye'     => $all->where('balance_status', 'PAYÉ')->count(),
+            'count_avance'   => $all->where('balance_status', 'AVANCE')->count(),
         ];
 
-        return response()->json([
-            'data'  => $all->values(),
-            'stats' => $stats,
-        ]);
+        return response()->json(['data' => $all, 'stats' => $stats]);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // GET /api/payments/{patientId}
-    // Fiche complète d'un patient : consultations + versements
+    // Fiche complète : consultations + versements
     // ═══════════════════════════════════════════════════════════════
     public function show(int $patientId)
     {
-        // findOrFail fonctionne même sans consultation
         $patient = Patient::with([
             'consultations' => fn($q) =>
-            $q->whereNotIn('status', ['BROUILLON'])
-                ->with('acts.catalogAct:id,name,code')
-                ->orderBy('created_at', 'desc'),
+                $q->whereNotIn('status', ['BROUILLON'])
+                  ->with('acts.catalogAct:id,name,code')
+                  ->orderBy('created_at', 'desc'),
             'paymentTransactions' => fn($q) =>
-            $q->orderBy('date', 'desc')
-                ->with('creator:id,name'),
+                $q->orderBy('date', 'desc')->with('creator:id,name'),
         ])->findOrFail($patientId);
-        
-        $formatted = $this->formatPatientBalance($patient);
 
-        // Détail consultations
+        $formatted = $this->formatBalance($patient);
+
         $formatted['consultations'] = $patient->consultations->map(fn($c) => [
             'id'          => $c->id,
             'status'      => $c->status,
@@ -90,7 +90,6 @@ class PaymentController extends Controller
             ]),
         ]);
 
-        // Détail versements
         $formatted['transactions'] = $patient->paymentTransactions->map(
             fn($t) => $this->formatTransaction($t)
         );
@@ -100,7 +99,6 @@ class PaymentController extends Controller
 
     // ═══════════════════════════════════════════════════════════════
     // POST /api/payments/{patientId}/transactions
-    // Ajouter un versement pour un patient
     // ═══════════════════════════════════════════════════════════════
     public function addTransaction(Request $request, int $patientId)
     {
@@ -120,25 +118,20 @@ class PaymentController extends Controller
             'notes'      => $request->notes,
         ]);
 
-        // Recharge le patient avec ses données à jour
         $patient->load([
-            'consultations' => fn($q) =>
-            $q->whereNotIn('status', ['BROUILLON'])
-                ->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
-            'paymentTransactions' => fn($q) =>
-            $q->orderBy('date', 'desc'),
+            'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
+            'paymentTransactions' => fn($q) => $q->orderBy('date', 'desc'),
         ]);
 
         return response()->json([
             'message'     => 'Versement enregistré.',
             'transaction' => $this->formatTransaction($transaction),
-            'patient'     => $this->formatPatientBalance($patient),
+            'patient'     => $this->formatBalance($patient),
         ], 201);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // DELETE /api/payments/transactions/{id}
-    // Supprimer un versement (dentiste uniquement)
     // ═══════════════════════════════════════════════════════════════
     public function deleteTransaction(int $transactionId)
     {
@@ -148,16 +141,13 @@ class PaymentController extends Controller
         $transaction->delete();
 
         $patient = Patient::with([
-            'consultations' => fn($q) =>
-            $q->whereNotIn('status', ['BROUILLON'])
-                ->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
-            'paymentTransactions' => fn($q) =>
-            $q->orderBy('date', 'desc'),
+            'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
+            'paymentTransactions' => fn($q) => $q->orderBy('date', 'desc'),
         ])->findOrFail($patientId);
 
         return response()->json([
             'message' => 'Versement supprimé.',
-            'patient' => $this->formatPatientBalance($patient),
+            'patient' => $this->formatBalance($patient),
         ]);
     }
 
@@ -165,31 +155,35 @@ class PaymentController extends Controller
     // HELPERS
     // ═══════════════════════════════════════════════════════════════
 
-    // Calcule le solde d'un patient et retourne un tableau formaté
-    private function formatPatientBalance(Patient $patient): array
+    // Accepte un patient avec relations chargées OU avec withSum attributes
+    private function formatBalance(Patient $p): array
     {
-        $totalConsultations = $patient->consultations->sum('total_price');
-        $totalPaid          = $patient->paymentTransactions->sum('amount');
-        $balance            = $totalPaid - $totalConsultations;
+        // withSum retourne des attributs scalaires ; sinon on utilise la collection
+        $totalConsultations = isset($p->total_consultations)
+            ? (float) $p->total_consultations
+            : (float) ($p->relationLoaded('consultations') ? $p->consultations->sum('total_price') : 0);
 
-        // Statut du solde
+        $totalPaid = isset($p->total_paid)
+            ? (float) $p->total_paid
+            : (float) ($p->relationLoaded('paymentTransactions') ? $p->paymentTransactions->sum('amount') : 0);
+
+        $balance = $totalPaid - $totalConsultations;
+
         $status = match (true) {
-            $balance >  0.01 => 'AVANCE',   // a trop payé
-            $balance < -0.01 => 'PARTIEL',  // doit encore
-            default          => 'PAYÉ',     // tout réglé
+            $balance >  0.01 => 'AVANCE',
+            $balance < -0.01 => 'PARTIEL',
+            default          => 'PAYÉ',
         };
 
         return [
-            'id'                 => $patient->id,
-            'full_name'          => $patient->first_name . ' ' . $patient->last_name,
-            'phone'              => $patient->phone,
-            'couverture'         => $patient->couverture,
-            'total_consultations' => (float) $totalConsultations,
-            'total_paid'         => (float) $totalPaid,
-            'balance'            => round((float) $balance, 2),
-            'balance_status'     => $status,
-            'consultations_count' => $patient->consultations->count(),
-            'transactions_count' => $patient->paymentTransactions->count(),
+            'id'                  => $p->id,
+            'full_name'           => $p->first_name . ' ' . $p->last_name,
+            'phone'               => $p->phone,
+            'couverture'          => $p->couverture,
+            'total_consultations' => $totalConsultations,
+            'total_paid'          => $totalPaid,
+            'balance'             => round($balance, 2),
+            'balance_status'      => $status,
         ];
     }
 

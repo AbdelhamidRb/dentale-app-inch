@@ -65,7 +65,7 @@
                         <input
                             type="date"
                             v-model="filters.date_from"
-                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"
+                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                         />
                     </div>
                     <div class="flex items-center gap-1 flex-1">
@@ -75,7 +75,7 @@
                         <input
                             type="date"
                             v-model="filters.date_to"
-                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"
+                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                         />
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                         <input
                             v-model="filters.search"
                             placeholder="Patient…"
-                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"
+                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                         />
                     </div>
                     <div class="flex gap-1">
@@ -187,60 +187,50 @@
                         :key="c.id"
                         @click="selectConsultation(c)"
                         :class="[
-                            'w-full text-left px-4 py-3 border-b border-slate-100',
+                            'w-full text-left px-4 py-3.5 border-b border-slate-100',
                             'hover:bg-slate-50 transition-colors',
                             selectedConsultation?.id === c.id
                                 ? 'bg-blue-50 border-l-2 border-l-blue-500'
                                 : '',
                         ]"
                     >
-                        <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
-                                <!-- Ligne 1 : statut + patient + actes -->
-                                <div class="flex items-center gap-1.5 mb-1">
-                                    <ConsultationStatusBadge
-                                        :status="c.status"
-                                    />
-                                    <span
-                                        class="text-xs font-medium text-slate-700 truncate"
-                                    >
+                                <!-- Ligne 1 : statut + patient -->
+                                <div class="flex items-center gap-2 mb-1">
+                                    <ConsultationStatusBadge :status="c.status" />
+                                    <span class="text-sm font-semibold text-slate-800 truncate">
                                         {{ c.patient?.full_name }}
                                     </span>
                                 </div>
-                                <!-- Actes -->
-                                <p class="text-xs text-slate-500 truncate mb-1">
+                                <!-- Ligne 2 : actes -->
+                                <p class="text-xs text-slate-500 truncate mb-2">
                                     {{ actesSummary(c) }}
                                 </p>
-                                <!-- Ligne 2 : dents + infos -->
-                                <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Ligne 3 : dents + date -->
+                                <div class="flex items-center gap-1.5 flex-wrap">
                                     <span
-                                        v-for="t in teethInConsultation(
-                                            c,
-                                        ).slice(0, 5)"
+                                        v-for="t in teethInConsultation(c).slice(0, 4)"
                                         :key="t"
-                                        class="text-[10px] px-1 py-0.5 bg-blue-100 text-blue-600 rounded"
-                                    >
-                                        {{ t }}
-                                    </span>
+                                        class="px-1.5 py-0.5 bg-blue-100 text-blue-700
+                                               text-[10px] font-semibold rounded"
+                                    >{{ t }}</span>
                                     <span
-                                        v-if="teethInConsultation(c).length > 5"
+                                        v-if="teethInConsultation(c).length > 4"
                                         class="text-[10px] text-slate-400"
-                                    >
-                                        +{{ teethInConsultation(c).length - 5 }}
-                                    </span>
-                                    <span class="text-[10px] text-slate-300"
-                                        >·</span
-                                    >
-                                    <span class="text-[10px] text-slate-400">
-                                        {{ c.sessions_count }}s ·
+                                    >+{{ teethInConsultation(c).length - 4 }}</span>
+                                    <span class="text-[10px] text-slate-300 ml-auto">
                                         {{ c.created_at }}
                                     </span>
                                 </div>
                             </div>
-                            <!-- Total -->
-                            <div class="text-right shrink-0">
+                            <!-- Total + séances -->
+                            <div class="text-right shrink-0 pt-0.5">
                                 <p class="text-sm font-bold text-slate-800">
                                     {{ c.total_price?.toFixed(0) ?? 0 }} MAD
+                                </p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                    {{ c.sessions_count }} séance{{ c.sessions_count !== 1 ? 's' : '' }}
                                 </p>
                             </div>
                         </div>
@@ -409,7 +399,7 @@ const stats = computed(() => [
     {
         label: "Terminées",
         value: consultations.value.filter((c) => c.status === "TERMINE").length,
-        color: "text-emerald-600",
+        color: "text-green-600",
     },
 ]);
 
@@ -428,7 +418,7 @@ const statusOptions = [
     {
         value: "TERMINE",
         label: "Terminées",
-        activeClass: "border-emerald-400 bg-emerald-50 text-emerald-700",
+        activeClass: "border-green-400 bg-green-50 text-green-700",
     },
 ];
 

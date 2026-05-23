@@ -5,7 +5,7 @@
          ══════════════════════════════════════════════════════════ -->
         <div
             class="flex flex-col min-w-0 transition-all duration-300"
-            :class="selected ? 'w-[420px] shrink-0' : 'flex-1'"
+            :class="selected || panelLoading ? 'w-[420px] shrink-0' : 'flex-1'"
         >
             <!-- ── En-tête : titre + bouton nouveau ─────────────────── -->
             <div class="flex items-center justify-between mb-4">
@@ -38,7 +38,6 @@
                         placeholder="Nom, téléphone, numéro dossier..."
                         class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <!-- Croix pour effacer la recherche -->
                     <button
                         v-if="filters.search"
                         @click="filters.search = ''"
@@ -88,26 +87,11 @@
                 <div
                     class="grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-2.5 border-b border-slate-100 bg-slate-50"
                 >
-                    <span
-                        class="text-[11px] font-medium text-slate-500 uppercase tracking-wide"
-                        >N° Dossier</span
-                    >
-                    <span
-                        class="text-[11px] font-medium text-slate-500 uppercase tracking-wide"
-                        >Patient</span
-                    >
-                    <span
-                        class="text-[11px] font-medium text-slate-500 uppercase tracking-wide"
-                        >Âge</span
-                    >
-                    <span
-                        class="text-[11px] font-medium text-slate-500 uppercase tracking-wide"
-                        >Téléphone</span
-                    >
-                    <span
-                        class="text-[11px] font-medium text-slate-500 uppercase tracking-wide"
-                        >Alertes</span
-                    >
+                    <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">N° Dossier</span>
+                    <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Patient</span>
+                    <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Âge</span>
+                    <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Téléphone</span>
+                    <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Alertes</span>
                 </div>
 
                 <!-- ── Skeleton loader pendant le chargement ─────────── -->
@@ -145,16 +129,13 @@
 
                         <!-- Nom + badge statut + bouton réactiver intégré -->
                         <div class="min-w-0">
-                            <p
-                                class="text-sm font-medium text-slate-800 truncate"
-                            >
+                            <p class="text-sm font-medium text-slate-800 truncate">
                                 {{ patient.full_name }}
                             </p>
                             <div class="flex items-center gap-2">
                                 <p class="text-xs text-slate-400">
                                     {{ patient.couverture }}
                                 </p>
-                                <!-- Bouton intégré sous le nom, visible seulement en mode archivés -->
                                 <button
                                     v-if="filters.archived"
                                     @click.stop="handleRestore(patient.id)"
@@ -165,6 +146,7 @@
                                 </button>
                             </div>
                         </div>
+
                         <!-- Âge -->
                         <span class="text-sm text-slate-600 text-right">
                             {{ patient.age ? patient.age + " ans" : "—" }}
@@ -185,6 +167,7 @@
                             <Bell
                                 v-else-if="patient.alerts_count > 0"
                                 class="w-4 h-4 text-amber-400"
+                                :title="`${patient.alerts_count} alerte(s) médicale(s)`"
                             />
                             <span v-else class="text-slate-300 text-xs">—</span>
                         </div>
@@ -233,23 +216,47 @@
 
         <!-- ══════════════════════════════════════════════════════════
          COLONNE DROITE — Panneau détail patient
-         Utilise v-show au lieu de v-if = le DOM reste monté
-         = pas de re-render coûteux à chaque ouverture
          ══════════════════════════════════════════════════════════ -->
         <Transition name="slide">
             <div
-                v-if="selected"
+                v-if="selected || panelLoading"
                 class="flex-1 bg-white rounded-xl border border-slate-200 overflow-y-auto"
             >
+                <!-- Skeleton pendant l'ouverture d'un patient -->
+                <div v-if="panelLoading" class="p-5 space-y-4 animate-pulse">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full shrink-0"></div>
+                        <div class="space-y-2 flex-1">
+                            <div class="w-40 h-4 bg-slate-100 rounded"></div>
+                            <div class="w-24 h-3 bg-slate-100 rounded"></div>
+                        </div>
+                    </div>
+                    <div class="h-px bg-slate-100"></div>
+                    <div class="space-y-2">
+                        <div class="w-32 h-3 bg-slate-100 rounded"></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="h-8 bg-slate-100 rounded"></div>
+                            <div class="h-8 bg-slate-100 rounded"></div>
+                            <div class="h-8 bg-slate-100 rounded"></div>
+                            <div class="h-8 bg-slate-100 rounded"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="w-32 h-3 bg-slate-100 rounded"></div>
+                        <div class="h-16 bg-slate-100 rounded"></div>
+                    </div>
+                </div>
+
                 <PatientPanel
+                    v-else-if="selected"
                     :data="selected"
+                    :upload-document="uploadDocument"
+                    :delete-document="deleteDocument"
+                    :add-alert="addAlert"
+                    :delete-alert="deleteAlert"
                     @close="closePanel"
                     @edit="openForm(selected.patient)"
                     @archive="handleArchive"
-                    @alert-added="addAlert"
-                    @alert-deleted="deleteAlert"
-                    @document-uploaded="uploadDocument"
-                    @document-deleted="deleteDocument"
                 />
             </div>
         </Transition>
@@ -284,6 +291,7 @@ const {
     patients,
     selected,
     loading,
+    panelLoading,
     error,
     meta,
     filters,
@@ -293,29 +301,33 @@ const {
     createPatient,
     updatePatient,
     archivePatient,
+    restorePatient,
     addAlert,
     deleteAlert,
     uploadDocument,
     deleteDocument,
-    restorePatient,
 } = usePatients();
 
-const showForm = ref(false);
+const showForm      = ref(false);
 const editingPatient = ref(null);
 
 onMounted(() => fetchPatients());
 
 function openForm(patient) {
     editingPatient.value = patient;
-    showForm.value = true;
+    showForm.value       = true;
 }
 
 async function handleSaved(data, isEdit) {
-    showForm.value = false;
-    if (isEdit) {
-        await updatePatient(data.id, data);
-    } else {
-        await createPatient(data);
+    try {
+        if (isEdit) {
+            await updatePatient(data.id, data);
+        } else {
+            await createPatient(data);
+        }
+        showForm.value = false;
+    } catch (e) {
+        error.value = e.message;
     }
 }
 
