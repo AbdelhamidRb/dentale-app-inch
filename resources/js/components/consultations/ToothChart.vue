@@ -106,7 +106,7 @@
         <!-- Popup (mode view) -->
         <Transition name="popup">
             <div
-                v-if="popup.visible && mode === 'view'"
+                v-if="showPopup && popup.visible && mode === 'view'"
                 class="absolute z-50 bg-white rounded-xl shadow-xl border border-slate-200 w-64 p-4"
                 :style="{ top: popup.y + 'px', left: popup.x + 'px' }"
                 @click.stop
@@ -189,7 +189,7 @@
         </Transition>
 
         <!-- Légende -->
-        <div class="flex flex-wrap gap-3 mt-3 px-1">
+        <div v-if="!hideLegend" class="flex flex-wrap gap-3 mt-3 px-1">
             <template v-if="mode === 'view'">
                 <div class="flex items-center gap-1.5">
                     <div
@@ -245,6 +245,9 @@ const props = defineProps({
     },
     selectedTeeth: { type: Array, default: () => [] },
     actsByTooth: { type: Object, default: () => ({}) },
+    showPopup:   { type: Boolean, default: true },
+    activeTooth: { type: Number,  default: null },
+    hideLegend:  { type: Boolean, default: false },
 });
 const emit = defineEmits(["tooth-clicked", "update:selectedTeeth"]);
 
@@ -262,7 +265,7 @@ function handleClick(id) {
         const idx = list.indexOf(id);
         idx === -1 ? list.push(id) : list.splice(idx, 1);
         emit("update:selectedTeeth", list);
-    } else {
+    } else if (props.showPopup) {
         if (popup.value.visible && popup.value.toothId === id) {
             closePopup();
             return;
@@ -306,15 +309,19 @@ function toothFill(id) {
     if (props.mode === "select")
         return props.selectedTeeth.includes(id) ? "#d1fae5" : "#f8f6f0";
     const n = toothActsCount(id);
+    if (props.activeTooth === id)
+        return n === 0 ? "#ede9fe" : n === 1 ? "#c7d2fe" : "#fde8d0";
     return n === 0 ? "#f8f6f0" : n === 1 ? "#dbeafe" : "#fed7aa";
 }
 function toothStroke(id) {
+    if (props.activeTooth === id) return "#7c3aed";
     if (props.mode === "select")
         return props.selectedTeeth.includes(id) ? "#10b981" : "#94a3b8";
     const n = toothActsCount(id);
     return n === 0 ? "#cbd5e1" : n === 1 ? "#3b82f6" : "#f97316";
 }
 function toothStrokeWidth(id) {
+    if (props.activeTooth === id) return 12;
     if (props.mode === "select" && props.selectedTeeth.includes(id)) return 8;
     if (props.mode === "view" && toothActsCount(id) > 0) return 7;
     return 4;
@@ -323,12 +330,14 @@ function toothClass(id) {
     return "cursor-pointer transition-all duration-150 hover:brightness-95";
 }
 function detailStroke(id) {
+    if (props.activeTooth === id) return "#7c3aed";
     if (props.mode === "select" && props.selectedTeeth.includes(id))
         return "#059669";
     if (props.mode === "view" && toothActsCount(id) > 0) return "#2563eb";
     return "#94a3b8";
 }
 function labelColor(id) {
+    if (props.activeTooth === id) return "#6d28d9";
     if (props.mode === "select" && props.selectedTeeth.includes(id))
         return "#059669";
     if (props.mode === "view" && toothActsCount(id) > 0) return "#1d4ed8";

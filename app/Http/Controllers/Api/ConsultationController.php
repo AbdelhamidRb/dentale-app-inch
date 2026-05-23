@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Appointment;
 use App\Models\Consultation;
 use App\Models\ConsultationAct;
 use App\Models\CatalogAct;
@@ -100,6 +101,10 @@ class ConsultationController extends Controller
 
         // ─── Recalcule le total ───────────────────────────────────
         $consultation->recalculateTotal();
+
+        // ─── Cas 1 : passe le RDV lié à TERMINE ──────────────────
+        $this->markAppointmentTermine($request->appointment_id);
+
         $consultation->load([
             'patient:id,first_name,last_name,phone',
             'dentist:id,name',
@@ -188,10 +193,10 @@ class ConsultationController extends Controller
     public function addSession(Request $request, Consultation $consultation)
     {
         $request->validate([
-            'date' => 'required|date',
+            'date'           => 'required|date',
+            'appointment_id' => 'nullable|exists:appointments,id',
         ]);
 
-        // Sécurité : on ne peut ajouter une séance qu'à une consultation EN_COURS
         if ($consultation->status !== 'EN_COURS') {
             return response()->json([
                 'message' => 'Seules les consultations EN_COURS peuvent recevoir une nouvelle séance.',
@@ -199,6 +204,9 @@ class ConsultationController extends Controller
         }
 
         $consultation->addSessionDate($request->date);
+
+        // ─── Cas 3 : passe le RDV source à TERMINE ───────────────
+        $this->markAppointmentTermine($request->appointment_id);
 
         return response()->json([
             'message'       => 'Séance ajoutée.',
@@ -214,10 +222,8 @@ class ConsultationController extends Controller
     {
         $consultation->update(['status' => 'TERMINE']);
 
-        // ─── Auto-clôture du RDV lié ──────────────────────────────
-        if ($consultation->appointment_id) {
-            $consultation->appointment()->update(['status' => 'TERMINE']);
-        }
+        // ─── Cas 2 : passe le RDV lié à TERMINE ──────────────────
+        $this->markAppointmentTermine($consultation->appointment_id);
 
         $consultation->load([
             'patient:id,first_name,last_name,phone',
@@ -241,6 +247,19 @@ class ConsultationController extends Controller
         $consultation->delete();
 
         return response()->json(['message' => 'Consultation supprimée.']);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // HELPER — Passe un RDV à TERMINE seulement si ce n'est pas déjà
+    // TERMINE ou NO_SHOW (préserve l'état NO_SHOW)
+    // ═══════════════════════════════════════════════════════════════
+    private function markAppointmentTermine(?int $appointmentId): void
+    {
+        if (!$appointmentId) return;
+
+        Appointment::where('id', $appointmentId)
+            ->whereNotIn('status', ['TERMINE', 'NO_SHOW'])
+            ->update(['status' => 'TERMINE']);
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -400,7 +400,7 @@
         :appointment-id="appointment?.id"
         :catalog-acts="catalogActs"
         :patients="appointment?.patient ? [appointment.patient] : []"
-        @saved="emit('consultation-created', $event)"
+        @saved="onConsultationCreated"
     />
 </template>
 
@@ -549,7 +549,7 @@ async function continueConsultation(consultation) {
                     "Content-Type": "application/json",
                     Accept: "application/json",
                 },
-                body: JSON.stringify({ date: today }),
+                body: JSON.stringify({ date: today, appointment_id: props.appointment.id }),
             },
         );
         const data = await res.json();
@@ -561,6 +561,7 @@ async function continueConsultation(consultation) {
 
         showConsultOptions.value = false;
         emit("consultation-created", consultation);
+        emit("status-changed", props.appointment.id, "TERMINE");
 
         // ── Redirige vers la fiche consultation ──────────────────
         router.push({
@@ -572,6 +573,11 @@ async function continueConsultation(consultation) {
     } finally {
         continuationLoading.value = false;
     }
+}
+
+function onConsultationCreated(event) {
+    emit("consultation-created", event);
+    emit("status-changed", props.appointment.id, "TERMINE");
 }
 
 // isDentist manquant — à ajouter ici

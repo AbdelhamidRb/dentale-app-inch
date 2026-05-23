@@ -79,8 +79,41 @@
             </div>
         </div>
 
+        <!-- ── Onglets ───────────────────────────────────────────────── -->
+        <div class="flex border-b border-slate-100 shrink-0">
+            <button
+                @click="activeTab = 'fiche'"
+                :class="['flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
+                         activeTab === 'fiche'
+                           ? 'text-blue-600 border-b-2 border-blue-500 -mb-px'
+                           : 'text-slate-400 hover:text-slate-600']"
+            >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Fiche patient
+            </button>
+            <button
+                @click="activeTab = 'schema'"
+                :class="['flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
+                         activeTab === 'schema'
+                           ? 'text-blue-600 border-b-2 border-blue-500 -mb-px'
+                           : 'text-slate-400 hover:text-slate-600']"
+            >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                </svg>
+                Schéma dentaire
+            </button>
+        </div>
+
         <!-- ── Contenu scrollable ─────────────────────────────────────── -->
-        <div class="flex-1 overflow-y-auto p-5 space-y-5">
+        <div v-if="activeTab === 'schema'" class="flex-1 overflow-y-auto">
+            <ToothChart :patient-id="patient.id" />
+        </div>
+        <div v-else class="flex-1 overflow-y-auto p-5 space-y-5">
             <!-- ── Section : Alertes critiques (en haut si présentes) ─── -->
             <div
                 v-if="hasCriticalAlerts"
@@ -452,6 +485,7 @@
                 </div>
             </div>
         </div>
+        <!-- fin onglet fiche -->
 
         <!-- ── Aperçu image fullscreen ─────────────────────────────── -->
         <!-- Teleport → sort du DOM du composant → z-index illimité -->
@@ -480,6 +514,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import ToothChart from './ToothChart.vue';
 
 const router = useRouter()
 
@@ -517,6 +552,10 @@ const emit = defineEmits([
     "document-uploaded",
     "document-deleted",
 ]);
+
+// ─── Onglet actif ─────────────────────────────────────────────────
+const activeTab = ref('fiche');
+watch(() => props.data?.patient?.id, () => { activeTab.value = 'fiche'; });
 
 const patient = computed(() => props.data.patient);
 

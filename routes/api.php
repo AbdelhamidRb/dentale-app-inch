@@ -41,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/patients/{patient}/documents',              [PatientController::class, 'uploadDocument']);
         Route::delete('/patients/{patient}/documents/{document}', [PatientController::class, 'destroyDocument']);
 
+        // Odontogramme
+        Route::get('/patients/{patient}/teeth', [PatientController::class, 'teeth']);
+
         // Liste des actes pour la modal
         Route::get('/catalog-acts', [AppointmentController::class, 'catalogActs']);
 

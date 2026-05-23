@@ -8,42 +8,76 @@ use App\Models\Patient;
 use App\Models\Consultation;
 use App\Models\ConsultationAct;
 use App\Models\PaymentTransaction;
-use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $today      = now()->toDateString();
-        $weekStart  = now()->startOfWeek()->toDateString();
-        $monthStart = now()->startOfMonth()->toDateString();
+        $now        = Carbon::now();
+        $today      = $now->toDateString();
+        $weekStart  = $now->copy()->startOfWeek()->toDateString();
+        $monthStart = $now->copy()->startOfMonth()->toDateString();
+        $prevStart  = $now->copy()->subMonth()->startOfMonth()->toDateString();
+        $prevEnd    = $now->copy()->subMonth()->endOfMonth()->toDateString();
 
-        // ── Aujourd'hui ───────────────────────────────────────────
-        $todayAppts = Appointment::where('scheduled_date', $today)->get();
+        // ── RDV aujourd'hui ───────────────────────────────────────
+        $todayAppts = Appointment::with('patient:id,first_name,last_name')
+            ->where('scheduled_date', $today)
+            ->orderBy('start_time')
+            ->get();
 
-        $apptPatientIds    = $todayAppts->pluck('patient_id');
-        $consultPatientIds = Consultation::whereDate('created_at', $today)->pluck('patient_id');
-        $todayPatients     = $apptPatientIds->merge($consultPatientIds)->unique()->count();
-        $newPatients       = Patient::whereDate('created_at', $today)->count();
+        $rdvStats = [
+            'total'    => $todayAppts->count(),
+            'termine'  => $todayAppts->where('status', 'TERMINE')->count(),
+            'planifie' => $todayAppts->whereIn('status', ['PLANIFIE', 'CONFIRME'])->count(),
+            'absent'   => $todayAppts->whereIn('status', ['NO_SHOW', 'ANNULE'])->count(),
+        ];
 
-        // ── CA consultations du jour (total_price des consultations terminées aujourd'hui) ─
-        $caConsultToday = (float) Consultation::whereDate('created_at', $today)
+        // ── Prochain RDV (le prochain non-terminé après maintenant) ──
+        $nextAppt = $todayAppts
+            ->whereIn('status', ['PLANIFIE', 'CONFIRME'])
+            ->where('start_time', '>=', $now->format('H:i:s'))
+            ->first();
+
+        $prochainRdv = $nextAppt ? [
+            'start_time'  => substr($nextAppt->start_time, 0, 5),
+            'patient'     => $nextAppt->patient->first_name . ' ' . $nextAppt->patient->last_name,
+        ] : null;
+
+        // ── Consultations EN_COURS ────────────────────────────────
+        $consultEnCours = Consultation::where('status', 'EN_COURS')->count();
+
+        // ── Patients ──────────────────────────────────────────────
+        $newPatientsToday = Patient::whereDate('created_at', $today)->count();
+        $newPatientsMonth = Patient::where('created_at', '>=', $monthStart)->count();
+        $totalPatients    = Patient::active()->count();
+
+        // ── Revenus encaissés ─────────────────────────────────────
+        $revenueDay       = (float) PaymentTransaction::whereDate('date', $today)->sum('amount');
+        $revenueWeek      = (float) PaymentTransaction::whereBetween('date', [$weekStart, $today])->sum('amount');
+        $revenueMonth     = (float) PaymentTransaction::whereBetween('date', [$monthStart, $today])->sum('amount');
+        $revenuePrevMonth = (float) PaymentTransaction::whereBetween('date', [$prevStart, $prevEnd])->sum('amount');
+
+        $revenueVariation = $revenuePrevMonth > 0
+            ? round(($revenueMonth - $revenuePrevMonth) / $revenuePrevMonth * 100, 1)
+            : null;
+
+        // ── CA consultations terminées ce mois ────────────────────
+        $caConsultMonth = (float) Consultation::where('status', 'TERMINE')
+            ->where('created_at', '>=', $monthStart)
             ->sum('total_price');
 
-        // ── Revenus ───────────────────────────────────────────────
-        $revenueDay   = (float) PaymentTransaction::whereDate('date', $today)->sum('amount');
-        $revenueWeek  = (float) PaymentTransaction::whereBetween('date', [$weekStart, $today])->sum('amount');
-        $revenueMonth = (float) PaymentTransaction::whereBetween('date', [$monthStart, $today])->sum('amount');
+        // ── Impayés ───────────────────────────────────────────────
+        $totalDette = (float) Consultation::where('status', 'TERMINE')->sum('total_price');
+        $totalPaye  = (float) PaymentTransaction::sum('amount');
+        $unpaid     = max(0, $totalDette - $totalPaye);
 
-        // ── Impayés : calcul par patient (évite l'erreur des avances) ─
-        $unpaid = Patient::with([
-            'paymentTransactions',
-        ])->get()->sum(function ($patient) {
-            $dette = $patient->consultations->sum('total_price');
-            $paye  = $patient->paymentTransactions->sum('amount');
-            return max(0, $dette - $paye); // ne compte pas les avances
-        });
-        $unpaid = (float) $unpaid;
+        // ── Taux absentéisme ce mois ──────────────────────────────
+        $totalMonth  = Appointment::where('scheduled_date', '>=', $monthStart)->count();
+        $absences    = Appointment::where('scheduled_date', '>=', $monthStart)
+            ->whereIn('status', ['NO_SHOW', 'ANNULE'])->count();
+        $absenceRate = $totalMonth > 0 ? round($absences / $totalMonth * 100, 1) : 0;
 
         // ── Top 5 actes ───────────────────────────────────────────
         $topActs = ConsultationAct::with('catalogAct:id,name,code')
@@ -59,30 +93,25 @@ class DashboardController extends Controller
                 'revenue' => (float) $a->revenue,
             ]);
 
-        // ── Taux d'absentéisme (mois en cours) ───────────────────
-        $totalMonth  = Appointment::where('scheduled_date', '>=', $monthStart)->count();
-        $absences    = Appointment::where('scheduled_date', '>=', $monthStart)
-            ->whereIn('status', ['NO_SHOW', 'ANNULE'])->count();
-        $absenceRate = $totalMonth > 0 ? round($absences / $totalMonth * 100, 1) : 0;
-
-        // ── Stats RDV aujourd'hui ─────────────────────────────────
-        $rdvStats = [
-            'total'    => $todayAppts->count(),
-            'termine'  => $todayAppts->where('status', 'TERMINE')->count(),
-            'en_cours' => $todayAppts->where('status', 'EN_COURS')->count(),
-            'planifie' => $todayAppts->whereIn('status', ['PLANIFIE', 'CONFIRME'])->count(),
-            'absent'   => $todayAppts->whereIn('status', ['NO_SHOW', 'ANNULE'])->count(),
-        ];
+        // ── CA des 6 derniers mois ────────────────────────────────
+        $monthlyChart = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $d     = $now->copy()->subMonths($i);
+            $start = $d->copy()->startOfMonth()->toDateString();
+            $end   = $d->copy()->endOfMonth()->toDateString();
+            $monthlyChart[] = [
+                'month'   => $d->locale('fr')->isoFormat('MMM YY'),
+                'revenue' => (float) PaymentTransaction::whereBetween('date', [$start, $end])->sum('amount'),
+                'ca'      => (float) Consultation::where('status', 'TERMINE')
+                                ->whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
+                                ->sum('total_price'),
+            ];
+        }
 
         // ── Démographie ───────────────────────────────────────────
-        $patients = Patient::active()->get();
-        $total    = $patients->count();
-
-        $gender = [
-            'M' => $patients->where('gender', 'M')->count(),
-            'F' => $patients->where('gender', 'F')->count(),
-        ];
-
+        $patients  = Patient::active()->get(['id', 'gender', 'birth_date']);
+        $total     = $patients->count();
+        $gender    = ['M' => $patients->where('gender', 'M')->count(), 'F' => $patients->where('gender', 'F')->count()];
         $ageGroups = [
             '0-18'  => $patients->filter(fn($p) => $p->age !== null && $p->age <= 18)->count(),
             '18-30' => $patients->filter(fn($p) => $p->age !== null && $p->age > 18 && $p->age <= 30)->count(),
@@ -90,43 +119,34 @@ class DashboardController extends Controller
             '50+'   => $patients->filter(fn($p) => $p->age !== null && $p->age > 50)->count(),
         ];
 
-        // ── CA des 6 derniers mois (graphique) ────────────────────
-        $monthlyChart = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date  = now()->subMonths($i);
-            $start = $date->copy()->startOfMonth()->toDateString();
-            $end   = $date->copy()->endOfMonth()->toDateString();
-            $monthlyChart[] = [
-                'month'   => $date->locale('fr')->isoFormat('MMM'),
-                'revenue' => (float) PaymentTransaction::whereBetween('date', [$start, $end])->sum('amount'),
-            ];
-        }
-
         return response()->json([
             'today' => [
-                'patients'          => $todayPatients,
-                'new_patients'      => $newPatients,
                 'rdv'               => $rdvStats,
-                'ca_consult_today'  => $caConsultToday,
+                'prochain_rdv'      => $prochainRdv,
+                'new_patients'      => $newPatientsToday,
+                'consult_en_cours'  => $consultEnCours,
+            ],
+            'patients' => [
+                'total'             => $totalPatients,
+                'new_this_month'    => $newPatientsMonth,
             ],
             'revenue' => [
-                'day'    => $revenueDay,
-                'week'   => $revenueWeek,
-                'month'  => $revenueMonth,
-                'unpaid' => $unpaid,
+                'day'              => $revenueDay,
+                'week'             => $revenueWeek,
+                'month'            => $revenueMonth,
+                'prev_month'       => $revenuePrevMonth,
+                'variation_pct'    => $revenueVariation,
+                'ca_consult_month' => $caConsultMonth,
+                'unpaid'           => $unpaid,
             ],
-            'top_acts'     => $topActs,
             'absence_rate' => [
                 'rate'     => $absenceRate,
                 'absences' => $absences,
                 'total'    => $totalMonth,
             ],
-            'demographics' => [
-                'total'      => $total,
-                'gender'     => $gender,
-                'age_groups' => $ageGroups,
-            ],
+            'top_acts'      => $topActs,
             'monthly_chart' => $monthlyChart,
+            'demographics'  => ['total' => $total, 'gender' => $gender, 'age_groups' => $ageGroups],
         ]);
     }
 }

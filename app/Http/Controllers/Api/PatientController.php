@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\MedicalAlert;
 use App\Models\PatientDocument;
+use App\Models\ConsultationAct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -302,6 +303,46 @@ class PatientController extends Controller
             'severity'    => $a->severity,
             'created_at'  => $a->created_at->format('d/m/Y'),
         ];
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GET /api/patients/{patient}/teeth
+    // Historique des actes par dent (numérotation FDI)
+    // ═══════════════════════════════════════════════════════════════
+    public function teeth(Patient $patient)
+    {
+        $acts = ConsultationAct::with([
+            'catalogAct:id,code,name',
+            'consultation:id,created_at,status',
+        ])
+        ->whereHas('consultation', fn($q) => $q->where('patient_id', $patient->id))
+        ->get();
+
+        $byTooth = [];
+
+        foreach ($acts as $act) {
+            foreach (($act->teeth ?? []) as $tooth) {
+                $byTooth[$tooth][] = [
+                    'act_code'        => $act->catalogAct->code,
+                    'act_name'        => $act->catalogAct->name,
+                    'price'           => (float) $act->price,
+                    'notes'           => $act->notes,
+                    'date'            => $act->consultation->created_at->format('d/m/Y'),
+                    'consultation_id' => $act->consultation_id,
+                    'status'          => $act->consultation->status,
+                ];
+            }
+        }
+
+        // Tri : plus récent en premier pour chaque dent
+        foreach ($byTooth as &$toothActs) {
+            usort($toothActs, fn($a, $b) =>
+                strtotime(str_replace('/', '-', $b['date'])) -
+                strtotime(str_replace('/', '-', $a['date']))
+            );
+        }
+
+        return response()->json(['teeth' => $byTooth]);
     }
 
     private function formatDocument(PatientDocument $d): array
