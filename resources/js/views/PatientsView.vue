@@ -1,11 +1,13 @@
 <template>
-    <div class="flex h-full gap-5">
+    <div class="flex h-full">
         <!-- ══════════════════════════════════════════════════════════
          COLONNE GAUCHE — Liste des patients
          ══════════════════════════════════════════════════════════ -->
         <div
-            class="flex flex-col min-w-0 transition-all duration-300"
-            :class="selected || panelLoading ? 'w-[420px] shrink-0' : 'flex-1'"
+            class="min-w-0 transition-all duration-300"
+            :class="selected || panelLoading
+                ? 'hidden lg:flex lg:flex-col lg:w-[420px] lg:shrink-0 lg:mr-5'
+                : 'flex flex-col flex-1'"
         >
             <!-- ── En-tête : titre + bouton nouveau ─────────────────── -->
             <div class="flex items-center justify-between mb-4">

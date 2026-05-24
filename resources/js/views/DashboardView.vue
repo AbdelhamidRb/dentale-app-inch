@@ -1,5 +1,5 @@
 <template>
-    <div class="h-full overflow-y-auto bg-slate-50 px-6 py-6">
+    <div class="h-full overflow-y-auto bg-slate-50 px-3 sm:px-6 py-4 sm:py-6">
 
         <!-- ── En-tête ────────────────────────────────────────────── -->
         <div class="flex items-center justify-between mb-6">

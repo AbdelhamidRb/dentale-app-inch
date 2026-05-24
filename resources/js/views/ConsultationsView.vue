@@ -7,7 +7,7 @@
             :class="[
                 'flex flex-col bg-white overflow-hidden transition-all duration-300',
                 selectedConsultation
-                    ? 'w-full max-w-xl border-r border-slate-200'
+                    ? 'hidden lg:flex lg:w-full lg:max-w-xl border-r border-slate-200'
                     : 'w-full border-r-0',
             ]"
         >

@@ -166,7 +166,7 @@
             </div>
 
             <!-- ── Actions ────────────────────────────────────────────── -->
-            <div class="border-t border-slate-100 px-4 py-3 shrink-0 space-y-2">
+            <div class="border-t border-slate-100 px-4 pt-3 pb-20 lg:pb-3 shrink-0 space-y-2">
                 <button v-if="consultation.status !== 'TERMINE' && isDentist"
                         @click="handleClose"
                         :disabled="actionLoading"

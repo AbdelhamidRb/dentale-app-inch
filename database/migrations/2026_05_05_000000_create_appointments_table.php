@@ -42,6 +42,9 @@ return new class extends Migration
             // ─── Notes optionnelles ───────────────────────────────
             $table->text('notes')->nullable();
 
+            // ─── Rappel WhatsApp ──────────────────────────────────
+            $table->timestamp('whatsapp_notified_at')->nullable();
+
             $table->timestamps();
         });
     }

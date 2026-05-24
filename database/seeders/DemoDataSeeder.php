@@ -48,6 +48,15 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
+        User::firstOrCreate(
+            ['email' => 'assistant@demo.com'],
+            [
+                'name'     => 'Sara Idrissi',
+                'password' => bcrypt('password'),
+                'role'     => 'ASSISTANT',
+            ]
+        );
+
         // ═══════════════════════════════════════════════════════════════
         // 3. CATALOGUE D'ACTES
         // ═══════════════════════════════════════════════════════════════

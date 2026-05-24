@@ -231,6 +231,18 @@ class AppointmentController extends Controller
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // PATCH /api/appointments/{id}/whatsapp-notified
+    // ═══════════════════════════════════════════════════════════════
+    public function markWhatsappNotified(Appointment $appointment)
+    {
+        $appointment->update(['whatsapp_notified_at' => now()]);
+
+        return response()->json([
+            'whatsapp_notified_at' => $appointment->whatsapp_notified_at->toISOString(),
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // GET /api/catalog-acts
     // Liste des actes pour le select dans la modal de création
     // ═══════════════════════════════════════════════════════════════
@@ -282,7 +294,8 @@ class AppointmentController extends Controller
                 'role' => $a->creator->role,
             ],
 
-            'created_at' => $a->created_at->format('d/m/Y H:i'),
+            'whatsapp_notified_at' => $a->whatsapp_notified_at?->toISOString(),
+            'created_at'           => $a->created_at->format('d/m/Y H:i'),
         ];
     }
 }

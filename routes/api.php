@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\SettingsController;
 
 
 // Routes publiques
@@ -103,6 +104,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
         Route::get('/dashboard', [DashboardController::class, 'index']);
+
+        // ─── Paramètres ────────────────────────────────────────────────
+        Route::get('/settings/{key}', [SettingsController::class, 'show']);
+        Route::put('/settings/{key}', [SettingsController::class, 'update']);
+
+        // ─── Marquer RDV notifié WhatsApp ──────────────────────────────
+        Route::patch('/appointments/{appointment}/whatsapp-notified', [AppointmentController::class, 'markWhatsappNotified']);
     });
 
     // ─── Archivage (Dentiste uniquement) ─────────────────────────────

@@ -8,7 +8,7 @@
             :class="[
                 'flex flex-col bg-white overflow-hidden transition-all duration-300',
                 selectedPatient
-                    ? 'w-full max-w-md border-r border-slate-200'
+                    ? 'hidden lg:flex lg:w-full lg:max-w-md border-r border-slate-200'
                     : 'w-full',
             ]"
         >
