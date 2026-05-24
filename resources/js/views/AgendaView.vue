@@ -136,7 +136,8 @@
            <!-- TIMELINE PRINCIPALE -->
             <div
                 ref="timelineEl"
-                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0 overflow-hidden"
+                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0"
+                :class="viewMode === 'week' ? 'overflow-hidden' : 'overflow-y-auto'"
             >
                 <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
                 <template v-if="loading && viewMode === 'day'">
@@ -234,13 +235,9 @@
                                     width: calc(${(1 / appt.maxCols) * 100}% - 4px);
                                 `"
                             >
-                                <div class="overflow-hidden h-full flex flex-col">
+                                <div class="overflow-hidden h-full flex flex-col justify-center">
                                     <span :class="['text-[11px] font-semibold truncate leading-tight', colorConfig(appt.color).title]">{{ appt.patient.full_name }}</span>
-                                    <span class="text-[10px] text-slate-500 font-mono leading-tight">{{ appt.start_time }}</span>
-                                    <span
-                                        v-if="apptDuration(appt) >= 60"
-                                        :class="['text-[10px] font-medium px-1 rounded-full self-start mt-0.5', colorConfig(appt.color).badge]"
-                                    >{{ statusLabel(appt.status) }}</span>
+                                    <span class="text-[10px] text-slate-400 font-mono leading-tight">{{ appt.start_time }}</span>
                                 </div>
                             </div>
 
@@ -272,15 +269,15 @@
                         </button>
                     </div>
 
-                    <!-- ── Timeline positionnement absolu ─────────────────── -->
-                    <div v-else class="flex flex-1 min-h-0">
+                    <!-- ── Timeline vue jour (scroll, hauteurs fixes) ────── -->
+                    <div v-else class="flex" style="height: 1080px">
                         <!-- Colonne heures -->
                         <div class="w-16 shrink-0 relative">
                             <div
                                 v-for="slot in workHours"
                                 :key="slot"
                                 class="absolute right-0 pr-3 text-right"
-                                :style="{ top: slotPercent(slot) }"
+                                :style="{ top: (timeToMinutes(slot) * 2) + 'px' }"
                             >
                                 <span class="text-xs font-mono leading-none" :class="slot.endsWith(':00') ? 'text-slate-400' : 'text-slate-200'">{{ slot }}</span>
                             </div>
@@ -294,7 +291,7 @@
                                 :key="slot"
                                 class="absolute left-0 right-0 border-t"
                                 :class="slot.endsWith(':00') ? 'border-slate-100' : 'border-slate-50'"
-                                :style="{ top: slotPercent(slot) }"
+                                :style="{ top: (timeToMinutes(slot) * 2) + 'px' }"
                             ></div>
 
                             <!-- Cartes RDV -->
@@ -308,9 +305,8 @@
                                     colorConfig(appt.color).card,
                                 ]"
                                 :style="`
-                                    top: ${apptTopPct(appt)};
-                                    height: ${apptHeightPct(appt)};
-                                    min-height: 44px;
+                                    top: ${timeToMinutes(appt.start_time) * 2}px;
+                                    height: ${Math.max(apptDuration(appt) * 2, 52)}px;
                                     left: calc(${(appt.col / appt.maxCols) * 100}% + 8px);
                                     width: calc(${(1 / appt.maxCols) * 100}% - 16px);
                                 `"
