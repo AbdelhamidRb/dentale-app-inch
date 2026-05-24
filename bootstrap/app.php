@@ -13,8 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'dentist' => \App\Http\Middleware\CheckDentist::class,
+            'dentist'   => \App\Http\Middleware\CheckDentist::class,
             'assistant' => \App\Http\Middleware\CheckAssistant::class,
+            'license'   => \App\Http\Middleware\CheckLicense::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

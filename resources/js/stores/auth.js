@@ -2,8 +2,11 @@ import { reactive } from 'vue'
 import router from '../router/index.js'
 
 export const authStore = reactive({
-  token: localStorage.getItem('token') || null,
-  user:  JSON.parse(localStorage.getItem('user') || 'null'),
+  token:          localStorage.getItem('token') || null,
+  user:           JSON.parse(localStorage.getItem('user') || 'null'),
+  licenseInvalid: false,
+  licenseReason:  null,
+  licenseMac:     null,
 
   async login(email, password) {
     const res = await fetch('/api/login', {
@@ -46,5 +49,12 @@ export const authStore = reactive({
   },
 
   isDentist()   { return this.user?.role === 'DENTIST'    },
-  isAssistant() { return this.user?.role === 'ASSISTANT'  }
+  isAssistant() { return this.user?.role === 'ASSISTANT'  },
+
+  handleLicenseError(data) {
+    this.licenseInvalid = true;
+    this.licenseReason  = data.reason  || null;
+    this.licenseMac     = data.mac     || null;
+    router.push({ name: 'license' });
+  },
 })

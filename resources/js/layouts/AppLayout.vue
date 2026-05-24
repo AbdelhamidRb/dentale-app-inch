@@ -129,7 +129,7 @@ import { RouterLink, RouterView, useRoute } from "vue-router";
 import { authStore } from "../stores/auth";
 import {
     LayoutDashboard, CalendarDays, Users, Stethoscope,
-    CreditCard, Package, LogOut, Activity, UserCircle,
+    CreditCard, LogOut, Activity, UserCircle, Settings,
 } from "lucide-vue-next";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
 
@@ -156,7 +156,7 @@ const navItems = [
     { divider: "Paiements",   roles: ["DENTIST", "ASSISTANT"] },
     { route: "paiements",     label: "Paiements",        icon: markRaw(CreditCard),     roles: ["DENTIST", "ASSISTANT"] },
     { divider: "Cabinet",     roles: ["DENTIST"] },
-    { route: "stock",         label: "Stock",            icon: markRaw(Package),        roles: ["DENTIST"] },
+    { route: "parametres",   label: "Paramètres",       icon: markRaw(Settings),       roles: ["DENTIST"] },
     { divider: "Compte",      roles: ["DENTIST", "ASSISTANT"] },
     { route: "profil",        label: "Mon profil",       icon: markRaw(UserCircle),     roles: ["DENTIST", "ASSISTANT"] },
 ];

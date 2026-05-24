@@ -1,0 +1,3 @@
+@echo off
+echo Installation Dental App en cours...
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0install.ps1"

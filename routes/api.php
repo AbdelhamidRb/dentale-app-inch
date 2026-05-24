@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SettingsController;
 
@@ -15,7 +16,7 @@ use App\Http\Controllers\Api\SettingsController;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Routes authentifiées
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'license'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
@@ -111,6 +112,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // ─── Marquer RDV notifié WhatsApp ──────────────────────────────
         Route::patch('/appointments/{appointment}/whatsapp-notified', [AppointmentController::class, 'markWhatsappNotified']);
+    });
+
+    // ─── Backup / Restauration (Dentiste uniquement) ─────────────────
+    Route::middleware('dentist')->group(function () {
+        Route::get('/backup/list',    [BackupController::class, 'list']);
+        Route::post('/backup/run',    [BackupController::class, 'run']);
+        Route::post('/backup/restore', [BackupController::class, 'restore']);
     });
 
     // ─── Archivage (Dentiste uniquement) ─────────────────────────────

@@ -1,0 +1,235 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<HTA:APPLICATION
+    ApplicationName="Dental App"
+    Border="thin"
+    Caption="yes"
+    MaximizeButton="no"
+    MinimizeButton="yes"
+    ShowInTaskbar="yes"
+    SysMenu="yes"
+    WindowState="normal"
+    ScrollFlat="yes"
+/>
+<title>Dental App</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        color: #1e293b;
+    }
+
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px 48px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.10);
+        width: 360px;
+        text-align: center;
+    }
+
+    .logo {
+        width: 56px;
+        height: 56px;
+        background: #2563eb;
+        border-radius: 16px;
+        margin: 0 auto 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo svg {
+        width: 30px;
+        height: 30px;
+        fill: white;
+    }
+
+    h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+        color: #94a3b8;
+        margin-bottom: 28px;
+    }
+
+    /* Status badge */
+    .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        padding: 10px 16px;
+        margin-bottom: 28px;
+    }
+
+    .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #94a3b8;
+        transition: background 0.3s;
+    }
+    .dot.on  { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+    .dot.off { background: #ef4444; }
+
+    .status-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    /* Buttons */
+    .buttons { display: flex; flex-direction: column; gap: 12px; }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        font-family: 'Segoe UI', sans-serif;
+        cursor: pointer;
+        transition: opacity 0.15s, transform 0.1s;
+        letter-spacing: 0.01em;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+    #btnStart {
+        background: #2563eb;
+        color: white;
+    }
+    #btnStart:hover:not(:disabled) { background: #1d4ed8; }
+
+    #btnStop {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    #btnStop:hover:not(:disabled) { background: #fecaca; }
+
+    .footer {
+        margin-top: 24px;
+        font-size: 11px;
+        color: #cbd5e1;
+    }
+</style>
+
+<script language="VBScript">
+
+Dim shell
+Set shell = CreateObject("WScript.Shell")
+
+' ─── Vérifier si les services tournent ───────────────────────────
+Function IsRunning(processName)
+    Dim wmi, list
+    Set wmi  = GetObject("winmgmts:\\.\root\cimv2")
+    Set list = wmi.ExecQuery("SELECT * FROM Win32_Process WHERE Name = '" & processName & "'")
+    IsRunning = (list.Count > 0)
+End Function
+
+' ─── Mettre à jour le statut affiché ─────────────────────────────
+Sub UpdateStatus()
+    Dim apacheOn, mysqlOn, allOn
+    apacheOn = IsRunning("httpd.exe")
+    mysqlOn  = IsRunning("mysqld.exe")
+    allOn    = apacheOn And mysqlOn
+
+    If allOn Then
+        dot.className        = "dot on"
+        statusText.innerText = "Application en marche"
+        btnStart.disabled    = True
+        btnStop.disabled     = False
+    ElseIf apacheOn Or mysqlOn Then
+        dot.className        = "dot"
+        statusText.innerText = "Démarrage en cours..."
+        btnStart.disabled    = True
+        btnStop.disabled     = True
+    Else
+        dot.className        = "dot off"
+        statusText.innerText = "Application arrêtée"
+        btnStart.disabled    = False
+        btnStop.disabled     = True
+    End If
+End Sub
+
+' ─── Démarrer ─────────────────────────────────────────────────────
+Sub DemarrerApp()
+    btnStart.disabled = True
+    dot.className     = "dot"
+    statusText.innerText = "Démarrage en cours..."
+    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File ""C:\laragon\www\dental-app-inch\scripts\start-app.ps1""", 0, False
+    window.setTimeout "UpdateStatus()", 8000
+End Sub
+
+' ─── Fermer ───────────────────────────────────────────────────────
+Sub FermerApp()
+    btnStop.disabled  = True
+    dot.className     = "dot"
+    statusText.innerText = "Fermeture en cours..."
+    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File ""C:\laragon\www\dental-app-inch\scripts\stop-app.ps1""", 0, False
+    window.setTimeout "UpdateStatus()", 3000
+End Sub
+
+' ─── Rafraîchissement automatique toutes les 5s ───────────────────
+Sub AutoRefresh()
+    UpdateStatus()
+    window.setTimeout "AutoRefresh()", 2000
+End Sub
+
+' ─── Lancement ────────────────────────────────────────────────────
+Sub Window_OnLoad()
+    window.resizeTo 400, 380
+    window.moveTo (screen.width - 400) / 2, (screen.height - 380) / 2
+    AutoRefresh()
+End Sub
+
+</script>
+</head>
+
+<body>
+<div class="card">
+
+    <!-- Logo -->
+    <div class="logo">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8 2 4.5 5 4.5 9c0 2 .8 3.8 2 5l1 6.5c.2 1 1 1.5 1.8 1.5h5.4c.8 0 1.6-.5 1.8-1.5L17.5 14c1.2-1.2 2-3 2-5 0-4-3.5-7-7.5-7z"/>
+        </svg>
+    </div>
+
+    <h1>Dental App</h1>
+    <p class="subtitle">Cabinet dentaire</p>
+
+    <!-- Status -->
+    <div class="status-row">
+        <div class="dot off" id="dot"></div>
+        <span class="status-text" id="statusText">Vérification...</span>
+    </div>
+
+    <!-- Boutons -->
+    <div class="buttons">
+        <button id="btnStart" onclick="DemarrerApp()">▶ &nbsp; Démarrer l'application</button>
+        <button id="btnStop"  onclick="FermerApp()">■ &nbsp; Fermer l'application</button>
+    </div>
+
+    <p class="footer">Dental App © 2026</p>
+</div>
+</body>
+</html>

@@ -9,8 +9,9 @@ const PatientsView = () => import("../views/PatientsView.vue");
 const ConsultView = () => import("../views/ConsultationsView.vue");
 const AgendaView = () => import("../views/AgendaView.vue");
 const PaiementsView = () => import("../views/PaiementsView.vue");
-const StockView = () => import("../views/StockView.vue");
 const ProfileView = () => import("../views/ProfileView.vue");
+const SettingsView = () => import("../views/SettingsView.vue");
+const LicenseView  = () => import("../views/LicenseView.vue");
 
 const routes = [
     // ─── Page publique ───────────────────────────────────────────────
@@ -40,10 +41,13 @@ const routes = [
                 component: ConsultView,
             },
             { path: "paiements", name: "paiements", component: PaiementsView },
-            { path: "stock", name: "stock", component: StockView },
             { path: "profil", name: "profil", component: ProfileView },
+            { path: "parametres", name: "parametres", component: SettingsView, meta: { dentistOnly: true } },
         ],
     },
+
+    // ─── Licence invalide ────────────────────────────────────────────
+    { path: "/license", name: "license", component: LicenseView },
 
     // ─── Route 404 : toute URL inconnue → login ──────────────────────
     { path: "/:pathMatch(.*)*", redirect: "/login" },
@@ -65,7 +69,7 @@ router.beforeEach((to) => {
         try {
             const user = JSON.parse(localStorage.getItem("user") || "{}");
             if (user.role === "ASSISTANT") {
-                const forbidden = ["dashboard", "consultations", "stock"];
+                const forbidden = ["dashboard", "consultations", "stock", "parametres"];
                 if (forbidden.includes(to.name)) return { name: "agenda" };
             }
         } catch {}
