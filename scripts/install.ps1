@@ -38,6 +38,7 @@ Write-Host "=================================================="
 Write-Host "   Installation Dental App"
 Write-Host "=================================================="
 Write-Host ""
+$needRestart = $false
 
 # ─── Vérification Laragon Full ─────────────────────────────────
 Step 1 10 "Vérification de Laragon..."
@@ -177,20 +178,53 @@ $vhostContent = @"
         Require all granted
     </Directory>
 </VirtualHost>
+"@
+Set-Content -Path $VHOST_FILE -Value $vhostContent -Encoding utf8
 
-# Accès réseau local (assistante, téléphones)
-<VirtualHost ${localIP}:80>
+# VirtualHost dental.local (mDNS — accès par nom depuis tous les appareils)
+$localConfFile = "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf"
+$localConf = @"
+<VirtualHost *:80>
+    ServerName dental.local
+    ServerAlias dental
     DocumentRoot "C:/laragon/www/dental-app-inch/public"
-    ServerName $localIP
     <Directory "C:/laragon/www/dental-app-inch/public">
         AllowOverride All
         Require all granted
     </Directory>
 </VirtualHost>
 "@
+Set-Content -Path $localConfFile -Value $localConf -Encoding utf8
 
-Set-Content -Path $VHOST_FILE -Value $vhostContent -Encoding utf8
-OK "VirtualHost Apache configuré (hostname + IP réseau : $localIP)"
+# VirtualHost IP (fallback si dental.local ne marche pas encore)
+$ipConfFile = "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf"
+$ipConf = @"
+<VirtualHost ${localIP}:80>
+    ServerName $localIP
+    DocumentRoot "C:/laragon/www/dental-app-inch/public"
+    <Directory "C:/laragon/www/dental-app-inch/public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+"@
+Set-Content -Path $ipConfFile -Value $ipConf -Encoding utf8
+
+OK "VirtualHost Apache configuré (dental.local + IP $localIP)"
+
+# ─── Renommer le PC en 'dental' (pour que dental.local fonctionne) ──
+$currentName = $env:COMPUTERNAME
+if ($currentName -ne "dental") {
+    if ($isAdmin) {
+        Rename-Computer -NewName "dental" -Force -ErrorAction SilentlyContinue
+        OK "PC renommé en 'dental' → dental.local disponible après redémarrage"
+        $needRestart = $true
+    } else {
+        WARN "PC non renommé (nécessite admin) — relancez en administrateur"
+    }
+} else {
+    OK "PC déjà nommé 'dental' → dental.local actif"
+}
 
 # ─── Règle Firewall port 80 ────────────────────────────────────
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
@@ -267,7 +301,8 @@ Write-Host "=================================================="
 Write-Host ""
 Write-Host "  1. Lancez DentalApp.exe sur le Bureau"
 Write-Host "  2. PC dentiste        : $APP_URL"
-Write-Host "  3. Autres appareils   : http://$localIP  (reseau WiFi)"
+Write-Host "  3. Autres appareils   : http://dental.local  (apres redemarrage)"
+Write-Host "     (fallback IP)      : http://$localIP"
 Write-Host ""
 Write-Host "  Comptes par defaut :"
 Write-Host "    Dentiste  : dentiste@demo.com  /  password"
@@ -275,4 +310,17 @@ Write-Host "    Assistant : assistant@demo.com /  password"
 Write-Host ""
 Write-Host "  PENSEZ A CHANGER LES MOTS DE PASSE !" -ForegroundColor Yellow
 Write-Host ""
-Read-Host "Appuyez sur Entree pour terminer"
+
+if ($needRestart) {
+    Write-Host "=================================================="
+    Write-Host "  REDEMARRAGE REQUIS" -ForegroundColor Yellow
+    Write-Host "  Le PC a ete renomme 'dental'."
+    Write-Host "  Apres le redemarrage : http://dental.local"
+    Write-Host "  fonctionnera sur tous les appareils du cabinet."
+    Write-Host "=================================================="
+    Write-Host ""
+    $r = Read-Host "Redemarrer maintenant ? (oui/non)"
+    if ($r -eq "oui") { Restart-Computer -Force }
+} else {
+    Read-Host "Appuyez sur Entree pour terminer"
+}

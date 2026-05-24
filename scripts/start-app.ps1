@@ -5,8 +5,9 @@
 $HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
 $MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
 $MYSQL_DATA = "C:\laragon\data\mysql"
-$CONF_DIR   = "C:\laragon\etc\apache2\sites-enabled"
-$IP_CONF    = "$CONF_DIR\dental-app-ip.conf"
+$CONF_DIR      = "C:\laragon\etc\apache2\sites-enabled"
+$IP_CONF       = "$CONF_DIR\dental-app-ip.conf"
+$LOCAL_CONF    = "$CONF_DIR\dental-app-local.conf"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
@@ -36,6 +37,20 @@ $ipConf = @"
 </VirtualHost>
 "@
 Set-Content $IP_CONF $ipConf -Encoding UTF8
+
+# ─── Écrire le VirtualHost dental.local ───────────────────────
+$localConf = @"
+<VirtualHost *:80>
+    DocumentRoot "C:/laragon/www/dental-app-inch/public"
+    ServerName dental.local
+    ServerAlias dental
+    <Directory "C:/laragon/www/dental-app-inch/public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+"@
+Set-Content $LOCAL_CONF $localConf -Encoding UTF8
 
 # ─── Ouvrir le port 80 dans le Firewall Windows ───────────────
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
@@ -67,7 +82,7 @@ do {
 # ─── Afficher l'IP réseau dans une popup ──────────────────────
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.MessageBox]::Show(
-    "Application démarrée !`n`nPC dentiste : $APP_URL`nAutres appareils (WiFi) : http://$localIP`n`nPartagez http://$localIP avec l'assistante et les téléphones.",
+    "Application démarrée !`n`nPC dentiste : $APP_URL`nAutres appareils : http://dental.local`n`n(Si dental.local ne marche pas : http://$localIP)",
     "Dental App",
     [System.Windows.Forms.MessageBoxButtons]::OK,
     [System.Windows.Forms.MessageBoxIcon]::Information
