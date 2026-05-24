@@ -6,7 +6,7 @@ $HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.ex
 $MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
 $MYSQL_DATA = "C:\laragon\data\mysql"
 $CONF_DIR   = "C:\laragon\etc\apache2\sites-enabled"
-$CONF_FILE  = "$CONF_DIR\dental-app-inch.conf"
+$IP_CONF    = "$CONF_DIR\dental-app-ip.conf"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
@@ -24,14 +24,8 @@ if (-not $localIP) {
     $localIP = "127.0.0.1"
 }
 
-# ─── Mettre à jour le VirtualHost Apache avec l'IP actuelle ───
-if (Test-Path $CONF_FILE) {
-    $conf = Get-Content $CONF_FILE -Raw
-
-    # Bloc IP-based VirtualHost à injecter/remplacer
-    $ipBlock = @"
-
-# Accès réseau local (assistante, téléphones)
+# ─── Écrire le VirtualHost IP (fichier dédié, écrasé à chaque démarrage) ──
+$ipConf = @"
 <VirtualHost ${localIP}:80>
     DocumentRoot "C:/laragon/www/dental-app-inch/public"
     ServerName $localIP
@@ -41,15 +35,7 @@ if (Test-Path $CONF_FILE) {
     </Directory>
 </VirtualHost>
 "@
-
-    # Supprimer l'ancien bloc IP s'il existe
-    $conf = $conf -replace '(?s)\r?\n# Accès réseau local.*?</VirtualHost>', ''
-
-    # Ajouter le nouveau bloc à la fin
-    $conf = $conf.TrimEnd() + "`r`n" + $ipBlock
-
-    Set-Content $CONF_FILE $conf -Encoding UTF8
-}
+Set-Content $IP_CONF $ipConf -Encoding UTF8
 
 # ─── Ouvrir le port 80 dans le Firewall Windows ───────────────
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
