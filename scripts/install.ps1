@@ -161,6 +161,13 @@ OK "Frontend compilé"
 # ─── VirtualHost Apache ────────────────────────────────────────
 Step 9 10 "Configuration Apache..."
 
+# Détecter l'IP locale pour accès réseau (assistante, téléphones)
+$localIP = (Get-NetIPAddress -AddressFamily IPv4 |
+    Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
+    Sort-Object InterfaceMetric |
+    Select-Object -First 1).IPAddress
+if (-not $localIP) { $localIP = "127.0.0.1" }
+
 $vhostContent = @"
 <VirtualHost *:80>
     ServerName dental-app-inch.test
@@ -170,10 +177,29 @@ $vhostContent = @"
         Require all granted
     </Directory>
 </VirtualHost>
+
+# Accès réseau local (assistante, téléphones)
+<VirtualHost ${localIP}:80>
+    DocumentRoot "C:/laragon/www/dental-app-inch/public"
+    ServerName $localIP
+    <Directory "C:/laragon/www/dental-app-inch/public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
 "@
 
 Set-Content -Path $VHOST_FILE -Value $vhostContent -Encoding utf8
-OK "VirtualHost Apache configuré"
+OK "VirtualHost Apache configuré (hostname + IP réseau : $localIP)"
+
+# ─── Règle Firewall port 80 ────────────────────────────────────
+$fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
+if (-not $fwRule) {
+    New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
+    OK "Règle Firewall port 80 ajoutée"
+} else {
+    OK "Règle Firewall port 80 déjà présente"
+}
 
 # ─── Backup automatique ────────────────────────────────────────
 Step 10 10 "Planification des sauvegardes automatiques..."
@@ -199,8 +225,9 @@ Write-Host "=================================================="
 Write-Host "  INSTALLATION TERMINEE !" -ForegroundColor Green
 Write-Host "=================================================="
 Write-Host ""
-Write-Host "  1. Ouvrez Laragon et demarrez Apache + MySQL"
-Write-Host "  2. Ouvrez votre navigateur sur : $APP_URL"
+Write-Host "  1. Lancez DentalApp.exe sur le Bureau"
+Write-Host "  2. PC dentiste        : $APP_URL"
+Write-Host "  3. Autres appareils   : http://$localIP  (reseau WiFi)"
 Write-Host ""
 Write-Host "  Comptes par defaut :"
 Write-Host "    Dentiste  : dentiste@demo.com  /  password"
