@@ -136,9 +136,7 @@
            <!-- TIMELINE PRINCIPALE -->
             <div
                 ref="timelineEl"
-                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0"
-                :class="viewMode === 'week' ? 'overflow-hidden' : 'overflow-auto'"
-                :style="viewMode === 'week' ? '' : 'max-height: calc(100vh - 180px)'"
+                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0 overflow-hidden"
             >
                 <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
                 <template v-if="loading && viewMode === 'day'">
@@ -287,7 +285,7 @@
                     </div>
 
                     <!-- ── Timeline positionnement absolu ─────────────────── -->
-                    <div v-else class="flex">
+                    <div v-else class="flex flex-1 min-h-0 overflow-hidden">
                         <!-- Colonne heures -->
                         <div
                             class="w-16 shrink-0 relative"
@@ -539,38 +537,39 @@ watch(viewMode, (mode) => {
 });
 //
 // ─── Constantes timeline ──────────────────────────────────────────
-const START_HOUR = 9;
-const END_HOUR   = 18;
+const START_HOUR  = 9;
+const END_HOUR    = 18;
 const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2; // 18 slots de 30min
 
-// Hauteur dynamique : s'adapte à la fenêtre pour éviter le scroll
-const weekGridRef  = ref(null);
-const gridHeight   = ref(0);
+// Hauteur dynamique basée sur le conteneur principal (timelineEl déjà déclaré)
+const containerHeight = ref(0);
 
-function updateGridHeight() {
-    if (weekGridRef.value) {
-        gridHeight.value = weekGridRef.value.clientHeight;
+function updateContainerHeight() {
+    if (timelineEl.value) {
+        containerHeight.value = timelineEl.value.clientHeight;
     }
 }
 
 onMounted(() => {
-    updateGridHeight();
-    window.addEventListener('resize', updateGridHeight);
+    nextTick(updateContainerHeight);
+    window.addEventListener('resize', updateContainerHeight);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', updateGridHeight);
+    window.removeEventListener('resize', updateContainerHeight);
 });
 
-// Recalcule quand on passe en vue semaine
-watch(viewMode, (mode) => {
-    if (mode === 'week') nextTick(updateGridHeight);
-});
+// Recalcule quand on change de vue
+watch(viewMode, () => nextTick(updateContainerHeight));
 
-// slotHeight = hauteur disponible / nombre de slots (min 28px pour lisibilité)
+// slotHeight : hauteur dispo / nb slots
+// Vue semaine : on soustrait ~44px pour l'en-tête des jours
+const weekGridRef = ref(null); // gardé pour compatibilité template
 const slotHeight = computed(() => {
-    if (!gridHeight.value) return 40;
-    return Math.max(28, Math.floor(gridHeight.value / TOTAL_SLOTS));
+    if (!containerHeight.value) return 44;
+    const headerH  = viewMode.value === 'week' ? 44 : 0;
+    const available = containerHeight.value - headerH;
+    return Math.max(28, Math.floor(available / TOTAL_SLOTS));
 });
 
 const totalHeight = computed(() => TOTAL_SLOTS * slotHeight.value);
