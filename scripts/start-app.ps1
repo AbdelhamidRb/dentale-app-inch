@@ -82,7 +82,7 @@ do {
 # ─── Afficher l'IP réseau dans une popup ──────────────────────
 Add-Type -AssemblyName System.Windows.Forms
 [System.Windows.Forms.MessageBox]::Show(
-    "Application démarrée !`n`nPC dentiste : $APP_URL`nAutres appareils : http://dental.local`n`n(Si dental.local ne marche pas : http://$localIP)",
+    "Application démarrée !`n`nPC dentiste : $APP_URL`nAssistante / Téléphones : http://$localIP",
     "Dental App",
     [System.Windows.Forms.MessageBoxButtons]::OK,
     [System.Windows.Forms.MessageBoxIcon]::Information

@@ -75,12 +75,19 @@ clé USB/
 
 L'installation fixe automatiquement l'IP du PC (si lancée en admin).
 
-**Sur chaque appareil du cabinet (téléphone dentiste, téléphone assistante, PC assistante) :**
-1. Ouvrir le navigateur
-2. Taper `http://192.168.1.100` (l'IP affichée à l'étape 4)
-3. Se connecter → **mettre en favori**
+| Appareil | URL |
+|---|---|
+| PC dentiste | `http://dental-app-inch.test` |
+| Téléphone dentiste | `http://192.168.1.xxx` (IP affichée à l'étape 4) |
+| Téléphone assistante | `http://192.168.1.xxx` |
+| PC assistante | `http://192.168.1.xxx` |
 
-> L'IP ne changera plus jamais. Un seul réglage à faire.
+**Sur chaque téléphone / PC assistante :**
+1. Ouvrir le navigateur
+2. Taper l'IP affichée à l'étape 4 (ex: `http://192.168.1.34`)
+3. Se connecter → **ajouter à l'écran d'accueil** (Android : menu 3 points → "Ajouter à l'écran d'accueil")
+
+> L'IP est fixe, elle ne changera plus jamais. Un seul réglage à faire.
 
 ---
 
@@ -150,12 +157,11 @@ Soir   → double-clic DentalApp.exe → bouton "Fermer"    → l'app se ferme
 
 ## SI LE CLIENT CHANGE DE RÉSEAU WIFI
 
-Si le cabinet change de box internet ou de réseau WiFi, l'IP peut changer.
+Si le cabinet change de box internet, l'IP locale peut changer.
 
-1. Sur le Bureau du PC dentiste, double-clic sur **`Fixer IP Reseau.lnk`**
-2. Clic droit → Exécuter en tant qu'administrateur
-3. Une popup affiche la nouvelle IP → la communiquer à l'assistante
-4. L'assistante met à jour son favori
+1. Sur le Bureau du PC dentiste, double-clic sur **`Fixer IP Reseau.lnk`** (clic droit → admin)
+2. Une popup affiche la nouvelle IP → la communiquer à l'assistante
+3. L'assistante met à jour son favori / raccourci écran d'accueil
 
 ---
 
