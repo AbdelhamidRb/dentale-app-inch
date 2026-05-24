@@ -212,11 +212,51 @@ if ($isAdmin) {
     WARN "Sauvegardes non planifiées (relancez install.ps1 en Administrateur pour activer)"
 }
 
+# ─── IP fixe (accès réseau assistante + téléphones) ───────────
+if ($isAdmin) {
+    $adapter = Get-NetIPConfiguration |
+        Where-Object { $_.IPv4DefaultGateway -ne $null -and $_.NetAdapter.Status -eq 'Up' } |
+        Select-Object -First 1
+    if ($adapter) {
+        $ifAlias   = $adapter.InterfaceAlias
+        $curIP     = $adapter.IPv4Address.IPAddress
+        $prefixLen = $adapter.IPv4Address.PrefixLength
+        $gateway   = $adapter.IPv4DefaultGateway.NextHop
+        $dns       = ($adapter.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | Select-Object -ExpandProperty ServerAddresses -First 1)
+        if (-not $dns) { $dns = "8.8.8.8" }
+
+        $ipConfig = Get-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue
+        if ($ipConfig.PrefixOrigin -ne 'Manual') {
+            Remove-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
+            Remove-NetRoute -InterfaceAlias $ifAlias -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
+            New-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -IPAddress $curIP -PrefixLength $prefixLen -DefaultGateway $gateway -ErrorAction SilentlyContinue | Out-Null
+            Set-DnsClientServerAddress -InterfaceAlias $ifAlias -ServerAddresses $dns -ErrorAction SilentlyContinue | Out-Null
+            $localIP = $curIP
+            OK "IP fixée : $localIP (ne changera plus)"
+        } else {
+            OK "IP déjà fixe : $localIP"
+        }
+    }
+} else {
+    WARN "IP non fixée (relancez install.ps1 en Administrateur pour activer)"
+    INFO "  Ou lancez le raccourci 'Fixer IP Reseau.lnk' sur le Bureau"
+}
+
 # ─── Raccourcis Bureau ─────────────────────────────────────────
 Copy-Item "$APP_DIR\scripts\DEMARRER.bat"  "$env:USERPROFILE\Desktop\DEMARRER.bat"  -Force
 Copy-Item "$APP_DIR\scripts\FERMER.bat"    "$env:USERPROFILE\Desktop\FERMER.bat"    -Force
 Copy-Item "$APP_DIR\scripts\BACKUP.bat"    "$env:USERPROFILE\Desktop\BACKUP.bat"    -Force
 Copy-Item "$APP_DIR\scripts\RESTAURER.bat" "$env:USERPROFILE\Desktop\RESTAURER.bat" -Force
+
+# Raccourci pour fixer l'IP (utile si install n'était pas admin)
+$shell = New-Object -ComObject WScript.Shell
+$lnk = $shell.CreateShortcut("$env:USERPROFILE\Desktop\Fixer IP Reseau.lnk")
+$lnk.TargetPath    = "powershell.exe"
+$lnk.Arguments     = "-ExecutionPolicy Bypass -File `"$APP_DIR\scripts\set-static-ip.ps1`""
+$lnk.IconLocation  = "C:\Windows\System32\imageres.dll,25"
+$lnk.Description   = "Fixer l'IP réseau pour accès assistante"
+$lnk.Save()
+
 OK "Raccourcis créés sur le Bureau"
 
 # ─── Résumé final ──────────────────────────────────────────────
