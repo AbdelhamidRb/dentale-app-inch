@@ -184,17 +184,14 @@
                     </div>
 
                     <!-- Corps : grille heures × jours -->
-                    <div class="flex flex-1 min-h-0 overflow-hidden" ref="weekGridRef">
-                        <!-- Colonne heures (sticky à gauche) -->
-                        <div
-                            class="w-16 shrink-0 relative sticky left-0 bg-white z-10"
-                            :style="`height: ${totalHeight}px`"
-                        >
+                    <div class="flex flex-1 min-h-0" ref="weekGridRef">
+                        <!-- Colonne heures -->
+                        <div class="w-16 shrink-0 relative bg-white z-10">
                             <div
                                 v-for="slot in workHours"
                                 :key="slot"
                                 class="absolute right-0 pr-3 text-right"
-                                :style="`top: ${slotTop(slot)}px`"
+                                :style="{ top: slotPercent(slot) }"
                             >
                                 <span
                                     class="text-xs font-mono leading-none"
@@ -209,7 +206,6 @@
                             :key="day"
                             class="flex-1 min-w-0 border-l border-slate-100 relative"
                             :class="isToday(day) ? 'bg-blue-50/30' : ''"
-                            :style="`height: ${totalHeight}px`"
                         >
                             <!-- Lignes de fond -->
                             <div
@@ -217,7 +213,7 @@
                                 :key="slot"
                                 class="absolute left-0 right-0 border-t"
                                 :class="slot.endsWith(':00') ? 'border-slate-100' : 'border-slate-50'"
-                                :style="`top: ${slotTop(slot)}px`"
+                                :style="{ top: slotPercent(slot) }"
                             ></div>
 
                             <!-- Cartes RDV -->
@@ -231,33 +227,25 @@
                                     colorConfig(appt.color).card,
                                 ]"
                                 :style="`
-                                    top: ${apptTop(appt)}px;
-                                    height: ${apptHeight(appt)}px;
-                                    min-height: 36px;
+                                    top: ${apptTopPct(appt)};
+                                    height: ${apptHeightPct(appt)};
+                                    min-height: 24px;
                                     left: calc(${(appt.col / appt.maxCols) * 100}% + 2px);
                                     width: calc(${(1 / appt.maxCols) * 100}% - 4px);
                                 `"
                             >
                                 <div class="overflow-hidden h-full flex flex-col">
+                                    <span :class="['text-[11px] font-semibold truncate leading-tight', colorConfig(appt.color).title]">{{ appt.patient.full_name }}</span>
+                                    <span class="text-[10px] text-slate-500 font-mono leading-tight">{{ appt.start_time }}</span>
                                     <span
-                                        :class="['text-[11px] font-semibold truncate leading-tight', colorConfig(appt.color).title]"
-                                    >{{ appt.patient.full_name }}</span>
-                                    <span class="text-[10px] text-slate-500 font-mono leading-tight">
-                                        {{ appt.start_time }}
-                                    </span>
-                                    <span
-                                        v-if="apptHeight(appt) > 60"
+                                        v-if="apptDuration(appt) >= 60"
                                         :class="['text-[10px] font-medium px-1 rounded-full self-start mt-0.5', colorConfig(appt.color).badge]"
                                     >{{ statusLabel(appt.status) }}</span>
                                 </div>
                             </div>
 
                             <!-- Zone cliquable pour créer un RDV ce jour -->
-                            <div
-                                class="absolute inset-0"
-                                style="z-index: 0"
-                                @click.self="openModal(null, null, day)"
-                            ></div>
+                            <div class="absolute inset-0" style="z-index: 0" @click.self="openModal(null, null, day)"></div>
                         </div>
                     </div>
                 </template>
@@ -285,50 +273,31 @@
                     </div>
 
                     <!-- ── Timeline positionnement absolu ─────────────────── -->
-                    <div v-else class="flex flex-1 min-h-0 overflow-hidden">
+                    <div v-else class="flex flex-1 min-h-0">
                         <!-- Colonne heures -->
-                        <div
-                            class="w-16 shrink-0 relative"
-                            :style="`height: ${totalHeight}px`"
-                        >
+                        <div class="w-16 shrink-0 relative">
                             <div
                                 v-for="slot in workHours"
                                 :key="slot"
                                 class="absolute right-0 pr-3 text-right"
-                                :style="`top: ${slotTop(slot)}px`"
+                                :style="{ top: slotPercent(slot) }"
                             >
-                                <span
-                                    class="text-xs font-mono leading-none"
-                                    :class="
-                                        slot.endsWith(':00')
-                                            ? 'text-slate-400'
-                                            : 'text-slate-200'
-                                    "
-                                >
-                                    {{ slot }}
-                                </span>
+                                <span class="text-xs font-mono leading-none" :class="slot.endsWith(':00') ? 'text-slate-400' : 'text-slate-200'">{{ slot }}</span>
                             </div>
                         </div>
 
                         <!-- Zone des RDV -->
-                        <div
-                            class="flex-1 border-l border-slate-100 relative"
-                            :style="`height: ${totalHeight}px`"
-                        >
+                        <div class="flex-1 border-l border-slate-100 relative">
                             <!-- Lignes de fond par slot -->
                             <div
                                 v-for="slot in workHours"
                                 :key="slot"
                                 class="absolute left-0 right-0 border-t"
-                                :class="
-                                    slot.endsWith(':00')
-                                        ? 'border-slate-100'
-                                        : 'border-slate-50'
-                                "
-                                :style="`top: ${slotTop(slot)}px`"
+                                :class="slot.endsWith(':00') ? 'border-slate-100' : 'border-slate-50'"
+                                :style="{ top: slotPercent(slot) }"
                             ></div>
 
-                            <!-- Cartes RDV — position et largeur calculées selon les chevauchements -->
+                            <!-- Cartes RDV -->
                             <div
                                 v-for="appt in appointmentsWithLayout"
                                 :key="appt.id"
@@ -339,12 +308,12 @@
                                     colorConfig(appt.color).card,
                                 ]"
                                 :style="`
-        top: ${apptTop(appt)}px;
-        height: ${apptHeight(appt)}px;
-        min-height: 52px;
-        left: calc(${(appt.col / appt.maxCols) * 100}% + 8px);
-        width: calc(${(1 / appt.maxCols) * 100}% - 16px);
-    `"
+                                    top: ${apptTopPct(appt)};
+                                    height: ${apptHeightPct(appt)};
+                                    min-height: 44px;
+                                    left: calc(${(appt.col / appt.maxCols) * 100}% + 8px);
+                                    width: calc(${(1 / appt.maxCols) * 100}% - 16px);
+                                `"
                             >
                                 <div
                                     class="flex items-start justify-between gap-2 h-full overflow-hidden"
@@ -368,8 +337,8 @@
                                             </span>
                                         </div>
 
-                                        <!-- Ligne 3 : Actes (si assez de hauteur) -->
-                                        <div v-if="apptHeight(appt) > 56" class="flex items-center gap-1">
+                                        <!-- Ligne 3 : Actes (si RDV >= 45 min) -->
+                                        <div v-if="apptDuration(appt) >= 45" class="flex items-center gap-1">
                                             <Stethoscope class="w-2.5 h-2.5 text-slate-400 shrink-0" />
                                             <span class="text-[10px] text-slate-500 truncate">
                                                 {{ appt.acts.length ? appt.acts.map(a => a.name).join(' · ') : 'Aucun acte' }}
@@ -438,7 +407,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { authStore } from '../stores/auth'
 const isDentist = computed(() => authStore.isDentist())
 import {
@@ -501,47 +470,13 @@ watch(viewMode, (mode) => {
 });
 //
 // ─── Constantes timeline ──────────────────────────────────────────
-const START_HOUR  = 9;
-const END_HOUR    = 18;
-const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2; // 18 slots de 30min
+const START_HOUR    = 9;
+const END_HOUR      = 18;
+const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60; // 540 min
 
-// Hauteur dynamique basée sur le conteneur principal (timelineEl déjà déclaré)
-const containerHeight = ref(0);
-let resizeObserver = null;
+const weekGridRef = ref(null); // utilisé dans template
 
-function updateContainerHeight() {
-    if (timelineEl.value) {
-        containerHeight.value = timelineEl.value.clientHeight;
-    }
-}
-
-onMounted(() => {
-    nextTick(() => {
-        updateContainerHeight();
-        // ResizeObserver : se déclenche à chaque changement de taille réel
-        resizeObserver = new ResizeObserver(updateContainerHeight);
-        if (timelineEl.value) resizeObserver.observe(timelineEl.value);
-    });
-});
-
-onUnmounted(() => {
-    if (resizeObserver) resizeObserver.disconnect();
-});
-
-// Recalcule quand on change de vue
-watch(viewMode, () => nextTick(updateContainerHeight));
-
-// slotHeight : hauteur dispo / nb slots
-// Vue semaine : soustraire ~46px pour l'en-tête des jours
-const weekGridRef = ref(null); // gardé pour compatibilité template
-const slotHeight = computed(() => {
-    if (!containerHeight.value) return 44;
-    const headerH   = viewMode.value === 'week' ? 46 : 0;
-    const available = containerHeight.value - headerH;
-    return Math.max(28, Math.floor(available / TOTAL_SLOTS));
-});
-
-const totalHeight = computed(() => TOTAL_SLOTS * slotHeight.value);
+// Convertit "HH:MM" en minutes depuis START_HOUR
 
 // Marqueurs de temps toutes les 30min
 const workHours = computed(() => {
@@ -558,25 +493,31 @@ function timeToMinutes(time) {
     const [h, m] = time.split(":").map(Number);
     return (h - START_HOUR) * 60 + m;
 }
+
+// ─── Positions en % (approche CSS pure, pas de mesure JS) ────────
+function slotPercent(slot) {
+    return (timeToMinutes(slot) / TOTAL_MINUTES * 100).toFixed(4) + '%';
+}
+
+function apptTopPct(appt) {
+    return (timeToMinutes(appt.start_time) / TOTAL_MINUTES * 100).toFixed(4) + '%';
+}
+
+function apptHeightPct(appt) {
+    const [sh, sm] = appt.start_time.split(':').map(Number);
+    const [eh, em] = appt.end_time.split(':').map(Number);
+    const duration = Math.max(30, eh * 60 + em - (sh * 60 + sm));
+    return (duration / TOTAL_MINUTES * 100).toFixed(4) + '%';
+}
+
+function apptDuration(appt) {
+    const [sh, sm] = appt.start_time.split(':').map(Number);
+    const [eh, em] = appt.end_time.split(':').map(Number);
+    return eh * 60 + em - (sh * 60 + sm);
+}
+
 // ─── Calcul des colonnes pour les RDV qui se chevauchent ─────────
 const appointmentsWithLayout = computed(() => computeLayout(appointments.value));
-// Position top d'un slot (en px)
-function slotTop(slot) {
-    return timeToMinutes(slot) * (slotHeight.value / 30);
-}
-
-// Position top d'un RDV (en px)
-function apptTop(appt) {
-    return timeToMinutes(appt.start_time) * (slotHeight.value / 30);
-}
-
-// Hauteur d'un RDV proportionnelle à sa durée
-function apptHeight(appt) {
-    const [sh, sm] = appt.start_time.split(":").map(Number);
-    const [eh, em] = appt.end_time.split(":").map(Number);
-    const durationMin = eh * 60 + em - (sh * 60 + sm);
-    return Math.max(durationMin * (slotHeight.value / 30), slotHeight.value);
-}
 
 // ─── Ouvrir modal ─────────────────────────────────────────────────
 function openModal(slot, appointment = null, date = null) {
