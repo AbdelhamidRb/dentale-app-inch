@@ -136,8 +136,10 @@
            <!-- TIMELINE PRINCIPALE -->
             <div
                 ref="timelineEl"
-                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0"
-                :class="viewMode === 'week' ? 'overflow-hidden' : 'overflow-y-auto'"
+                class="bg-white rounded-xl border border-slate-200 flex flex-col overflow-hidden"
+                :style="viewMode === 'week'
+                    ? 'height: calc(100vh - 200px)'
+                    : 'flex: 1; overflow-y: auto; min-height: 0'"
             >
                 <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
                 <template v-if="loading && viewMode === 'day'">
@@ -235,9 +237,8 @@
                                     width: calc(${(1 / appt.maxCols) * 100}% - 4px);
                                 `"
                             >
-                                <div class="overflow-hidden h-full flex flex-col justify-center">
-                                    <span :class="['text-[11px] font-semibold truncate leading-tight', colorConfig(appt.color).title]">{{ appt.patient.full_name }}</span>
-                                    <span class="text-[10px] text-slate-400 font-mono leading-tight">{{ appt.start_time }}</span>
+                                <div class="overflow-hidden h-full flex items-center">
+                                    <span :class="['text-[11px] font-semibold truncate leading-tight w-full', colorConfig(appt.color).title]">{{ appt.patient.full_name }}</span>
                                 </div>
                             </div>
 
