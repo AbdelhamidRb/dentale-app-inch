@@ -349,66 +349,30 @@
                                 <div
                                     class="flex items-start justify-between gap-2 h-full overflow-hidden"
                                 >
-                                    <div class="min-w-0 flex-1 overflow-hidden">
-                                        <!-- Nom + badge -->
-                                        <div
-                                            class="flex items-center gap-2 mb-1"
-                                        >
-                                            <span
-                                                :class="[
-                                                    'text-sm font-semibold truncate',
-                                                    colorConfig(appt.color)
-                                                        .title,
-                                                ]"
-                                            >
+                                    <div class="min-w-0 flex-1 overflow-hidden flex flex-col justify-center gap-0.5">
+                                        <!-- Ligne 1 : Nom + badge -->
+                                        <div class="flex items-center gap-2">
+                                            <span :class="['text-xs font-semibold truncate', colorConfig(appt.color).title]">
                                                 {{ appt.patient.full_name }}
                                             </span>
-                                            <span
-                                                :class="[
-                                                    'text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0',
-                                                    colorConfig(appt.color)
-                                                        .badge,
-                                                ]"
-                                            >
+                                            <span :class="['text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0', colorConfig(appt.color).badge]">
                                                 {{ statusLabel(appt.status) }}
                                             </span>
                                         </div>
 
-                                        <!-- Heure -->
-                                        <div
-                                            class="flex items-center gap-1.5 mb-1"
-                                        >
-                                            <Clock
-                                                class="w-3 h-3 text-slate-400 shrink-0"
-                                            />
-                                            <span
-                                                class="text-xs text-slate-500 font-mono"
-                                            >
-                                                {{ appt.start_time }} →
-                                                {{ appt.end_time }}
+                                        <!-- Ligne 2 : Heure -->
+                                        <div class="flex items-center gap-1">
+                                            <Clock class="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                            <span class="text-[10px] text-slate-500 font-mono">
+                                                {{ appt.start_time }} → {{ appt.end_time }}
                                             </span>
                                         </div>
 
-                                        <!-- Actes (masqués si RDV trop court) -->
-                                        <div
-                                            v-if="apptHeight(appt) > 80"
-                                            class="flex items-center gap-1.5"
-                                        >
-                                            <Stethoscope
-                                                class="w-3 h-3 text-slate-400 shrink-0"
-                                            />
-                                            <span
-                                                class="text-xs text-slate-500 truncate"
-                                            >
-                                                {{
-                                                    appt.acts.length
-                                                        ? appt.acts
-                                                              .map(
-                                                                  (a) => a.name,
-                                                              )
-                                                              .join(" · ")
-                                                        : "Aucun acte précisé"
-                                                }}
+                                        <!-- Ligne 3 : Actes (si assez de hauteur) -->
+                                        <div v-if="apptHeight(appt) > 56" class="flex items-center gap-1">
+                                            <Stethoscope class="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                                            <span class="text-[10px] text-slate-500 truncate">
+                                                {{ appt.acts.length ? appt.acts.map(a => a.name).join(' · ') : 'Aucun acte' }}
                                             </span>
                                         </div>
                                     </div>
@@ -543,6 +507,7 @@ const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2; // 18 slots de 30min
 
 // Hauteur dynamique basée sur le conteneur principal (timelineEl déjà déclaré)
 const containerHeight = ref(0);
+let resizeObserver = null;
 
 function updateContainerHeight() {
     if (timelineEl.value) {
@@ -551,23 +516,27 @@ function updateContainerHeight() {
 }
 
 onMounted(() => {
-    nextTick(updateContainerHeight);
-    window.addEventListener('resize', updateContainerHeight);
+    nextTick(() => {
+        updateContainerHeight();
+        // ResizeObserver : se déclenche à chaque changement de taille réel
+        resizeObserver = new ResizeObserver(updateContainerHeight);
+        if (timelineEl.value) resizeObserver.observe(timelineEl.value);
+    });
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', updateContainerHeight);
+    if (resizeObserver) resizeObserver.disconnect();
 });
 
 // Recalcule quand on change de vue
 watch(viewMode, () => nextTick(updateContainerHeight));
 
 // slotHeight : hauteur dispo / nb slots
-// Vue semaine : on soustrait ~44px pour l'en-tête des jours
+// Vue semaine : soustraire ~46px pour l'en-tête des jours
 const weekGridRef = ref(null); // gardé pour compatibilité template
 const slotHeight = computed(() => {
     if (!containerHeight.value) return 44;
-    const headerH  = viewMode.value === 'week' ? 44 : 0;
+    const headerH   = viewMode.value === 'week' ? 46 : 0;
     const available = containerHeight.value - headerH;
     return Math.max(28, Math.floor(available / TOTAL_SLOTS));
 });
