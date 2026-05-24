@@ -1,28 +1,28 @@
 # ═══════════════════════════════════════════════════════════════
-#  schedule-tasks.ps1  —  Planification des backups automatiques
+#  schedule-tasks.ps1  —  Planification des tâches automatiques
 #  A executer UNE SEULE FOIS en tant qu'Administrateur
-#  Lun-Ven 18h00  |  Samedi 12h30
 # ═══════════════════════════════════════════════════════════════
 
-$scriptPath = "C:\laragon\www\dental-app-inch\scripts\backup.ps1"
-$taskName   = "DentalApp-Backup"
+$SCRIPTS_DIR  = "C:\laragon\www\dental-app-inch\scripts"
+$backupScript = "$SCRIPTS_DIR\backup.ps1"
+$usbScript    = "$SCRIPTS_DIR\sync-usb.ps1"
 
 Write-Host ""
-Write-Host "Configuration des sauvegardes automatiques..."
+Write-Host "Configuration des taches automatiques..."
 Write-Host ""
 
-# Vérifier les droits admin
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
     Write-Host "[ERREUR] Ce script doit etre execute en tant qu'Administrateur." -ForegroundColor Red
-    Write-Host "  Clic droit sur PowerShell > 'Executer en tant qu'administrateur'"
     exit 1
 }
 
-# Supprimer l'ancienne tâche si elle existe
-Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+# ═══════════════════════════════════════════════════════════════
+#  TÂCHE 1 : Backup automatique  (Lun-Ven 18h, Sam 12h30)
+# ═══════════════════════════════════════════════════════════════
+$taskBackup = "DentalApp-Backup"
+Unregister-ScheduledTask -TaskName $taskBackup -Confirm:$false -ErrorAction SilentlyContinue
 
-# Triggers : Lun-Ven 18h00 + Samedi 12h30
 $triggerWeek = New-ScheduledTaskTrigger -Weekly `
     -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday `
     -At "18:00"
@@ -31,34 +31,99 @@ $triggerSat = New-ScheduledTaskTrigger -Weekly `
     -DaysOfWeek Saturday `
     -At "12:30"
 
-# Action : lancer backup.ps1 en arrière-plan (fenêtre cachée)
-$action = New-ScheduledTaskAction `
+$actionBackup = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
+    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$backupScript`""
 
-# Paramètres : démarrer même si la machine n'était pas allumée à l'heure prévue
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -RunOnlyIfNetworkAvailable:$false `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
 
-# Créer la tâche
 Register-ScheduledTask `
-    -TaskName $taskName `
-    -Action $action `
+    -TaskName $taskBackup `
+    -Action $actionBackup `
     -Trigger $triggerWeek, $triggerSat `
     -Settings $settings `
     -RunLevel Highest `
     -Description "Sauvegarde automatique Dental App (BDD + images)" `
     -Force | Out-Null
 
-Write-Host "  OK  Tache planifiee : $taskName" -ForegroundColor Green
+Write-Host "  OK  $taskBackup" -ForegroundColor Green
 Write-Host "      Lundi au Vendredi  18h00"
 Write-Host "      Samedi             12h30"
 Write-Host ""
-Write-Host "Pour tester maintenant :"
-Write-Host "  Start-ScheduledTask -TaskName '$taskName'"
+
+# ═══════════════════════════════════════════════════════════════
+#  TÂCHE 2 : Sync USB automatique (déclenché par branchement USB)
+# ═══════════════════════════════════════════════════════════════
+$taskUSB = "DentalApp-USBSync"
+Unregister-ScheduledTask -TaskName $taskUSB -Confirm:$false -ErrorAction SilentlyContinue
+
+# Trigger basé sur l'événement Windows "périphérique USB connecté"
+# Event Log: Microsoft-Windows-DriverFrameworks-UserMode/Operational, ID 2003
+$usbTriggerXml = @'
+<QueryList>
+  <Query Id="0" Path="Microsoft-Windows-DriverFrameworks-UserMode/Operational">
+    <Select Path="Microsoft-Windows-DriverFrameworks-UserMode/Operational">
+      *[System[Provider[@Name='Microsoft-Windows-DriverFrameworks-UserMode'] and EventID=2003]]
+    </Select>
+  </Query>
+</QueryList>
+'@
+
+$actionUSB = New-ScheduledTaskAction `
+    -Execute "powershell.exe" `
+    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$usbScript`""
+
+# Créer la tâche via XML pour supporter le trigger événement USB
+$taskXml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Synchronisation automatique des backups vers la cle USB DENTAL-BKP</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <EventTrigger>
+      <Delay>PT8S</Delay>
+      <Subscription>&lt;QueryList&gt;&lt;Query Id=&quot;0&quot; Path=&quot;Microsoft-Windows-DriverFrameworks-UserMode/Operational&quot;&gt;&lt;Select Path=&quot;Microsoft-Windows-DriverFrameworks-UserMode/Operational&quot;&gt;*[System[Provider[@Name=&quot;Microsoft-Windows-DriverFrameworks-UserMode&quot;] and EventID=2003]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
+    </EventTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "$usbScript"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+
+Register-ScheduledTask -TaskName $taskUSB -Xml $taskXml -Force | Out-Null
+
+Write-Host "  OK  $taskUSB" -ForegroundColor Green
+Write-Host "      Declenche automatiquement a chaque branchement USB"
+Write-Host "      Synchronise les backups manquants vers la cle DENTAL-BKP"
 Write-Host ""
-Write-Host "Pour voir les logs :"
-Write-Host "  Get-ScheduledTaskInfo -TaskName '$taskName'"
+
+# ═══════════════════════════════════════════════════════════════
+Write-Host "Toutes les taches sont configurees !" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Pour tester le backup maintenant :"
+Write-Host "  Start-ScheduledTask -TaskName '$taskBackup'"
+Write-Host ""
+Write-Host "Pour tester la sync USB (branchez d'abord la cle DENTAL-BKP) :"
+Write-Host "  Start-ScheduledTask -TaskName '$taskUSB'"
 Write-Host ""
