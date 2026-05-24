@@ -2,9 +2,10 @@
 #  start-app.ps1  —  Démarrer Dental App
 # ═══════════════════════════════════════════════════════════════
 
-$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
-$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
-$MYSQL_DATA = "C:\laragon\data\mysql"
+$HTTPD        = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$MYSQLD       = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
+$MYSQLADMIN   = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
+$MYSQL_DATA   = "C:\laragon\data\mysql"
 $CONF_DIR      = "C:\laragon\etc\apache2\sites-enabled"
 $IP_CONF       = "$CONF_DIR\dental-app-ip.conf"
 $LOCAL_CONF    = "$CONF_DIR\dental-app-local.conf"
@@ -69,15 +70,17 @@ if (-not (IsRunning "httpd")) {
 # ─── Démarrer MySQL ────────────────────────────────────────────
 if (-not (IsRunning "mysqld")) {
     Start-Process -FilePath $MYSQLD -ArgumentList "--datadir=`"$MYSQL_DATA`"" -WindowStyle Hidden
-    Start-Sleep -Seconds 2
 }
 
-# ─── Attendre que les services soient prêts ────────────────────
-$attempts = 0
+# ─── Attendre que MySQL accepte les connexions (pas juste le processus) ──
+$mysqlReady = $false
+$attempts   = 0
 do {
-    Start-Sleep -Milliseconds 500
+    Start-Sleep -Milliseconds 800
     $attempts++
-} while ((-not (IsRunning "httpd") -or -not (IsRunning "mysqld")) -and $attempts -lt 10)
+    $ping = & $MYSQLADMIN -u root ping 2>$null
+    if ($ping -match "alive") { $mysqlReady = $true }
+} while (-not $mysqlReady -and $attempts -lt 20)  # max ~16 secondes
 
 # ─── Afficher l'IP réseau dans une popup ──────────────────────
 Add-Type -AssemblyName System.Windows.Forms

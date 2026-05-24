@@ -136,8 +136,9 @@
            <!-- TIMELINE PRINCIPALE -->
             <div
                 ref="timelineEl"
-                class="flex-1 bg-white rounded-xl border border-slate-200 overflow-auto"
-                style="max-height: calc(100vh - 180px)"
+                class="flex-1 bg-white rounded-xl border border-slate-200 flex flex-col min-h-0"
+                :class="viewMode === 'week' ? 'overflow-hidden' : 'overflow-auto'"
+                :style="viewMode === 'week' ? '' : 'max-height: calc(100vh - 180px)'"
             >
                 <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
                 <template v-if="loading && viewMode === 'day'">
@@ -185,7 +186,7 @@
                     </div>
 
                     <!-- Corps : grille heures × jours -->
-                    <div class="flex">
+                    <div class="flex flex-1 min-h-0 overflow-hidden" ref="weekGridRef">
                         <!-- Colonne heures (sticky à gauche) -->
                         <div
                             class="w-16 shrink-0 relative sticky left-0 bg-white z-10"
@@ -475,7 +476,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { authStore } from '../stores/auth'
 const isDentist = computed(() => authStore.isDentist())
 import {
@@ -538,12 +539,41 @@ watch(viewMode, (mode) => {
 });
 //
 // ─── Constantes timeline ──────────────────────────────────────────
-const SLOT_HEIGHT = 60; // px pour 30 minutes
 const START_HOUR = 9;
-const END_HOUR = 18;
+const END_HOUR   = 18;
+const TOTAL_SLOTS = (END_HOUR - START_HOUR) * 2; // 18 slots de 30min
 
-// Hauteur totale de la zone timeline
-const totalHeight = computed(() => (END_HOUR - START_HOUR) * 2 * SLOT_HEIGHT);
+// Hauteur dynamique : s'adapte à la fenêtre pour éviter le scroll
+const weekGridRef  = ref(null);
+const gridHeight   = ref(0);
+
+function updateGridHeight() {
+    if (weekGridRef.value) {
+        gridHeight.value = weekGridRef.value.clientHeight;
+    }
+}
+
+onMounted(() => {
+    updateGridHeight();
+    window.addEventListener('resize', updateGridHeight);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateGridHeight);
+});
+
+// Recalcule quand on passe en vue semaine
+watch(viewMode, (mode) => {
+    if (mode === 'week') nextTick(updateGridHeight);
+});
+
+// slotHeight = hauteur disponible / nombre de slots (min 28px pour lisibilité)
+const slotHeight = computed(() => {
+    if (!gridHeight.value) return 40;
+    return Math.max(28, Math.floor(gridHeight.value / TOTAL_SLOTS));
+});
+
+const totalHeight = computed(() => TOTAL_SLOTS * slotHeight.value);
 
 // Marqueurs de temps toutes les 30min
 const workHours = computed(() => {
@@ -564,12 +594,12 @@ function timeToMinutes(time) {
 const appointmentsWithLayout = computed(() => computeLayout(appointments.value));
 // Position top d'un slot (en px)
 function slotTop(slot) {
-    return timeToMinutes(slot) * (SLOT_HEIGHT / 30);
+    return timeToMinutes(slot) * (slotHeight.value / 30);
 }
 
 // Position top d'un RDV (en px)
 function apptTop(appt) {
-    return timeToMinutes(appt.start_time) * (SLOT_HEIGHT / 30);
+    return timeToMinutes(appt.start_time) * (slotHeight.value / 30);
 }
 
 // Hauteur d'un RDV proportionnelle à sa durée
@@ -577,7 +607,7 @@ function apptHeight(appt) {
     const [sh, sm] = appt.start_time.split(":").map(Number);
     const [eh, em] = appt.end_time.split(":").map(Number);
     const durationMin = eh * 60 + em - (sh * 60 + sm);
-    return Math.max(durationMin * (SLOT_HEIGHT / 30), 52);
+    return Math.max(durationMin * (slotHeight.value / 30), slotHeight.value);
 }
 
 // ─── Ouvrir modal ─────────────────────────────────────────────────
