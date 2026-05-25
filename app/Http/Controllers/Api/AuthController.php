@@ -27,7 +27,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user->tokens()->delete();
         $token = $user->createToken('dental-token')->plainTextToken;
         return response()->json([
             'user'  => [
