@@ -226,7 +226,7 @@
                 :consultation="selectedConsultation"
                 :is-dentist="isDentist"
                 @close="selectedConsultation = null"
-                @edit="openEditModal"
+
                 @updated="onUpdated"
                 @deleted="onDeleted"
             />
@@ -239,7 +239,7 @@
         ═══════════════════════════════════════════════════════════ -->
         <ConsultationModal
             v-model="showModal"
-            :consultation-to-edit="consultationToEdit"
+
             :patients="patients"
             :catalog-acts="catalogActs"
             :available-appointments="appointments"
@@ -366,11 +366,6 @@ const stats = computed(() => [
 // ─── Options statut ───────────────────────────────────────────────
 const statusOptions = [
     {
-        value: "BROUILLON",
-        label: "Brouillon",
-        activeClass: "border-slate-400 bg-slate-100 text-slate-700",
-    },
-    {
         value: "EN_COURS",
         label: "En cours",
         activeClass: "border-amber-400 bg-amber-50  text-amber-700",
@@ -384,10 +379,7 @@ const statusOptions = [
 
 // ─── Modal ────────────────────────────────────────────────────────
 const showModal = ref(false);
-const consultationToEdit = ref(null);
-
 async function openCreateModal() {
-    consultationToEdit.value = null;
     showModal.value = true;
     // Charge les RDV seulement à l'ouverture de la modale
     if (!appointments.value.length) {
@@ -429,10 +421,6 @@ async function loadAppointments() {
     }
 }
 
-function openEditModal(c) {
-    consultationToEdit.value = c;
-    showModal.value = true;
-}
 
 async function onSaved() {
     consultationCache.clear();

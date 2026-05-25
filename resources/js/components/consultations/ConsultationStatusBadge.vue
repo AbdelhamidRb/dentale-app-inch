@@ -13,7 +13,6 @@ const props = defineProps({
 })
 
 const badge = computed(() => ({
-    BROUILLON: { label: 'Brouillon',  dot: 'bg-slate-400',  class: 'bg-slate-100 text-slate-600' },
     EN_COURS:  { label: 'En cours',   dot: 'bg-amber-400',  class: 'bg-amber-50  text-amber-700' },
     TERMINE:   { label: 'Terminée',   dot: 'bg-green-500',  class: 'bg-green-50 text-green-700' },
 }[props.status] ?? { label: props.status, dot: 'bg-slate-300', class: 'bg-slate-100 text-slate-500' }))

@@ -68,7 +68,7 @@ class ConsultationController extends Controller
         $request->validate([
             'patient_id'        => 'required|exists:patients,id',
             'appointment_id'    => 'nullable|exists:appointments,id',
-            'status'            => 'nullable|in:BROUILLON,EN_COURS,TERMINE',
+            'status'            => 'nullable|in:EN_COURS,TERMINE',
             'notes'             => 'nullable|string',
 
             // Tableau d'actes
@@ -86,7 +86,7 @@ class ConsultationController extends Controller
                 'patient_id'     => $request->patient_id,
                 'appointment_id' => $request->appointment_id,
                 'created_by'     => auth()->id(),
-                'status'         => $request->status ?? 'BROUILLON',
+                'status'         => $request->status ?? 'EN_COURS',
                 'notes'          => $request->notes,
                 'session_dates'  => [now()->toDateString()],
             ]);
@@ -147,7 +147,7 @@ class ConsultationController extends Controller
     public function update(Request $request, Consultation $consultation)
     {
         $request->validate([
-            'status'            => 'nullable|in:BROUILLON,EN_COURS,TERMINE',
+            'status'            => 'nullable|in:EN_COURS,TERMINE',
             'notes'             => 'nullable|string',
             'acts'              => 'nullable|array',
             'acts.*.id'         => 'nullable|exists:consultation_acts,id',
