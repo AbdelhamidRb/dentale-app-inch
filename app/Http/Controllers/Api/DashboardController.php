@@ -25,14 +25,6 @@ class DashboardController extends Controller
             WHERE is_archived = 0
         ", [$monthStart]);
 
-        // Patients distincts ayant un RDV ce mois (hors annulés/no-show)
-        $visitedThisMonth = (int) DB::selectOne("
-            SELECT COUNT(DISTINCT patient_id) AS cnt
-            FROM appointments
-            WHERE scheduled_date >= ?
-              AND status NOT IN ('NO_SHOW','ANNULE')
-        ", [$monthStart])->cnt;
-
         // ── 2. Paiements aujourd'hui ─────────────────────────────────
         $paymentsToday = DB::selectOne("
             SELECT COUNT(*) AS cnt, COALESCE(SUM(pt.amount), 0) AS total
@@ -61,7 +53,7 @@ class DashboardController extends Controller
             SELECT COALESCE(SUM(c.total_price), 0) AS s
             FROM consultations c
             JOIN patients p ON p.id = c.patient_id
-            WHERE c.status = 'TERMINE' AND p.is_archived = 0
+            WHERE p.is_archived = 0
         ")->s;
         $unpaid = max(0, $totalDette - (float) ($revenueStats->total_ever ?? 0));
 
@@ -116,9 +108,8 @@ class DashboardController extends Controller
 
         return response()->json([
             'patients' => [
-                'total'             => (int) ($patientStats->total ?? 0),
-                'new_this_month'    => (int) ($patientStats->new_month ?? 0),
-                'visited_this_month'=> $visitedThisMonth,
+                'total'          => (int) ($patientStats->total ?? 0),
+                'new_this_month' => (int) ($patientStats->new_month ?? 0),
             ],
             'payments_today' => [
                 'count'  => (int) ($paymentsToday->cnt ?? 0),
