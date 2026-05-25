@@ -161,7 +161,9 @@
 
                     <!-- État vide -->
                     <div v-if="patients.length === 0" class="flex flex-col items-center justify-center py-16 text-slate-400">
-                        <span class="text-4xl mb-3">👤</span>
+                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                            <UserX class="w-6 h-6 text-slate-400" />
+                        </div>
                         <p class="text-sm font-medium">Aucun patient trouvé</p>
                         <p v-if="filters.search" class="text-xs mt-1">Essayez avec d'autres mots-clés</p>
                     </div>
@@ -274,6 +276,7 @@ import {
     Bell,
     RotateCcw,
     ChevronRight,
+    UserX,
 } from "lucide-vue-next";
 import { usePatients } from "../composables/usePatients";
 import PatientPanel from "../components/patients/PatientPanel.vue";
