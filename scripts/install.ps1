@@ -1,38 +1,35 @@
-# ═══════════════════════════════════════════════════════════════
-#  install.ps1  —  Installation automatique  |  Dental App
-#  Prérequis : Laragon Full installé dans C:\laragon
-#  Usage     : Double-clic (PowerShell se lance automatiquement)
-# ═══════════════════════════════════════════════════════════════
+# Installation automatique Dental App
+# Prerequis : Laragon installe dans C:\laragon
+# Usage : clic droit INSTALLER.bat -> Executer en tant qu'administrateur
 
-# ─── Configuration ─────────────────────────────────────────────
-$GITHUB_REPO  = "hamidrherib/dental-app-inch"   # ton repo GitHub
-$BRANCH       = "main"
-$APP_DIR      = "C:\laragon\www\dental-app-inch"
-$DB_NAME      = "dental_db_inch"
-$DB_USER      = "root"
-$DB_PASS      = ""                               # Laragon : root sans mot de passe par défaut
-$APP_URL      = "http://dental-app-inch.test"
-$VHOST_FILE   = "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf"
+$GITHUB_REPO = "AbdelhamidRb/dentale-app-inch"
+$BRANCH      = "main"
+$APP_DIR     = "C:\laragon\www\dental-app-inch"
+$DB_NAME     = "dental_db_inch"
+$DB_USER     = "root"
+$DB_PASS     = ""
+$APP_URL     = "http://dental-app-inch.test"
 
-# ─── Chemins Laragon ───────────────────────────────────────────
 $PHP      = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
 $COMPOSER = "C:\laragon\bin\composer\composer.phar"
 $GIT      = "C:\laragon\bin\git\bin\git.exe"
 $MYSQL    = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
-$NODE     = "C:\laragon\bin\nodejs\node-v22\node.exe"
-$NPM      = "C:\laragon\bin\nodejs\node-v22\npm.cmd"
 
-# ═══════════════════════════════════════════════════════════════
-function Step($n, $total, $msg) {
-    Write-Host ""
-    Write-Host "[$n/$total] $msg" -ForegroundColor Cyan
-}
-function OK($msg)    { Write-Host "  OK  $msg" -ForegroundColor Green }
-function ERR($msg)   { Write-Host "  [ERREUR] $msg" -ForegroundColor Red; Read-Host "Appuyez sur Entree pour quitter"; exit 1 }
-function WARN($msg)  { Write-Host "  ATTENTION  $msg" -ForegroundColor Yellow }
-function INFO($msg)  { Write-Host "  $msg" }
+# Ajouter Git au PATH pour que Composer puisse l'utiliser
+$env:Path = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:Path"
 
-# ═══════════════════════════════════════════════════════════════
+function Step($n, $t, $msg) { Write-Host ""; Write-Host "[$n/$t] $msg" -ForegroundColor Cyan }
+function OK($msg)   { Write-Host "  OK  $msg" -ForegroundColor Green }
+function ERR($msg)  { Write-Host "  [ERREUR] $msg" -ForegroundColor Red; Read-Host "Appuyez sur Entree pour quitter"; exit 1 }
+function WARN($msg) { Write-Host "  ATTENTION  $msg" -ForegroundColor Yellow }
+
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+# Detecter le Bureau (OneDrive ou classique)
+$DESKTOP = "$env:USERPROFILE\OneDrive\Desktop"
+if (-not (Test-Path $DESKTOP)) { $DESKTOP = "$env:USERPROFILE\Desktop" }
+if (-not (Test-Path $DESKTOP)) { $DESKTOP = [Environment]::GetFolderPath("Desktop") }
+
 Clear-Host
 Write-Host "=================================================="
 Write-Host "   Installation Dental App"
@@ -40,52 +37,56 @@ Write-Host "=================================================="
 Write-Host ""
 $needRestart = $false
 
-# ─── Vérification Laragon Full ─────────────────────────────────
-Step 1 10 "Vérification de Laragon..."
+# ── 1. Verifier Laragon ────────────────────────────────────────
+Step 1 8 "Verification de Laragon..."
+foreach ($tool in @($PHP, $COMPOSER, $GIT, $MYSQL)) {
+    if (-not (Test-Path $tool)) { ERR "Outil manquant : $tool`nInstallez Laragon depuis https://laragon.org/download/" }
+}
+OK "Laragon detecte"
 
-$required = @($PHP, $COMPOSER, $GIT, $MYSQL, $NODE, $NPM)
-foreach ($tool in $required) {
-    if (-not (Test-Path $tool)) {
-        ERR "Outil manquant : $tool`n`n  Installez Laragon Full depuis https://laragon.org/download/`n  Choisissez la version 'Full' (pas Lite)"
+# ── 2. Verifier licence ────────────────────────────────────────
+Step 2 8 "Verification de la licence..."
+$licFile = Join-Path $PSScriptRoot "dental-app.lic"
+if (-not (Test-Path $licFile)) { ERR "dental-app.lic introuvable dans le meme dossier que INSTALLER.bat" }
+OK "Licence trouvee"
+
+# ── 3. Activer extension zip dans PHP ─────────────────────────
+Step 3 8 "Configuration PHP..."
+$phpIni = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.ini"
+if (Test-Path $phpIni) {
+    $ini = Get-Content $phpIni
+    if ($ini -match ';extension=zip') {
+        ($ini) -replace ';extension=zip', 'extension=zip' | Set-Content $phpIni
+        OK "Extension zip activee"
+    } else {
+        OK "Extension zip deja active"
     }
 }
-OK "Laragon Full détecté"
 
-# ─── Vérification licence ──────────────────────────────────────
-Step 2 10 "Vérification de la licence..."
-
-$licFile = Join-Path $PSScriptRoot "..\dental-app.lic"
-if (-not (Test-Path $licFile)) {
-    ERR "Fichier dental-app.lic introuvable.`n`n  Ce fichier doit être fourni avec le script d'installation.`n  Contactez votre fournisseur."
-}
-OK "Fichier de licence trouvé"
-
-# ─── Cloner le projet ──────────────────────────────────────────
-Step 3 10 "Téléchargement de l'application..."
-
+# ── 4. Cloner le projet ────────────────────────────────────────
+Step 4 8 "Telechargement de l'application..."
 if (Test-Path $APP_DIR) {
-    WARN "Le dossier $APP_DIR existe déjà."
-    $overwrite = Read-Host "  Écraser ? (oui/non)"
-    if ($overwrite -ne 'oui') { Write-Host "Installation annulée."; exit 0 }
+    WARN "Le dossier $APP_DIR existe deja."
+    $overwrite = Read-Host "  Ecraser et reinstaller ? (oui/non)"
+    if ($overwrite -ne 'oui') { Write-Host "Installation annulee."; exit 0 }
     Remove-Item $APP_DIR -Recurse -Force
 }
-
 & $GIT clone "https://github.com/$GITHUB_REPO.git" $APP_DIR --branch $BRANCH --depth 1 2>&1 | Out-Null
-if (-not (Test-Path "$APP_DIR\artisan")) { ERR "Clonage GitHub échoué. Vérifiez votre connexion internet." }
-OK "Application téléchargée"
-
-# ─── Copier la licence ─────────────────────────────────────────
+if (-not (Test-Path "$APP_DIR\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
 Copy-Item $licFile "$APP_DIR\dental-app.lic" -Force
-OK "Licence installée"
+OK "Application telechargee"
 
-# ─── Fichier .env ──────────────────────────────────────────────
-Step 4 10 "Configuration de l'environnement..."
-
+# ── 5. Fichier .env ────────────────────────────────────────────
+Step 5 8 "Configuration de l'environnement..."
 $envContent = @"
-APP_NAME="Dental App"
+APP_NAME=DentalApp
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=$APP_URL
+APP_KEY=
+
+APP_LOCALE=fr
+APP_FALLBACK_LOCALE=fr
 
 LOG_CHANNEL=stack
 LOG_LEVEL=error
@@ -98,229 +99,116 @@ DB_USERNAME=$DB_USER
 DB_PASSWORD=$DB_PASS
 
 FILESYSTEM_DISK=local
+SESSION_DRIVER=cookie
+SESSION_LIFETIME=480
+CACHE_STORE=file
+QUEUE_CONNECTION=database
+BCRYPT_ROUNDS=12
 "@
-
 Set-Content -Path "$APP_DIR\.env" -Value $envContent -Encoding utf8
-OK ".env créé"
+OK ".env cree"
 
-# ─── Composer install ──────────────────────────────────────────
-Step 5 10 "Installation des dépendances PHP..."
-
+# ── 6. Composer + cle Laravel ──────────────────────────────────
+Step 6 8 "Installation des dependances PHP..."
 $composerCmd = "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_DIR`""
 cmd /c $composerCmd 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { ERR "composer install a échoué." }
-OK "Dépendances PHP installées"
-
-# ─── Clé Laravel ───────────────────────────────────────────────
-Step 6 10 "Génération de la clé Laravel..."
-
+if ($LASTEXITCODE -ne 0) { ERR "composer install a echoue." }
 & $PHP "$APP_DIR\artisan" key:generate --force 2>&1 | Out-Null
-OK "Clé Laravel générée"
+OK "Dependances PHP installees + cle generee"
 
-# ─── Base de données ───────────────────────────────────────────
-Step 7 10 "Création de la base de données..."
-
+# ── 7. Base de donnees ─────────────────────────────────────────
+Step 7 8 "Creation de la base de donnees..."
 $psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName               = $MYSQL
-$psi.Arguments              = "-u $DB_USER"
-if ($DB_PASS) { $psi.Arguments += " -p$DB_PASS" }
-$psi.RedirectStandardInput  = $true
-$psi.RedirectStandardError  = $true
-$psi.UseShellExecute        = $false
-$psi.CreateNoWindow         = $true
-
+$psi.FileName              = $MYSQL
+$psi.Arguments             = "-u $DB_USER"
+$psi.RedirectStandardInput = $true
+$psi.RedirectStandardError = $true
+$psi.UseShellExecute       = $false
+$psi.CreateNoWindow        = $true
 $proc = [System.Diagnostics.Process]::Start($psi)
 $proc.StandardInput.WriteLine("CREATE DATABASE IF NOT EXISTS ``$DB_NAME`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
 $proc.StandardInput.Close()
 $proc.WaitForExit()
+if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base. MySQL est-il demarre dans Laragon ?" }
 
-if ($proc.ExitCode -ne 0) { ERR "Création de la base de données échouée. MySQL est-il démarré dans Laragon ?" }
-OK "Base de données créée"
-
-# ─── Migrations + Seed ─────────────────────────────────────────
 & $PHP "$APP_DIR\artisan" migrate --force 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { ERR "Migrations échouées." }
-
+if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
 & $PHP "$APP_DIR\artisan" db:seed --class=DemoDataSeeder --force 2>&1 | Out-Null
-OK "Base de données initialisée"
-
-# ─── Storage link ──────────────────────────────────────────────
 & $PHP "$APP_DIR\artisan" storage:link --force 2>&1 | Out-Null
-OK "Lien storage créé"
+& $PHP "$APP_DIR\artisan" optimize 2>&1 | Out-Null
+OK "Base de donnees initialisee"
 
-# ─── npm install + build ───────────────────────────────────────
-Step 8 10 "Build du frontend..."
+# ── 8. Apache + Firewall + IP ──────────────────────────────────
+Step 8 8 "Configuration reseau..."
 
-$env:Path = "C:\laragon\bin\nodejs\node-v22;$env:Path"
-cmd /c "`"$NPM`" install --prefix `"$APP_DIR`" 2>&1" | Out-Null
-if ($LASTEXITCODE -ne 0) { ERR "npm install a échoué." }
-
-cmd /c "`"$NPM`" run build --prefix `"$APP_DIR`" 2>&1" | Out-Null
-if ($LASTEXITCODE -ne 0) { ERR "npm run build a échoué." }
-OK "Frontend compilé"
-
-# ─── VirtualHost Apache ────────────────────────────────────────
-Step 9 10 "Configuration Apache..."
-
-# Détecter l'IP locale pour accès réseau (assistante, téléphones)
 $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
-    Sort-Object InterfaceMetric |
-    Select-Object -First 1).IPAddress
+    Sort-Object InterfaceMetric | Select-Object -First 1).IPAddress
 if (-not $localIP) { $localIP = "127.0.0.1" }
 
-$vhostContent = @"
-<VirtualHost *:80>
-    ServerName dental-app-inch.test
-    DocumentRoot "C:/laragon/www/dental-app-inch/public"
-    <Directory "C:/laragon/www/dental-app-inch/public">
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-"@
-Set-Content -Path $VHOST_FILE -Value $vhostContent -Encoding utf8
+$vh1 = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Value $vh1 -Encoding utf8
 
-# VirtualHost dental.local (mDNS — accès par nom depuis tous les appareils)
-$localConfFile = "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf"
-$localConf = @"
-<VirtualHost *:80>
-    ServerName dental.local
-    ServerAlias dental
-    DocumentRoot "C:/laragon/www/dental-app-inch/public"
-    <Directory "C:/laragon/www/dental-app-inch/public">
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-"@
-Set-Content -Path $localConfFile -Value $localConf -Encoding utf8
+$vh2 = "<VirtualHost *:80>`n    ServerName dental.local`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf" -Value $vh2 -Encoding utf8
 
-# VirtualHost IP (fallback si dental.local ne marche pas encore)
-$ipConfFile = "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf"
-$ipConf = @"
-<VirtualHost ${localIP}:80>
-    ServerName $localIP
-    DocumentRoot "C:/laragon/www/dental-app-inch/public"
-    <Directory "C:/laragon/www/dental-app-inch/public">
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-"@
-Set-Content -Path $ipConfFile -Value $ipConf -Encoding utf8
+$vh3 = "<VirtualHost ${localIP}:80>`n    ServerName $localIP`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf" -Value $vh3 -Encoding utf8
 
-OK "VirtualHost Apache configuré (dental.local + IP $localIP)"
-
-# ─── Renommer le PC en 'dental' (pour que dental.local fonctionne) ──
-$currentName = $env:COMPUTERNAME
-if ($currentName -ne "dental") {
-    if ($isAdmin) {
-        Rename-Computer -NewName "dental" -Force -ErrorAction SilentlyContinue
-        OK "PC renommé en 'dental' → dental.local disponible après redémarrage"
-        $needRestart = $true
-    } else {
-        WARN "PC non renommé (nécessite admin) — relancez en administrateur"
-    }
-} else {
-    OK "PC déjà nommé 'dental' → dental.local actif"
-}
-
-# ─── Règle Firewall port 80 ────────────────────────────────────
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
 if (-not $fwRule) {
     New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
-    OK "Règle Firewall port 80 ajoutée"
-} else {
-    OK "Règle Firewall port 80 déjà présente"
+    OK "Firewall port 80 ouvert"
 }
 
-# ─── Backup automatique ────────────────────────────────────────
-Step 10 10 "Planification des sauvegardes automatiques..."
+if ($isAdmin -and $env:COMPUTERNAME -ne "dental") {
+    Rename-Computer -NewName "dental" -Force -ErrorAction SilentlyContinue
+    OK "PC renomme en 'dental' (dental.local actif apres redemarrage)"
+    $needRestart = $true
+}
 
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if ($isAdmin) {
     & "$APP_DIR\scripts\schedule-tasks.ps1" | Out-Null
-    OK "Sauvegardes planifiées (Lun-Ven 18h, Sam 12h30)"
-} else {
-    WARN "Sauvegardes non planifiées (relancez install.ps1 en Administrateur pour activer)"
+    OK "Sauvegardes automatiques planifiees"
 }
 
-# ─── IP fixe (accès réseau assistante + téléphones) ───────────
-if ($isAdmin) {
-    $adapter = Get-NetIPConfiguration |
-        Where-Object { $_.IPv4DefaultGateway -ne $null -and $_.NetAdapter.Status -eq 'Up' } |
-        Select-Object -First 1
-    if ($adapter) {
-        $ifAlias   = $adapter.InterfaceAlias
-        $curIP     = $adapter.IPv4Address.IPAddress
-        $prefixLen = $adapter.IPv4Address.PrefixLength
-        $gateway   = $adapter.IPv4DefaultGateway.NextHop
-        $dns       = ($adapter.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | Select-Object -ExpandProperty ServerAddresses -First 1)
-        if (-not $dns) { $dns = "8.8.8.8" }
+OK "Apache configure (dental-app-inch.test + http://$localIP)"
 
-        $ipConfig = Get-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -ErrorAction SilentlyContinue
-        if ($ipConfig.PrefixOrigin -ne 'Manual') {
-            Remove-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
-            Remove-NetRoute -InterfaceAlias $ifAlias -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
-            New-NetIPAddress -InterfaceAlias $ifAlias -AddressFamily IPv4 -IPAddress $curIP -PrefixLength $prefixLen -DefaultGateway $gateway -ErrorAction SilentlyContinue | Out-Null
-            Set-DnsClientServerAddress -InterfaceAlias $ifAlias -ServerAddresses $dns -ErrorAction SilentlyContinue | Out-Null
-            $localIP = $curIP
-            OK "IP fixée : $localIP (ne changera plus)"
-        } else {
-            OK "IP déjà fixe : $localIP"
-        }
-    }
-} else {
-    WARN "IP non fixée (relancez install.ps1 en Administrateur pour activer)"
-    INFO "  Ou lancez le raccourci 'Fixer IP Reseau.lnk' sur le Bureau"
-}
+# ── Raccourcis Bureau ──────────────────────────────────────────
+Copy-Item "$APP_DIR\scripts\DEMARRER.bat"  "$DESKTOP\DEMARRER.bat"  -Force
+Copy-Item "$APP_DIR\scripts\FERMER.bat"    "$DESKTOP\FERMER.bat"    -Force
+Copy-Item "$APP_DIR\scripts\BACKUP.bat"    "$DESKTOP\BACKUP.bat"    -Force
+Copy-Item "$APP_DIR\scripts\RESTAURER.bat" "$DESKTOP\RESTAURER.bat" -Force
 
-# ─── Raccourcis Bureau ─────────────────────────────────────────
-Copy-Item "$APP_DIR\scripts\DEMARRER.bat"  "$env:USERPROFILE\Desktop\DEMARRER.bat"  -Force
-Copy-Item "$APP_DIR\scripts\FERMER.bat"    "$env:USERPROFILE\Desktop\FERMER.bat"    -Force
-Copy-Item "$APP_DIR\scripts\BACKUP.bat"    "$env:USERPROFILE\Desktop\BACKUP.bat"    -Force
-Copy-Item "$APP_DIR\scripts\RESTAURER.bat" "$env:USERPROFILE\Desktop\RESTAURER.bat" -Force
+# Compiler et copier DentalApp.exe
+& $PHP "$APP_DIR\artisan" 2>&1 | Out-Null
+powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1" 2>&1 | Out-Null
 
-# Raccourci pour fixer l'IP (utile si install n'était pas admin)
-$shell = New-Object -ComObject WScript.Shell
-$lnk = $shell.CreateShortcut("$env:USERPROFILE\Desktop\Fixer IP Reseau.lnk")
-$lnk.TargetPath    = "powershell.exe"
-$lnk.Arguments     = "-ExecutionPolicy Bypass -File `"$APP_DIR\scripts\set-static-ip.ps1`""
-$lnk.IconLocation  = "C:\Windows\System32\imageres.dll,25"
-$lnk.Description   = "Fixer l'IP réseau pour accès assistante"
-$lnk.Save()
+OK "Raccourcis crees sur le Bureau"
 
-OK "Raccourcis créés sur le Bureau"
-
-# ─── Résumé final ──────────────────────────────────────────────
+# ── Resume final ───────────────────────────────────────────────
 Write-Host ""
 Write-Host "=================================================="
 Write-Host "  INSTALLATION TERMINEE !" -ForegroundColor Green
 Write-Host "=================================================="
 Write-Host ""
-Write-Host "  1. Lancez DentalApp.exe sur le Bureau"
-Write-Host "  2. PC dentiste        : $APP_URL"
-Write-Host "  3. Autres appareils   : http://dental.local  (apres redemarrage)"
-Write-Host "     (fallback IP)      : http://$localIP"
+Write-Host "  PC dentiste      : http://dental-app-inch.test"
+Write-Host "  Autres appareils : http://$localIP"
 Write-Host ""
 Write-Host "  Comptes par defaut :"
-Write-Host "    Dentiste  : dentiste@demo.com  /  password"
-Write-Host "    Assistant : assistant@demo.com /  password"
+Write-Host "    Dentiste  : dentiste@demo.com  / password"
+Write-Host "    Assistant : assistant@demo.com / password"
 Write-Host ""
 Write-Host "  PENSEZ A CHANGER LES MOTS DE PASSE !" -ForegroundColor Yellow
 Write-Host ""
 
 if ($needRestart) {
-    Write-Host "=================================================="
-    Write-Host "  REDEMARRAGE REQUIS" -ForegroundColor Yellow
-    Write-Host "  Le PC a ete renomme 'dental'."
-    Write-Host "  Apres le redemarrage : http://dental.local"
-    Write-Host "  fonctionnera sur tous les appareils du cabinet."
-    Write-Host "=================================================="
+    Write-Host "  Un redemarrage est necessaire pour activer dental.local" -ForegroundColor Yellow
     Write-Host ""
     $r = Read-Host "Redemarrer maintenant ? (oui/non)"
     if ($r -eq "oui") { Restart-Computer -Force }
 } else {
+    Write-Host "  Lancez DentalApp.exe sur le Bureau pour demarrer l'application."
+    Write-Host ""
     Read-Host "Appuyez sur Entree pour terminer"
 }
