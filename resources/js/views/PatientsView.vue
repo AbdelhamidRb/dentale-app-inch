@@ -119,11 +119,18 @@
                         <!-- Nom + sous-ligne -->
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-slate-800 truncate">{{ patient.full_name }}</p>
-                            <!-- Mobile : téléphone + âge -->
+                            <!-- Mobile : téléphone + âge + réactiver -->
                             <div class="flex items-center gap-1.5 lg:hidden mt-0.5">
                                 <span class="text-xs text-slate-400">{{ patient.phone }}</span>
                                 <span class="text-slate-200 text-xs">·</span>
                                 <span class="text-xs text-slate-400">{{ patient.age ? patient.age + ' ans' : '—' }}</span>
+                                <template v-if="filters.archived">
+                                    <span class="text-slate-200 text-xs">·</span>
+                                    <button @click.stop="handleRestore(patient.id)"
+                                        class="text-[10px] text-green-600 font-medium flex items-center gap-0.5">
+                                        <RotateCcw class="w-2.5 h-2.5" /> Réactiver
+                                    </button>
+                                </template>
                             </div>
                             <!-- Desktop : couverture + réactiver -->
                             <div class="hidden lg:flex items-center gap-2 mt-0.5">

@@ -9,10 +9,10 @@ const originalFetch = window.fetch
 window.fetch = async (...args) => {
     const res = await originalFetch(...args)
 
-    // 401 : token expiré ou invalide → déconnexion immédiate
+    // 401 : token expiré ou invalide → déconnexion (API uniquement)
     if (res.status === 401) {
         const url = typeof args[0] === 'string' ? args[0] : args[0]?.url ?? ''
-        if (!url.includes('/api/login')) {
+        if (url.includes('/api/') && !url.includes('/api/login')) {
             authStore.token = null
             authStore.user  = null
             localStorage.removeItem('token')

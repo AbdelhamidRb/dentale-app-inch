@@ -112,10 +112,10 @@
         </div>
 
         <!-- ── Contenu scrollable ─────────────────────────────────────── -->
-        <div v-if="activeTab === 'schema'" class="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        <div v-if="activeTab === 'schema'" class="flex-1 overflow-y-auto pb-24 lg:pb-0">
             <ToothChart :patient-id="patient.id" />
         </div>
-        <div v-else class="flex-1 overflow-y-auto p-5 space-y-5 pb-16 lg:pb-5">
+        <div v-else class="flex-1 overflow-y-auto p-5 space-y-5 pb-24 lg:pb-5">
             <!-- ── Section : Alertes critiques (en haut si présentes) ─── -->
             <div
                 v-if="hasCriticalAlerts"
