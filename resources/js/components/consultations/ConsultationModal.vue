@@ -128,26 +128,6 @@
                                         }}"
                                     </div>
                                 </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-medium text-slate-500 mb-1.5"
-                                        >Statut</label
-                                    >
-                                    <select
-                                        v-model="form.status"
-                                        class="w-full border border-slate-200 rounded-xl px-3 py-2 sm:py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                    >
-                                        <option value="BROUILLON">
-                                            Brouillon
-                                        </option>
-                                        <option value="EN_COURS">
-                                            En cours
-                                        </option>
-                                        <option value="TERMINE">
-                                            Terminée
-                                        </option>
-                                    </select>
-                                </div>
                             </div>
 
                             <!-- Lien RDV (optionnel) -->
@@ -527,7 +507,7 @@ const defaultForm = () => ({
     id: null,
     patient_id: props.appointmentPatient?.id ?? "",
     appointment_id: props.appointmentId ?? null,
-    status: "BROUILLON",
+    status: "EN_COURS",
     notes: "",
     acts: [],
 });
