@@ -491,6 +491,22 @@
             </div>
         </Teleport>
     </div>
+
+    <ConfirmModal
+        :model-value="!!confirmDeleteAlertId"
+        @update:model-value="v => { if (!v) confirmDeleteAlertId = null }"
+        title="Supprimer l'alerte"
+        message="Cette alerte médicale sera <strong>supprimée définitivement</strong>."
+        confirm-label="Supprimer"
+        @confirm="doDeleteAlert" />
+
+    <ConfirmModal
+        :model-value="!!confirmDeleteDocId"
+        @update:model-value="v => { if (!v) confirmDeleteDocId = null }"
+        title="Supprimer le document"
+        message="Ce document sera <strong>supprimé définitivement</strong> du dossier patient."
+        confirm-label="Supprimer"
+        @confirm="doDeleteDocument" />
 </template>
 
 <script setup>
@@ -507,6 +523,7 @@ import {
     AlertTriangle,
 } from "lucide-vue-next";
 import ToothChart from "./ToothChart.vue";
+import ConfirmModal from "../ui/ConfirmModal.vue";
 
 const router = useRouter();
 
@@ -594,9 +611,14 @@ async function submitAlert() {
     }
 }
 
-async function handleDeleteAlert(alertId) {
-    if (!confirm("Supprimer cette alerte médicale ?")) return;
-    await props.deleteAlert(patient.value.id, alertId);
+const confirmDeleteAlertId = ref(null);
+const confirmDeleteDocId   = ref(null);
+
+function handleDeleteAlert(alertId) { confirmDeleteAlertId.value = alertId; }
+
+async function doDeleteAlert() {
+    await props.deleteAlert(patient.value.id, confirmDeleteAlertId.value);
+    confirmDeleteAlertId.value = null;
 }
 
 // ─── Documents ────────────────────────────────────────────────────
@@ -645,8 +667,10 @@ async function confirmUpload() {
     }
 }
 
-async function handleDeleteDocument(docId) {
-    if (!confirm("Supprimer ce document ?")) return;
-    await props.deleteDocument(patient.value.id, docId);
+function handleDeleteDocument(docId) { confirmDeleteDocId.value = docId; }
+
+async function doDeleteDocument() {
+    await props.deleteDocument(patient.value.id, confirmDeleteDocId.value);
+    confirmDeleteDocId.value = null;
 }
 </script>

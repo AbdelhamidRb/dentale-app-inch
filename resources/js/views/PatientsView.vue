@@ -237,11 +237,28 @@
             @close="showForm = false"
             @saved="handleSaved"
         />
+
+        <ConfirmModal
+            :model-value="!!confirmArchiveId"
+            @update:model-value="v => { if (!v) confirmArchiveId = null }"
+            title="Archiver le patient"
+            message="Ce patient sera archivé et n'apparaîtra plus dans les listes actives."
+            confirm-label="Archiver"
+            @confirm="doArchive" />
+
+        <ConfirmModal
+            :model-value="!!confirmRestoreId"
+            @update:model-value="v => { if (!v) confirmRestoreId = null }"
+            title="Réactiver le patient"
+            message="Ce patient sera remis dans la liste des patients actifs."
+            confirm-label="Réactiver"
+            @confirm="doRestore" />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
+import ConfirmModal from "../components/ui/ConfirmModal.vue";
 import {
     Search,
     Plus,
@@ -299,14 +316,20 @@ async function handleSaved(data, isEdit) {
     }
 }
 
-async function handleArchive(id) {
-    if (!confirm("Archiver ce patient ?")) return;
-    await archivePatient(id);
+const confirmArchiveId  = ref(null);
+const confirmRestoreId  = ref(null);
+
+function handleArchive(id) { confirmArchiveId.value = id; }
+function handleRestore(id) { confirmRestoreId.value = id; }
+
+async function doArchive() {
+    await archivePatient(confirmArchiveId.value);
+    confirmArchiveId.value = null;
 }
 
-async function handleRestore(id) {
-    if (!confirm("Réactiver ce patient ?")) return;
-    await restorePatient(id);
+async function doRestore() {
+    await restorePatient(confirmRestoreId.value);
+    confirmRestoreId.value = null;
 }
 </script>
 

@@ -281,7 +281,7 @@
                                 </div>
                                 <button
                                     v-if="isDentist"
-                                    @click="handleDeleteTransaction(t.id)"
+                                    @click="confirmDeleteTxId = t.id"
                                     class="lg:opacity-0 lg:group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
                                 >
                                     <svg
@@ -433,11 +433,20 @@
             </div>
         </div>
     </Transition>
+
+    <ConfirmModal
+        :model-value="!!confirmDeleteTxId"
+        @update:model-value="v => { if (!v) confirmDeleteTxId = null }"
+        title="Supprimer le versement"
+        message="Ce versement sera <strong>supprimé définitivement</strong>."
+        confirm-label="Supprimer"
+        @confirm="handleDeleteTransaction(confirmDeleteTxId)" />
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
 import PaymentStatusBadge from "./PaymentStatusBadge.vue";
+import ConfirmModal from "../ui/ConfirmModal.vue";
 import { usePayments } from "../../composables/usePayments";
 
 const props = defineProps({
@@ -459,9 +468,10 @@ const today = new Date().toISOString().split("T")[0];
 const newTx = ref({ amount: null, date: today, notes: "" });
 
 // ─── Copie locale des transactions pour réactivité immédiate ──────
-const localTransactions = ref([]);
-const adding = ref(false);
-const txError = ref(null);
+const localTransactions  = ref([]);
+const adding             = ref(false);
+const txError            = ref(null);
+const confirmDeleteTxId  = ref(null);
 
 // Charge les détails quand on change de patient
 watch(() => props.patient?.id, async (id) => {
@@ -526,8 +536,6 @@ async function handleAddTransaction() {
 }
 
 async function handleDeleteTransaction(txId) {
-    if (!confirm('Supprimer ce versement ?')) return
-    // Suppression optimiste immédiate
     const backup = [...localTransactions.value]
     localTransactions.value = localTransactions.value.filter(t => t.id !== txId)
     try {
@@ -535,7 +543,7 @@ async function handleDeleteTransaction(txId) {
         emit('updated')
     } catch (e) {
         txError.value = e.message
-        localTransactions.value = backup // restaure si erreur
+        localTransactions.value = backup
     }
 }
 // ─── Helpers ──────────────────────────────────────────────────────

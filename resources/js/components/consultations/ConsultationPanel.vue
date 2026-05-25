@@ -180,7 +180,7 @@
             <div class="border-t border-slate-100 px-4 pt-3 pb-20 lg:pb-3 shrink-0 space-y-2">
                 <!-- Clôturer : seulement si pas encore terminée -->
                 <button v-if="consultation.status !== 'TERMINE' && isDentist"
-                        @click="handleClose"
+                        @click="showConfirmClose = true"
                         :disabled="actionLoading"
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
                                bg-green-600 text-white hover:bg-green-700
@@ -193,7 +193,7 @@
 
                 <!-- Supprimer : dentiste uniquement -->
                 <button v-if="isDentist"
-                        @click="handleDelete"
+                        @click="showConfirmDelete = true"
                         :disabled="actionLoading"
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
                                border border-red-200 bg-red-50 text-red-600 hover:bg-red-100
@@ -207,6 +207,18 @@
             </div>
         </div>
     </Transition>
+
+    <ConfirmModal v-model="showConfirmClose"
+        title="Clôturer la consultation"
+        message="La consultation sera marquée comme <strong>Terminée</strong>. Cette action est irréversible."
+        confirm-label="Clôturer"
+        @confirm="handleClose" />
+
+    <ConfirmModal v-model="showConfirmDelete"
+        title="Supprimer la consultation"
+        message="Cette consultation et toutes ses interventions seront <strong>supprimées définitivement</strong>."
+        confirm-label="Supprimer"
+        @confirm="handleDelete" />
 
     <!-- ══════════════════════════════════════════════════════════
          Modal schéma dentaire — 2 colonnes
@@ -364,6 +376,7 @@
 import { ref, computed, watch } from 'vue';
 import ConsultationStatusBadge from './ConsultationStatusBadge.vue';
 import ToothChart from './ToothChart.vue';
+import ConfirmModal from '../ui/ConfirmModal.vue';
 import { useConsultations } from '../../composables/useConsultations';
 
 const props = defineProps({
@@ -383,6 +396,8 @@ const actionLoading  = ref(false);
 const today = new Date().toISOString().split('T')[0];
 
 // ─── Modal schéma dentaire ────────────────────────────────────────
+const showConfirmClose  = ref(false);
+const showConfirmDelete = ref(false);
 const showChart   = ref(false);
 const activeTooth = ref(null);
 const activeActs  = computed(() => actsByTooth.value[activeTooth.value] ?? []);
@@ -427,7 +442,6 @@ async function submitAddSession() {
 }
 
 async function handleClose() {
-    if (!confirm('Clôturer définitivement cette consultation ?')) return;
     actionLoading.value = true;
     try {
         await closeConsultation(props.consultation.id);
@@ -438,7 +452,6 @@ async function handleClose() {
 }
 
 async function handleDelete() {
-    if (!confirm('Supprimer cette consultation ? Cette action est irréversible.')) return;
     actionLoading.value = true;
     try {
         await deleteConsultation(props.consultation.id);
