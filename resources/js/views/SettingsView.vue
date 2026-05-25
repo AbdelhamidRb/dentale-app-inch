@@ -183,12 +183,11 @@
             <!-- Liste desktop (tableau) -->
             <div v-else-if="acts.length" class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <!-- En-tête tableau (desktop) -->
-                <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_6rem_5rem_5rem] gap-3 px-4 py-2.5
+                <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_5rem_5rem] gap-3 px-4 py-2.5
                             border-b border-slate-100 bg-slate-50">
                     <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Code</span>
                     <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Nom</span>
                     <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Prix (MAD)</span>
-                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Durée</span>
                     <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Statut</span>
                     <span></span>
                 </div>
@@ -198,11 +197,10 @@
                          :class="['transition-colors', act.is_active ? '' : 'opacity-50']">
 
                         <!-- Desktop row -->
-                        <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_6rem_5rem_5rem] gap-3 px-4 py-3 items-center">
+                        <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_5rem_5rem] gap-3 px-4 py-3 items-center">
                             <span class="text-xs font-mono text-slate-500">{{ act.code }}</span>
                             <span class="text-sm font-medium text-slate-800 truncate">{{ act.name }}</span>
                             <span class="text-sm text-slate-700 font-semibold">{{ Number(act.base_price).toFixed(0) }} MAD</span>
-                            <span class="text-sm text-slate-500">{{ act.duration_minutes }} min</span>
                             <button @click="toggleActStatus(act)"
                                 :class="['text-xs font-medium px-2 py-0.5 rounded-full transition-colors',
                                          act.is_active
@@ -216,7 +214,12 @@
                                     <Pencil class="w-3.5 h-3.5" />
                                 </button>
                                 <button @click="confirmDeleteAct(act)"
-                                    class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    :disabled="act.in_use"
+                                    :title="act.in_use ? 'Utilisé dans des consultations' : 'Supprimer'"
+                                    :class="['p-1.5 rounded-lg transition-colors',
+                                             act.in_use
+                                                 ? 'text-slate-200 cursor-not-allowed'
+                                                 : 'text-slate-400 hover:text-red-600 hover:bg-red-50']">
                                     <Trash2 class="w-3.5 h-3.5" />
                                 </button>
                             </div>
@@ -235,11 +238,13 @@
                                                          : 'bg-slate-100 text-slate-500']">
                                             {{ act.is_active ? 'Actif' : 'Inactif' }}
                                         </button>
+                                        <span v-if="act.in_use"
+                                            class="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full font-medium">
+                                            Utilisé
+                                        </span>
                                     </div>
                                     <p class="text-sm font-medium text-slate-800 truncate">{{ act.name }}</p>
-                                    <p class="text-xs text-slate-400 mt-0.5">
-                                        {{ Number(act.base_price).toFixed(0) }} MAD · {{ act.duration_minutes }} min
-                                    </p>
+                                    <p class="text-xs text-slate-400 mt-0.5">{{ Number(act.base_price).toFixed(0) }} MAD</p>
                                 </div>
                                 <div class="flex items-center gap-1 shrink-0">
                                     <button @click="openActForm(act)"
@@ -247,7 +252,11 @@
                                         <Pencil class="w-4 h-4" />
                                     </button>
                                     <button @click="confirmDeleteAct(act)"
-                                        class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        :disabled="act.in_use"
+                                        :class="['p-2 rounded-lg transition-colors',
+                                                 act.in_use
+                                                     ? 'text-slate-200 cursor-not-allowed'
+                                                     : 'text-slate-400 hover:text-red-600 hover:bg-red-50']">
                                         <Trash2 class="w-4 h-4" />
                                     </button>
                                 </div>
@@ -288,22 +297,13 @@
                     </div>
 
                     <div class="space-y-4">
-                        <!-- Code + Nom -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Code *</label>
-                                <input v-model="actForm.code" type="text" placeholder="EX001"
-                                    class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    :class="actErrors.code ? 'border-red-400' : 'border-slate-200'" />
-                                <p v-if="actErrors.code" class="text-xs text-red-500 mt-1">{{ actErrors.code }}</p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Durée (min) *</label>
-                                <input v-model.number="actForm.duration_minutes" type="number" min="5" max="480" placeholder="30"
-                                    class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    :class="actErrors.duration_minutes ? 'border-red-400' : 'border-slate-200'" />
-                                <p v-if="actErrors.duration_minutes" class="text-xs text-red-500 mt-1">{{ actErrors.duration_minutes }}</p>
-                            </div>
+                        <!-- Code -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Code *</label>
+                            <input v-model="actForm.code" type="text" placeholder="EX001"
+                                class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                :class="actErrors.code ? 'border-red-400' : 'border-slate-200'" />
+                            <p v-if="actErrors.code" class="text-xs text-red-500 mt-1">{{ actErrors.code }}</p>
                         </div>
 
                         <!-- Nom -->
@@ -557,7 +557,7 @@ const savingAct   = ref(false);
 const actSaveError = ref('');
 const deleteActTarget = ref(null);
 
-const actFormDefault = () => ({ code: '', name: '', base_price: 0, duration_minutes: 30, is_active: true });
+const actFormDefault = () => ({ code: '', name: '', base_price: 0, is_active: true });
 const actForm  = ref(actFormDefault());
 const actErrors = ref({});
 
@@ -576,7 +576,7 @@ function openActForm(act) {
     actErrors.value   = {};
     actSaveError.value = '';
     actForm.value = act
-        ? { code: act.code, name: act.name, base_price: Number(act.base_price), duration_minutes: act.duration_minutes, is_active: act.is_active }
+        ? { code: act.code, name: act.name, base_price: Number(act.base_price), is_active: act.is_active }
         : actFormDefault();
     showActForm.value = true;
 }

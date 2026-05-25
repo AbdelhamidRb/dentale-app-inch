@@ -28,12 +28,13 @@ class CatalogAct extends Model
 
     // ─── Relations ────────────────────────────────────────────────
 
-    // Un acte peut être prévu dans plusieurs RDV
+    public function consultationActs()
+    {
+        return $this->hasMany(ConsultationAct::class);
+    }
+
     public function appointments()
     {
-        return $this->belongsToMany(
-            Appointment::class,
-            'appointment_acts'
-        );
+        return $this->belongsToMany(Appointment::class, 'appointment_acts');
     }
 }
