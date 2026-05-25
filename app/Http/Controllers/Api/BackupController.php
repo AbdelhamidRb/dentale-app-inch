@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use ZipArchive;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
@@ -147,7 +149,7 @@ class BackupController extends Controller
 
         // ─── Sauvegarder le token actuel avant écrasement de la BDD ──
         $currentToken = $request->user()->currentAccessToken();
-        $savedToken   = \DB::table('personal_access_tokens')->where('id', $currentToken->id)->first();
+        $savedToken   = DB::table('personal_access_tokens')->where('id', $currentToken->id)->first();
 
         // ─── Restaurer BDD ────────────────────────────────────────
         $sqlFile = $path . '\\database.sql';
@@ -171,7 +173,7 @@ class BackupController extends Controller
 
         // ─── Réinsérer le token pour garder la session active ─────
         if ($savedToken) {
-            \DB::table('personal_access_tokens')->updateOrInsert(
+            DB::table('personal_access_tokens')->updateOrInsert(
                 ['id' => $savedToken->id],
                 (array) $savedToken
             );
@@ -191,14 +193,15 @@ class BackupController extends Controller
                 }
                 rmdir($imgPath);
             }
+            mkdir($imgPath, 0755, true);
             $zip = new ZipArchive();
             $zip->open($zipFile);
-            $zip->extractTo(dirname($imgPath));
+            $zip->extractTo($imgPath);
             $zip->close();
         }
 
         // Correction automatique des données corrompues (encodage CP850)
-        \Artisan::call('app:fix-encoding');
+        Artisan::call('app:fix-encoding');
 
         return response()->json(['success' => true, 'restored' => $request->name]);
     }
