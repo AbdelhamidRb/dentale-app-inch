@@ -7,7 +7,10 @@ use App\Models\Patient;
 use App\Models\MedicalAlert;
 use App\Models\PatientDocument;
 use App\Models\ConsultationAct;
+use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -179,6 +182,50 @@ class PatientController extends Controller
 
         return response()->json([
             'message' => 'Patient archivé avec succès.'
+        ]);
+    }
+
+    // ─── GET /api/patients/archive-preview ───────────────────────
+    // Patients qui seraient archivés avec la config actuelle
+    public function archivePreview(Request $request)
+    {
+        $months = (int) Setting::get('archive_after_months', '18');
+
+        if ($months <= 0) {
+            return response()->json(['months' => $months, 'patients' => [], 'total' => 0]);
+        }
+
+        $cutoff = Carbon::now()->subMonths($months)->toDateString();
+
+        $patients = Patient::where('is_archived', false)
+            ->where('status', '!=', 'DECEDE')
+            ->where(function ($q) use ($cutoff) {
+                $q->where(function ($q1) use ($cutoff) {
+                    $q1->whereExists(function ($sub) {
+                            $sub->select(DB::raw(1))->from('appointments')
+                                ->whereColumn('appointments.patient_id', 'patients.id')
+                                ->where('appointments.status', 'TERMINE');
+                        })
+                        ->whereRaw('(SELECT MAX(scheduled_date) FROM appointments WHERE patient_id = patients.id AND status = ?) <= ?', ['TERMINE', $cutoff]);
+                })
+                ->orWhere(function ($q2) use ($cutoff) {
+                    $q2->whereNotExists(function ($sub) {
+                            $sub->select(DB::raw(1))->from('appointments')
+                                ->whereColumn('appointments.patient_id', 'patients.id')
+                                ->where('appointments.status', 'TERMINE');
+                        })
+                        ->where('patients.created_at', '<=', $cutoff);
+                });
+            })
+            ->withCount(['medicalAlerts', 'criticalAlerts'])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'months'   => $months,
+            'cutoff'   => $cutoff,
+            'total'    => $patients->count(),
+            'patients' => $patients->map(fn($p) => $this->formatPatient($p)),
         ]);
     }
 

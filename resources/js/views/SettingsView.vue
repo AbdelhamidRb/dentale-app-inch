@@ -279,6 +279,99 @@
             </div>
         </div>
 
+        <!-- ══ Onglet Archivage ══════════════════════════════════════ -->
+        <div v-if="activeTab === 'archive'" class="space-y-4 max-w-2xl">
+
+            <!-- Configuration -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+                <p class="font-semibold text-slate-800 mb-1">Archivage automatique</p>
+                <p class="text-xs text-slate-400 mb-4">
+                    Les patients sans visite terminée depuis ce nombre de mois sont archivés automatiquement chaque nuit.
+                    Mettre <strong>0</strong> pour désactiver.
+                </p>
+
+                <div class="flex items-center gap-3">
+                    <div class="relative w-32">
+                        <input
+                            v-model.number="archiveMonths"
+                            type="number" min="0" max="120" step="1"
+                            class="w-full px-3 py-2 pr-14 border border-slate-200 rounded-xl text-sm
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">mois</span>
+                    </div>
+                    <button
+                        @click="saveArchiveMonths"
+                        :disabled="savingArchive"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50
+                               text-white text-sm font-medium rounded-xl transition-colors"
+                    >
+                        {{ savingArchive ? 'Enregistrement…' : 'Enregistrer' }}
+                    </button>
+                    <span v-if="archiveSaved" class="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle class="w-4 h-4" /> Enregistré
+                    </span>
+                </div>
+
+                <p v-if="archiveMonths === 0" class="mt-3 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                    Archivage automatique désactivé.
+                </p>
+                <p v-else class="mt-3 text-xs text-slate-400 flex items-center gap-1.5">
+                    <Clock class="w-3.5 h-3.5" />
+                    Chaque nuit à 01h00 — patients inactifs depuis plus de {{ archiveMonths }} mois
+                </p>
+            </div>
+
+            <!-- Prévisualisation -->
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold text-slate-800">Patients concernés</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Seraient archivés avec la configuration actuelle</p>
+                    </div>
+                    <button
+                        @click="loadArchivePreview"
+                        :disabled="loadingPreview"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600
+                               border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-40"
+                    >
+                        <RotateCcw class="w-3.5 h-3.5" :class="loadingPreview ? 'animate-spin' : ''" />
+                        Actualiser
+                    </button>
+                </div>
+
+                <div v-if="loadingPreview" class="py-8 flex justify-center text-slate-400 text-sm">
+                    Analyse en cours…
+                </div>
+
+                <div v-else-if="archivePreviewPatients.length === 0" class="py-8 text-center text-sm text-slate-400">
+                    <Archive class="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                    Aucun patient à archiver pour le moment
+                </div>
+
+                <div v-else class="divide-y divide-slate-50">
+                    <div v-for="p in archivePreviewPatients" :key="p.id"
+                         class="flex items-center gap-3 px-5 py-3">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-slate-700">{{ p.full_name }}</p>
+                            <p class="text-xs text-slate-400 mt-0.5">{{ p.numero_dossier }} · Créé le {{ p.created_at }}</p>
+                        </div>
+                        <span v-if="p.has_critical_alerts"
+                              class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full shrink-0">
+                            Alerte médicale
+                        </span>
+                    </div>
+                </div>
+
+                <div v-if="archivePreviewPatients.length > 0"
+                     class="px-5 py-3 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
+                    <p class="text-xs text-amber-700">
+                        <strong>{{ archivePreviewPatients.length }}</strong> patient(s) seront archivés à la prochaine exécution
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- ── Modal formulaire acte ────────────────────────────────── -->
         <Teleport to="body">
         <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
@@ -412,7 +505,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
-         Plus, Pencil, Trash2, X, Stethoscope } from 'lucide-vue-next';
+         Plus, Pencil, Trash2, X, Stethoscope, Archive } from 'lucide-vue-next';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
 
 const activeTab = ref('backup');
@@ -420,6 +513,7 @@ const tabs = [
     { id: 'backup',   label: 'Sauvegardes' },
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'acts',     label: 'Actes' },
+    { id: 'archive',  label: 'Archivage' },
 ];
 
 // ── Backup ──────────────────────────────────────────────────────
@@ -626,9 +720,47 @@ async function doDeleteAct() {
     }
 }
 
+// ── Archivage ────────────────────────────────────────────────────
+const archiveMonths         = ref(18);
+const savingArchive         = ref(false);
+const archiveSaved          = ref(false);
+const loadingPreview        = ref(false);
+const archivePreviewPatients = ref([]);
+
+async function loadArchiveConfig() {
+    try {
+        const res = await api('/api/settings/archive_after_months');
+        archiveMonths.value = parseInt(res.value ?? '18');
+    } catch { /* silencieux */ }
+}
+
+async function saveArchiveMonths() {
+    savingArchive.value = true;
+    archiveSaved.value  = false;
+    try {
+        await api('/api/settings/archive_after_months', 'PUT', { value: String(archiveMonths.value) });
+        archiveSaved.value = true;
+        setTimeout(() => { archiveSaved.value = false; }, 3000);
+        await loadArchivePreview();
+    } finally {
+        savingArchive.value = false;
+    }
+}
+
+async function loadArchivePreview() {
+    loadingPreview.value = true;
+    try {
+        const res = await api('/api/patients/archive-preview');
+        archivePreviewPatients.value = res.patients ?? [];
+    } catch { archivePreviewPatients.value = []; }
+    finally { loadingPreview.value = false; }
+}
+
 onMounted(() => {
     loadBackups();
     loadTemplate();
     loadActs();
+    loadArchiveConfig();
+    loadArchivePreview();
 });
 </script>

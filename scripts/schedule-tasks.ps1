@@ -119,6 +119,38 @@ Write-Host "      Synchronise les backups manquants vers la cle DENTAL-BKP"
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
+#  TÂCHE 3 : Laravel Scheduler (toutes les minutes)
+#  Nécessaire pour l'archivage automatique des patients
+# ═══════════════════════════════════════════════════════════════
+$taskScheduler = "DentalApp-Scheduler"
+Unregister-ScheduledTask -TaskName $taskScheduler -Confirm:$false -ErrorAction SilentlyContinue
+
+$PHP     = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
+$artisan = "C:\laragon\www\dental-app-inch\artisan"
+
+$triggerScheduler = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -Once -At "00:00"
+$actionScheduler  = New-ScheduledTaskAction `
+    -Execute $PHP `
+    -Argument "`"$artisan`" schedule:run"
+
+$settingsScheduler = New-ScheduledTaskSettingsSet `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
+
+Register-ScheduledTask `
+    -TaskName $taskScheduler `
+    -Action $actionScheduler `
+    -Trigger $triggerScheduler `
+    -Settings $settingsScheduler `
+    -RunLevel Highest `
+    -Description "Déclenche le scheduler Laravel chaque minute (archivage patients automatique à 01h00)" `
+    -Force | Out-Null
+
+Write-Host "  OK  $taskScheduler" -ForegroundColor Green
+Write-Host "      Chaque minute — archivage automatique a 01h00"
+Write-Host ""
+
+# ═══════════════════════════════════════════════════════════════
 Write-Host "Toutes les taches sont configurees !" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Pour tester le backup maintenant :"
@@ -126,4 +158,7 @@ Write-Host "  Start-ScheduledTask -TaskName '$taskBackup'"
 Write-Host ""
 Write-Host "Pour tester la sync USB (branchez d'abord la cle DENTAL-BKP) :"
 Write-Host "  Start-ScheduledTask -TaskName '$taskUSB'"
+Write-Host ""
+Write-Host "Pour tester l'archivage maintenant :"
+Write-Host "  Start-ScheduledTask -TaskName '$taskScheduler'"
 Write-Host ""

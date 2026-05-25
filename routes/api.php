@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\SettingsController;
 
 
 // Routes publiques
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // Routes authentifiées
 Route::middleware(['auth:sanctum', 'license'])->group(function () {
@@ -78,31 +78,9 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::patch('/consultations/{consultation}/close', [ConsultationController::class, 'close']);
 
         // ─── Paiements ─────────────────────────────────────────────────
-        Route::get('/payments',     [PaymentController::class, 'index']);
-        Route::post('/payments',    [PaymentController::class, 'store']);
-        Route::get('/payments/{payment}',    [PaymentController::class, 'show']);
-        Route::put('/payments/{payment}',    [PaymentController::class, 'update']);
-
-        // Versements
-        Route::post(
-            '/payments/{payment}/transactions',
-            [PaymentController::class, 'addTransaction']
-        );
-        Route::delete(
-            '/payments/{payment}/transactions/{transaction}',
-            [PaymentController::class, 'deleteTransaction']
-        );
-        // Liste patients avec soldes + stats
-        Route::get('/payments', [PaymentController::class, 'index']);
-
-        // Fiche complète d'un patient (consultations + versements)
-        Route::get('/payments/{patientId}', [PaymentController::class, 'show']);
-
-        // Ajouter un versement pour un patient
-        Route::post(
-            '/payments/{patientId}/transactions',
-            [PaymentController::class, 'addTransaction']
-        );
+        Route::get('/payments',                           [PaymentController::class, 'index']);
+        Route::get('/payments/{patientId}',               [PaymentController::class, 'show']);
+        Route::post('/payments/{patientId}/transactions', [PaymentController::class, 'addTransaction']);
 
 
         Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -130,13 +108,10 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
 
     // ─── Archivage (Dentiste uniquement) ─────────────────────────────
     Route::middleware('dentist')->group(function () {
+        Route::get('/patients/archive-preview',      [PatientController::class, 'archivePreview']);
         Route::delete('/patients/{patient}',         [PatientController::class, 'destroy']);
         Route::post('/patients/{patient}/restore',   [PatientController::class, 'restore']);
         Route::delete('/consultations/{consultation}', [ConsultationController::class, 'destroy']);
-        Route::delete('/payments/{payment}', [PaymentController::class, 'destroy']);
-        Route::delete(
-            '/payments/transactions/{transactionId}',
-            [PaymentController::class, 'deleteTransaction']
-        );
+        Route::delete('/payments/transactions/{transactionId}', [PaymentController::class, 'deleteTransaction']);
     });
 });
