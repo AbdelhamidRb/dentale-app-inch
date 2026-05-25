@@ -22,7 +22,7 @@ class ConsultationController extends Controller
         $query = Consultation::with([
             'patient:id,first_name,last_name,phone',
             'dentist:id,name',
-            'acts' => fn($q) => $q->with('catalogAct:id,code,name')->limit(3),
+            'acts.catalogAct:id,code,name',
         ])->withCount('acts')
           ->whereHas('patient', fn($q) => $q->where('is_archived', false))
           ->latest();
@@ -91,17 +91,19 @@ class ConsultationController extends Controller
                 'session_dates'  => [now()->toDateString()],
             ]);
 
-            // ─── Ajout des actes ──────────────────────────────────
+            // ─── Ajout des actes (batch insert) ──────────────────
             if ($request->filled('acts')) {
-                foreach ($request->acts as $act) {
-                    ConsultationAct::create([
-                        'consultation_id' => $consultation->id,
-                        'catalog_act_id'  => $act['catalog_act_id'],
-                        'teeth'           => $act['teeth'] ?? [],
-                        'price'           => $act['price'],
-                        'notes'           => $act['notes'] ?? null,
-                    ]);
-                }
+                $now  = now();
+                $rows = array_map(fn($act) => [
+                    'consultation_id' => $consultation->id,
+                    'catalog_act_id'  => $act['catalog_act_id'],
+                    'teeth'           => json_encode($act['teeth'] ?? []),
+                    'price'           => round((float) $act['price']),
+                    'notes'           => $act['notes'] ?? null,
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ], $request->acts);
+                ConsultationAct::insert($rows);
             }
 
             $consultation->recalculateTotal();
@@ -163,18 +165,22 @@ class ConsultationController extends Controller
             'notes'  => $request->notes,
         ]);
 
-        // ─── Sync des actes (remplace tout) ──────────────────────
+        // ─── Sync des actes (remplace tout — batch insert) ───────
         if ($request->has('acts')) {
             $consultation->acts()->delete();
 
-            foreach ($request->acts as $act) {
-                ConsultationAct::create([
+            if (!empty($request->acts)) {
+                $now  = now();
+                $rows = array_map(fn($act) => [
                     'consultation_id' => $consultation->id,
                     'catalog_act_id'  => $act['catalog_act_id'],
-                    'teeth'           => $act['teeth'] ?? [],
-                    'price'           => $act['price'],
+                    'teeth'           => json_encode($act['teeth'] ?? []),
+                    'price'           => round((float) $act['price']),
                     'notes'           => $act['notes'] ?? null,
-                ]);
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ], $request->acts);
+                ConsultationAct::insert($rows);
             }
         }
 

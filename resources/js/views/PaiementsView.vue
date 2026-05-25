@@ -37,9 +37,9 @@
                 <!-- Ligne 3 : filtres -->
                 <div class="flex gap-1.5 flex-wrap">
                     <button
-                        v-for="f in filters"
+                        v-for="f in filterDefs"
                         :key="f.value"
-                        @click="activeFilter = activeFilter === f.value ? '' : f.value"
+                        @click="toggleFilter(f.value)"
                         :class="[
                             'px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors',
                             activeFilter === f.value
@@ -59,19 +59,11 @@
             <div class="flex-1 overflow-y-auto pb-20 lg:pb-0">
                 <!-- Skeleton -->
                 <div v-if="loading" class="divide-y divide-slate-100">
-                    <div
-                        v-for="i in 6"
-                        :key="i"
-                        class="px-5 py-4 animate-pulse"
-                    >
+                    <div v-for="i in 6" :key="i" class="px-5 py-4 animate-pulse">
                         <div class="flex items-center justify-between">
                             <div class="space-y-2">
-                                <div
-                                    class="w-32 h-4 bg-slate-200 rounded-full"
-                                ></div>
-                                <div
-                                    class="w-20 h-3 bg-slate-100 rounded-full"
-                                ></div>
+                                <div class="w-32 h-4 bg-slate-200 rounded-full"></div>
+                                <div class="w-20 h-3 bg-slate-100 rounded-full"></div>
                             </div>
                             <div class="w-16 h-6 bg-slate-200 rounded"></div>
                         </div>
@@ -80,24 +72,20 @@
 
                 <!-- Vide -->
                 <div
-                    v-else-if="!filteredPatients.length"
+                    v-else-if="!patients.length"
                     class="flex flex-col items-center justify-center h-48 px-6 text-center"
                 >
-                    <div
-                        class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-3"
-                    >
+                    <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-3">
                         <UserCircle class="w-7 h-7 text-slate-400" />
                     </div>
-                    <p class="text-sm font-semibold text-slate-600">
-                        Aucun patient trouvé
-                    </p>
+                    <p class="text-sm font-semibold text-slate-600">Aucun patient trouvé</p>
                     <p class="text-xs text-slate-400 mt-1 leading-relaxed">
                         Les patients apparaissent ici<br>dès qu'ils ont une consultation
                     </p>
                 </div>
 
                 <button
-                    v-for="p in filteredPatients"
+                    v-for="p in patients"
                     :key="p.id"
                     @click="selectPatient(p)"
                     :class="[
@@ -112,20 +100,12 @@
                         <div class="flex-1 min-w-0">
                             <!-- Ligne 1 -->
                             <div class="flex items-center gap-1.5 mb-1">
-                                <PaymentStatusBadge
-                                    :status="p.balance_status"
-                                />
-                                <span
-                                    class="text-xs font-medium text-slate-700 truncate"
-                                >
-                                    {{ p.full_name }}
-                                </span>
+                                <PaymentStatusBadge :status="p.balance_status" />
+                                <span class="text-xs font-medium text-slate-700 truncate">{{ p.full_name }}</span>
                             </div>
                             <!-- Ligne 2 : barre + infos -->
                             <div class="flex items-center gap-2">
-                                <div
-                                    class="h-1.5 bg-slate-100 rounded-full overflow-hidden w-24 shrink-0"
-                                >
+                                <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden w-24 shrink-0">
                                     <div
                                         class="h-full rounded-full"
                                         :class="progressColor(p.balance_status)"
@@ -133,28 +113,33 @@
                                     ></div>
                                 </div>
                                 <span class="text-[10px] text-slate-400">
-                                    {{ p.consultations_count }} consult.
+                                    {{ fmt(p.total_consultations) }} MAD dû
                                 </span>
                             </div>
                         </div>
                         <!-- Solde -->
                         <div class="text-right shrink-0">
-                            <p
-                                :class="[
-                                    'text-sm font-bold',
-                                    p.balance < 0
-                                        ? 'text-red-600'
-                                        : p.balance > 0
-                                          ? 'text-blue-600'
-                                          : 'text-emerald-600',
-                                ]"
-                            >
-                                {{ p.balance > 0 ? "+" : ""
-                                }}{{ fmt(p.balance) }} MAD
+                            <p :class="['text-sm font-bold', p.balance < 0 ? 'text-red-600' : p.balance > 0 ? 'text-blue-600' : 'text-emerald-600']">
+                                {{ p.balance > 0 ? "+" : "" }}{{ fmt(p.balance) }} MAD
                             </p>
                         </div>
                     </div>
                 </button>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="meta.last_page > 1" class="flex items-center justify-between px-4 py-2.5 border-t border-slate-100 shrink-0">
+                <p class="text-xs text-slate-400">Page {{ meta.current_page }} / {{ meta.last_page }}</p>
+                <div class="flex gap-1">
+                    <button @click="goToPage(meta.current_page - 1)" :disabled="meta.current_page === 1"
+                        class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                        ← Préc.
+                    </button>
+                    <button @click="goToPage(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page"
+                        class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                        Suiv. →
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -185,125 +170,76 @@ const route = useRoute();
 // ─── Auth ─────────────────────────────────────────────────────────
 const isDentist = computed(() => {
     try {
-        return (
-            JSON.parse(localStorage.getItem("user") || "{}").role === "DENTIST"
-        );
-    } catch {
-        return false;
-    }
+        return JSON.parse(localStorage.getItem("user") || "{}").role === "DENTIST";
+    } catch { return false; }
 });
 
 // ─── État ─────────────────────────────────────────────────────────
-const { patients, loading, stats, fetchPatients, invalidateCache } =
-    usePayments();
+const { patients, loading, stats, meta, fetchPatients, invalidateCache } = usePayments();
 
 const selectedPatient = ref(null);
-const searchQuery = ref("");
-const searchQueryDebounced = ref("");
-let searchTimer = null;
+const searchQuery     = ref("");
+const activeFilter    = ref("");
 
-watch(searchQuery, (val) => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-        searchQueryDebounced.value = val;
-    }, 300); // attend 300ms avant de filtrer
-});
-const activeFilter = ref("");
-
-// ─── Filtres ──────────────────────────────────────────────────────
-const filters = [
-    {
-        value: "PARTIEL",
-        label: "Partiels",
-        active: "border-red-400 bg-red-50 text-red-700",
-    },
-    {
-        value: "PAYÉ",
-        label: "Soldés",
-        active: "border-emerald-400 bg-emerald-50 text-emerald-700",
-    },
-    {
-        value: "AVANCE",
-        label: "Avances",
-        active: "border-blue-400 bg-blue-50 text-blue-700",
-    },
+// ─── Définitions filtres ──────────────────────────────────────────
+const filterDefs = [
+    { value: "PARTIEL", label: "Partiels", active: "border-red-400 bg-red-50 text-red-700" },
+    { value: "PAYÉ",    label: "Soldés",   active: "border-emerald-400 bg-emerald-50 text-emerald-700" },
+    { value: "AVANCE",  label: "Avances",  active: "border-blue-400 bg-blue-50 text-blue-700" },
 ];
 
 function filterCount(status) {
-    return patients.value.filter((p) => p.balance_status === status).length;
+    return stats.value[{ PARTIEL: 'count_partiel', PAYÉ: 'count_paye', AVANCE: 'count_avance' }[status]] ?? 0;
 }
 
-// Filtre combiné : statut + recherche
-const filteredPatients = computed(() => {
-    let list = patients.value;
+// ─── Charge serveur avec les filtres actifs ───────────────────────
+function buildParams(page = 1) {
+    const p = { page };
+    if (searchQuery.value.trim()) p.search = searchQuery.value.trim();
+    if (activeFilter.value)       p.status = activeFilter.value;
+    return p;
+}
 
-    if (activeFilter.value) {
-        list = list.filter((p) => p.balance_status === activeFilter.value);
-    }
+async function load(page = 1, force = false) {
+    await fetchPatients(buildParams(page), force);
+}
 
-    if (searchQueryDebounced.value.trim()) {
-        const q = searchQueryDebounced.value.toLowerCase();
-        list = list.filter(
-            (p) =>
-                p.full_name?.toLowerCase().includes(q) || p.phone?.includes(q),
-        );
-    }
+function goToPage(page) { load(page, true); }
 
-    // Trie : partiels en premier (solde le plus négatif)
-    return [...list].sort((a, b) => a.balance - b.balance);
-});
+function toggleFilter(val) {
+    activeFilter.value = activeFilter.value === val ? "" : val;
+    load(1, true);
+}
 
-// Recharge quand le filtre change
-watch(activeFilter, () => {
-    invalidateCache();
-    fetchPatients({}, true);
+// Debounce sur la recherche
+let searchTimer = null;
+watch(searchQuery, () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => load(1, true), 300);
 });
 
 // ─── Stats ────────────────────────────────────────────────────────
 const statCards = computed(() => [
-    {
-        label: "Dû total",
-        value: stats.value.total_du,
-        color: "text-slate-700",
-        isAmount: true,
-    },
-    {
-        label: "Encaissé",
-        value: stats.value.total_encaisse,
-        color: "text-emerald-600",
-        isAmount: true,
-    },
-    {
-        label: "Restant",
-        value: stats.value.total_restant,
-        color: "text-red-500",
-        isAmount: true,
-    },
+    { label: "Dû total",  value: stats.value.total_du,       color: "text-slate-700" },
+    { label: "Encaissé",  value: stats.value.total_encaisse, color: "text-emerald-600" },
+    { label: "Restant",   value: stats.value.total_restant,  color: "text-red-500" },
 ]);
 
 // ─── Sélection patient ────────────────────────────────────────────
-function selectPatient(p) {
-    selectedPatient.value = p;
-}
+function selectPatient(p) { selectedPatient.value = p; }
 
 // ─── Callback après versement ─────────────────────────────────────
 async function onUpdated() {
     invalidateCache();
-    await fetchPatients({}, true);
-    // Rafraîchit le patient sélectionné depuis la liste mise à jour
+    await load(meta.value.current_page, true);
     if (selectedPatient.value) {
-        const updated = patients.value.find(
-            (p) => p.id === selectedPatient.value.id,
-        );
-        if (updated)
-            selectedPatient.value = { ...selectedPatient.value, ...updated };
+        const updated = patients.value.find(p => p.id === selectedPatient.value.id);
+        if (updated) selectedPatient.value = { ...selectedPatient.value, ...updated };
     }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
-function fmt(val) {
-    return Number(val ?? 0).toFixed(0);
-}
+function fmt(val) { return Number(val ?? 0).toFixed(0); }
 
 function progressPct(p) {
     if (!p.total_consultations) return 0;
@@ -311,46 +247,32 @@ function progressPct(p) {
 }
 
 function progressColor(status) {
-    return (
-        {
-            PAYÉ: "bg-emerald-500",
-            PARTIEL: "bg-red-400",
-            AVANCE: "bg-blue-400",
-        }[status] ?? "bg-slate-300"
-    );
+    return { PAYÉ: "bg-emerald-500", PARTIEL: "bg-red-400", AVANCE: "bg-blue-400" }[status] ?? "bg-slate-300";
 }
 
 // ─── Init ─────────────────────────────────────────────────────────
 onMounted(async () => {
-    await fetchPatients()
+    await load();
 
-    // Auto-sélection depuis PatientPanel (patient avec OU sans consultation)
-    const pid = route.query.patient_id
+    // Auto-sélection depuis PatientPanel
+    const pid = route.query.patient_id;
     if (pid) {
-        // Cherche dans la liste chargée
-        const found = patients.value.find(p => String(p.id) === String(pid))
+        const found = patients.value.find(p => String(p.id) === String(pid));
         if (found) {
-            selectPatient(found)
+            selectPatient(found);
         } else {
-            // Patient sans consultation → charge directement depuis l'API
             try {
-                const token = localStorage.getItem('token')
+                const token = localStorage.getItem('token');
                 const res = await fetch(`/api/payments/${pid}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json'
-                    }
-                })
-                const data = await res.json()
+                    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+                });
+                const data = await res.json();
                 if (data.patient) {
-                    // Ajoute temporairement à la liste
-                    patients.value.unshift(data.patient)
-                    selectPatient(data.patient)
+                    patients.value.unshift(data.patient);
+                    selectPatient(data.patient);
                 }
-            } catch (e) {
-                error.value = e.message ?? "Impossible de charger le patient.";
-            }
+            } catch { /* silencieux */ }
         }
     }
-})
+});
 </script>

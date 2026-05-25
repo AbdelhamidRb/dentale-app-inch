@@ -18,11 +18,12 @@ async function handle(res) {
 
 export const paymentsApi = {
     // Liste patients avec soldes
-    // params: { status, search }
+    // params: { status, search, page }
     async list(params = {}) {
         const q = new URLSearchParams();
         if (params.status) q.set("status", params.status);
         if (params.search) q.set("search", params.search);
+        if (params.page)   q.set("page",   params.page);
         const res = await fetch(`${BASE}?${q}`, { headers: headers() });
         return handle(res);
     },

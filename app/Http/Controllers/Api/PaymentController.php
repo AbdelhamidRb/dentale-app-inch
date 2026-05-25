@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\PaymentTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PaymentController extends Controller
 {
@@ -15,18 +16,19 @@ class PaymentController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function index(Request $request)
     {
+        $perPage = 30;
+        $page    = max(1, (int) $request->get('page', 1));
+
         $query = Patient::select('id', 'first_name', 'last_name', 'phone', 'couverture')
             ->where('is_archived', false)
-            // Seulement les patients qui ont au moins une consultation non-brouillon
             ->whereHas('consultations', fn($q) => $q->whereNotIn('status', ['BROUILLON']))
-            // Totaux calculés en SQL (sous-requêtes) au lieu de charger les collections
             ->withSum(
                 ['consultations as total_consultations' => fn($q) => $q->whereNotIn('status', ['BROUILLON'])],
                 'total_price'
             )
             ->withSum('paymentTransactions as total_paid', 'amount');
 
-        // Recherche en SQL (avant get())
+        // Recherche en SQL
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q
@@ -36,18 +38,10 @@ class PaymentController extends Controller
             );
         }
 
-        $rows = $query->get();
+        // Calcul balance sur toute la sélection (pour les stats globales)
+        $all = $query->get()->map(fn($p) => $this->formatBalance($p));
 
-        // Calcul du solde + statut — sur la collection déjà réduite (pas toute la BDD)
-        $patients = $rows->map(fn($p) => $this->formatBalance($p));
-
-        // Filtre statut en PHP (dépend d'une valeur calculée, pas filtrable en SQL simplement)
-        if ($request->filled('status')) {
-            $patients = $patients->filter(fn($p) => $p['balance_status'] === $request->status);
-        }
-
-        $all = $patients->values();
-
+        // Stats toujours calculées sur TOUS les résultats (avant filtre statut)
         $stats = [
             'total_du'       => $all->sum('total_consultations'),
             'total_encaisse' => $all->sum('total_paid'),
@@ -57,7 +51,31 @@ class PaymentController extends Controller
             'count_avance'   => $all->where('balance_status', 'AVANCE')->count(),
         ];
 
-        return response()->json(['data' => $all, 'stats' => $stats]);
+        // Filtre statut en PHP (valeur calculée, non exprimable simplement en SQL)
+        $filtered = $request->filled('status')
+            ? $all->filter(fn($p) => $p['balance_status'] === $request->status)->values()
+            : $all->values();
+
+        // Tri : plus endetté en premier
+        $sorted = $filtered->sortBy('balance')->values();
+
+        // Pagination sur la collection
+        $paginated = new LengthAwarePaginator(
+            $sorted->slice(($page - 1) * $perPage, $perPage)->values(),
+            $sorted->count(),
+            $perPage,
+            $page,
+        );
+
+        return response()->json([
+            'data'  => $paginated->items(),
+            'stats' => $stats,
+            'meta'  => [
+                'current_page' => $paginated->currentPage(),
+                'last_page'    => $paginated->lastPage(),
+                'total'        => $paginated->total(),
+            ],
+        ]);
     }
 
     // ═══════════════════════════════════════════════════════════════
