@@ -156,6 +156,220 @@
             </div>
         </div>
 
+        <!-- ══ Onglet Actes ════════════════════════════════════════ -->
+        <div v-if="activeTab === 'acts'" class="max-w-3xl">
+
+            <!-- Barre d'actions -->
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm text-slate-500">{{ acts.length }} acte(s) configuré(s)</p>
+                <button @click="openActForm(null)"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+                           text-white text-sm font-medium rounded-xl transition-colors">
+                    <Plus class="w-4 h-4" />
+                    Nouvel acte
+                </button>
+            </div>
+
+            <!-- Skeleton -->
+            <div v-if="loadingActs" class="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-50">
+                <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-3.5 animate-pulse">
+                    <div class="h-4 bg-slate-100 rounded w-16 shrink-0"></div>
+                    <div class="h-4 bg-slate-100 rounded flex-1"></div>
+                    <div class="h-4 bg-slate-100 rounded w-20 shrink-0"></div>
+                    <div class="h-4 bg-slate-100 rounded w-12 shrink-0"></div>
+                </div>
+            </div>
+
+            <!-- Liste desktop (tableau) -->
+            <div v-else-if="acts.length" class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <!-- En-tête tableau (desktop) -->
+                <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_6rem_5rem_5rem] gap-3 px-4 py-2.5
+                            border-b border-slate-100 bg-slate-50">
+                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Code</span>
+                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Nom</span>
+                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Prix (MAD)</span>
+                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Durée</span>
+                    <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Statut</span>
+                    <span></span>
+                </div>
+
+                <div class="divide-y divide-slate-50">
+                    <div v-for="act in acts" :key="act.id"
+                         :class="['transition-colors', act.is_active ? '' : 'opacity-50']">
+
+                        <!-- Desktop row -->
+                        <div class="hidden sm:grid grid-cols-[5rem_1fr_7rem_6rem_5rem_5rem] gap-3 px-4 py-3 items-center">
+                            <span class="text-xs font-mono text-slate-500">{{ act.code }}</span>
+                            <span class="text-sm font-medium text-slate-800 truncate">{{ act.name }}</span>
+                            <span class="text-sm text-slate-700 font-semibold">{{ Number(act.base_price).toFixed(0) }} MAD</span>
+                            <span class="text-sm text-slate-500">{{ act.duration_minutes }} min</span>
+                            <button @click="toggleActStatus(act)"
+                                :class="['text-xs font-medium px-2 py-0.5 rounded-full transition-colors',
+                                         act.is_active
+                                             ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                                             : 'bg-slate-100 text-slate-500 hover:bg-slate-200']">
+                                {{ act.is_active ? 'Actif' : 'Inactif' }}
+                            </button>
+                            <div class="flex items-center gap-1 justify-end">
+                                <button @click="openActForm(act)"
+                                    class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                    <Pencil class="w-3.5 h-3.5" />
+                                </button>
+                                <button @click="confirmDeleteAct(act)"
+                                    class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <Trash2 class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile card -->
+                        <div class="sm:hidden px-4 py-3.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{{ act.code }}</span>
+                                        <button @click="toggleActStatus(act)"
+                                            :class="['text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
+                                                     act.is_active
+                                                         ? 'bg-emerald-100 text-emerald-700'
+                                                         : 'bg-slate-100 text-slate-500']">
+                                            {{ act.is_active ? 'Actif' : 'Inactif' }}
+                                        </button>
+                                    </div>
+                                    <p class="text-sm font-medium text-slate-800 truncate">{{ act.name }}</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">
+                                        {{ Number(act.base_price).toFixed(0) }} MAD · {{ act.duration_minutes }} min
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button @click="openActForm(act)"
+                                        class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                        <Pencil class="w-4 h-4" />
+                                    </button>
+                                    <button @click="confirmDeleteAct(act)"
+                                        class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        <Trash2 class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vide -->
+            <div v-else class="bg-white rounded-2xl border border-slate-200 py-16 flex flex-col items-center gap-3 text-slate-400">
+                <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center">
+                    <Stethoscope class="w-7 h-7 text-slate-300" />
+                </div>
+                <p class="text-sm font-medium">Aucun acte configuré</p>
+                <button @click="openActForm(null)"
+                    class="text-xs text-blue-600 hover:underline font-medium">
+                    Ajouter le premier acte
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Modal formulaire acte ────────────────────────────────── -->
+        <Teleport to="body">
+        <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
+                    leave-active-class="transition duration-100" leave-to-class="opacity-0">
+            <div v-if="showActForm"
+                 class="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/40 px-0 sm:px-4"
+                 @click.self="showActForm = false">
+                <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-xl p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <p class="font-semibold text-slate-800">
+                            {{ editingAct ? 'Modifier l\'acte' : 'Nouvel acte' }}
+                        </p>
+                        <button @click="showActForm = false" class="text-slate-400 hover:text-slate-600">
+                            <X class="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Code + Nom -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Code *</label>
+                                <input v-model="actForm.code" type="text" placeholder="EX001"
+                                    class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    :class="actErrors.code ? 'border-red-400' : 'border-slate-200'" />
+                                <p v-if="actErrors.code" class="text-xs text-red-500 mt-1">{{ actErrors.code }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Durée (min) *</label>
+                                <input v-model.number="actForm.duration_minutes" type="number" min="5" max="480" placeholder="30"
+                                    class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    :class="actErrors.duration_minutes ? 'border-red-400' : 'border-slate-200'" />
+                                <p v-if="actErrors.duration_minutes" class="text-xs text-red-500 mt-1">{{ actErrors.duration_minutes }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Nom -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Nom de l'acte *</label>
+                            <input v-model="actForm.name" type="text" placeholder="Détartrage complet"
+                                class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                :class="actErrors.name ? 'border-red-400' : 'border-slate-200'" />
+                            <p v-if="actErrors.name" class="text-xs text-red-500 mt-1">{{ actErrors.name }}</p>
+                        </div>
+
+                        <!-- Prix -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Prix de base (MAD) *</label>
+                            <div class="relative">
+                                <input v-model.number="actForm.base_price" type="number" min="0" step="10" placeholder="500"
+                                    class="w-full px-3 py-2 pr-14 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    :class="actErrors.base_price ? 'border-red-400' : 'border-slate-200'" />
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">MAD</span>
+                            </div>
+                            <p v-if="actErrors.base_price" class="text-xs text-red-500 mt-1">{{ actErrors.base_price }}</p>
+                        </div>
+
+                        <!-- Statut -->
+                        <div class="flex items-center justify-between py-1">
+                            <div>
+                                <p class="text-sm font-medium text-slate-700">Acte actif</p>
+                                <p class="text-xs text-slate-400">Visible lors de la création de RDV</p>
+                            </div>
+                            <button @click="actForm.is_active = !actForm.is_active"
+                                :class="['relative inline-flex w-10 h-6 rounded-full transition-colors',
+                                         actForm.is_active ? 'bg-blue-600' : 'bg-slate-200']">
+                                <span :class="['absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform',
+                                               actForm.is_active ? 'translate-x-4' : '']"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Erreur globale -->
+                    <p v-if="actSaveError" class="mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{{ actSaveError }}</p>
+
+                    <!-- Actions -->
+                    <div class="flex gap-2 mt-5">
+                        <button @click="showActForm = false"
+                            class="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">
+                            Annuler
+                        </button>
+                        <button @click="saveAct" :disabled="savingAct"
+                            class="flex-1 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors">
+                            {{ savingAct ? 'Enregistrement…' : (editingAct ? 'Modifier' : 'Créer') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
+        </Teleport>
+
+        <!-- ── Confirm suppression acte ────────────────────────────── -->
+        <ConfirmModal
+            :model-value="!!deleteActTarget"
+            @update:model-value="v => { if (!v) deleteActTarget = null }"
+            title="Supprimer l'acte"
+            :message="`L'acte <strong>${deleteActTarget?.name}</strong> sera définitivement supprimé.`"
+            confirm-label="Supprimer"
+            @confirm="doDeleteAct" />
+
         <!-- Modal confirmation restauration -->
         <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
                     leave-active-class="transition duration-100" leave-to-class="opacity-0">
@@ -197,12 +411,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert } from 'lucide-vue-next';
+import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
+         Plus, Pencil, Trash2, X, Stethoscope } from 'lucide-vue-next';
+import ConfirmModal from '../components/ui/ConfirmModal.vue';
 
 const activeTab = ref('backup');
 const tabs = [
     { id: 'backup',   label: 'Sauvegardes' },
-    { id: 'whatsapp', label: 'Message WhatsApp' },
+    { id: 'whatsapp', label: 'WhatsApp' },
+    { id: 'acts',     label: 'Actes' },
 ];
 
 // ── Backup ──────────────────────────────────────────────────────
@@ -305,6 +522,13 @@ async function api(url, method = 'GET', body = null) {
     if (!res.ok) {
         if (res.status === 401) throw new Error('Session expirée. Veuillez vous reconnecter.');
         if (res.status === 403) throw new Error('Accès refusé. Cette action est réservée au dentiste.');
+        if (res.status === 422 && data.errors) {
+            const err = new Error('Données invalides.');
+            err.fields = Object.fromEntries(
+                Object.entries(data.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+            );
+            throw err;
+        }
         if (res.status === 500) throw new Error(data.error ?? data.message ?? 'Erreur serveur. Vérifiez que Laragon est bien démarré.');
         throw new Error(data.error ?? data.message ?? `Erreur ${res.status}.`);
     }
@@ -324,8 +548,87 @@ function formatSize(bytes) {
     return (bytes / 1024 / 1024).toFixed(1) + ' Mo';
 }
 
+// ── Actes ────────────────────────────────────────────────────────
+const acts        = ref([]);
+const loadingActs = ref(false);
+const showActForm = ref(false);
+const editingAct  = ref(null);
+const savingAct   = ref(false);
+const actSaveError = ref('');
+const deleteActTarget = ref(null);
+
+const actFormDefault = () => ({ code: '', name: '', base_price: 0, duration_minutes: 30, is_active: true });
+const actForm  = ref(actFormDefault());
+const actErrors = ref({});
+
+async function loadActs() {
+    loadingActs.value = true;
+    try {
+        const res = await api('/api/catalog-acts/all');
+        acts.value = res.acts ?? [];
+    } finally {
+        loadingActs.value = false;
+    }
+}
+
+function openActForm(act) {
+    editingAct.value  = act;
+    actErrors.value   = {};
+    actSaveError.value = '';
+    actForm.value = act
+        ? { code: act.code, name: act.name, base_price: Number(act.base_price), duration_minutes: act.duration_minutes, is_active: act.is_active }
+        : actFormDefault();
+    showActForm.value = true;
+}
+
+async function saveAct() {
+    actErrors.value   = {};
+    actSaveError.value = '';
+    savingAct.value   = true;
+    try {
+        if (editingAct.value) {
+            const res = await api(`/api/catalog-acts/${editingAct.value.id}`, 'PUT', actForm.value);
+            const idx = acts.value.findIndex(a => a.id === editingAct.value.id);
+            if (idx !== -1) acts.value[idx] = res.act;
+        } else {
+            const res = await api('/api/catalog-acts', 'POST', actForm.value);
+            acts.value.push(res.act);
+            acts.value.sort((a, b) => a.code.localeCompare(b.code));
+        }
+        showActForm.value = false;
+    } catch (e) {
+        if (e.fields) { actErrors.value = e.fields; }
+        else { actSaveError.value = e.message ?? 'Erreur lors de l\'enregistrement.'; }
+    } finally {
+        savingAct.value = false;
+    }
+}
+
+async function toggleActStatus(act) {
+    try {
+        const res = await api(`/api/catalog-acts/${act.id}`, 'PUT', { is_active: !act.is_active });
+        const idx = acts.value.findIndex(a => a.id === act.id);
+        if (idx !== -1) acts.value[idx] = res.act;
+    } catch { /* silencieux */ }
+}
+
+function confirmDeleteAct(act) { deleteActTarget.value = act; }
+
+async function doDeleteAct() {
+    if (!deleteActTarget.value) return;
+    try {
+        await api(`/api/catalog-acts/${deleteActTarget.value.id}`, 'DELETE');
+        acts.value = acts.value.filter(a => a.id !== deleteActTarget.value.id);
+    } catch (e) {
+        actSaveError.value = e.message ?? 'Impossible de supprimer cet acte.';
+    } finally {
+        deleteActTarget.value = null;
+    }
+}
+
 onMounted(() => {
     loadBackups();
     loadTemplate();
+    loadActs();
 });
 </script>

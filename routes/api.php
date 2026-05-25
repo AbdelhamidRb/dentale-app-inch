@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BackupController;
+use App\Http\Controllers\Api\CatalogActController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SettingsController;
 
@@ -119,6 +120,12 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::get('/backup/list',    [BackupController::class, 'list']);
         Route::post('/backup/run',    [BackupController::class, 'run']);
         Route::post('/backup/restore', [BackupController::class, 'restore']);
+
+        // ─── Catalogue des actes ──────────────────────────────────────
+        Route::get('/catalog-acts/all',            [CatalogActController::class, 'index']);
+        Route::post('/catalog-acts',               [CatalogActController::class, 'store']);
+        Route::put('/catalog-acts/{catalogAct}',   [CatalogActController::class, 'update']);
+        Route::delete('/catalog-acts/{catalogAct}',[CatalogActController::class, 'destroy']);
     });
 
     // ─── Archivage (Dentiste uniquement) ─────────────────────────────
