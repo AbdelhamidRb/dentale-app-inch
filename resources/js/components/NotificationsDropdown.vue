@@ -180,7 +180,10 @@ function onClickOutside(e) {
         open.value = false;
     }
 }
-onMounted(() => document.addEventListener('mousedown', onClickOutside));
+onMounted(() => {
+    document.addEventListener('mousedown', onClickOutside)
+    loadData() // charge les données au montage pour afficher le badge sans cliquer
+});
 onUnmounted(() => document.removeEventListener('mousedown', onClickOutside));
 
 // ── Chargement ────────────────────────────────────────────────────

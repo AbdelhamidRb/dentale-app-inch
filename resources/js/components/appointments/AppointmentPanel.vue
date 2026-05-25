@@ -13,22 +13,20 @@
                 </p>
             </div>
             <div class="flex items-center gap-1">
-                <button
-                    @click="$emit('edit')"
-                    class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                >
+                <button @click="$emit('edit')"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    title="Modifier">
                     <Pencil class="w-4 h-4" />
                 </button>
-                <button
-                    @click="$emit('close')"
-                    class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                >
+                <button @click="$emit('close')"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    title="Fermer">
                     <X class="w-4 h-4" />
                 </button>
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-16 lg:pb-4">
             <!-- Badge statut actuel -->
             <div
                 :class="`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${statusStyle.badge}`"

@@ -94,29 +94,27 @@
             </header>
 
             <!-- Contenu -->
-            <main class="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+            <main class="flex-1 min-h-0 overflow-hidden flex flex-col">
                 <RouterView v-slot="{ Component }">
                     <Transition name="fade" mode="out-in">
                         <component :is="Component" />
                     </Transition>
                 </RouterView>
-                <!-- Espaceur pour la nav mobile fixe en bas -->
-                <div class="h-16 lg:hidden" aria-hidden="true"></div>
             </main>
         </div>
 
         <!-- ── Navigation mobile — barre fixe en bas ──────────────── -->
         <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden">
-            <div class="flex items-center justify-around">
+            <div class="flex items-center">
                 <RouterLink
                     v-for="item in mobileNavItems"
                     :key="item.route"
                     :to="{ name: item.route }"
-                    class="flex flex-col items-center gap-0.5 py-2 px-1 flex-1 transition-colors"
+                    class="flex flex-col items-center gap-0.5 py-2 px-0.5 flex-1 transition-colors min-w-0"
                     :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400'"
                 >
-                    <component :is="item.icon" class="w-5 h-5" />
-                    <span class="text-[10px] font-medium">{{ item.label }}</span>
+                    <component :is="item.icon" class="w-4.5 h-4.5 w-[18px] h-[18px]" />
+                    <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
                 </RouterLink>
             </div>
         </nav>
@@ -171,18 +169,20 @@ const mobileNavItems = computed(() => {
     const role = user.value?.role;
     if (role === "DENTIST") {
         return [
-            { route: "dashboard",     label: "Accueil",    icon: markRaw(LayoutDashboard) },
-            { route: "agenda",        label: "Agenda",     icon: markRaw(CalendarDays) },
-            { route: "patients",      label: "Patients",   icon: markRaw(Users) },
-            { route: "consultations", label: "Soins",      icon: markRaw(Stethoscope) },
-            { route: "paiements",     label: "Paiements",  icon: markRaw(CreditCard) },
+            { route: "dashboard",     label: "Accueil",     icon: markRaw(LayoutDashboard) },
+            { route: "agenda",        label: "Agenda",      icon: markRaw(CalendarDays) },
+            { route: "patients",      label: "Patients",    icon: markRaw(Users) },
+            { route: "consultations", label: "Soins",       icon: markRaw(Stethoscope) },
+            { route: "paiements",     label: "Paiements",   icon: markRaw(CreditCard) },
+            { route: "profil",        label: "Profil",      icon: markRaw(UserCircle) },
+            { route: "parametres",    label: "Réglages",    icon: markRaw(Settings) },
         ];
     }
     return [
-        { route: "agenda",   label: "Agenda",    icon: markRaw(CalendarDays) },
-        { route: "patients", label: "Patients",  icon: markRaw(Users) },
-        { route: "paiements",label: "Paiements", icon: markRaw(CreditCard) },
-        { route: "profil",   label: "Profil",    icon: markRaw(UserCircle) },
+        { route: "agenda",    label: "Agenda",     icon: markRaw(CalendarDays) },
+        { route: "patients",  label: "Patients",   icon: markRaw(Users) },
+        { route: "paiements", label: "Paiements",  icon: markRaw(CreditCard) },
+        { route: "profil",    label: "Profil",     icon: markRaw(UserCircle) },
     ];
 });
 

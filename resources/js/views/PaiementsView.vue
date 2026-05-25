@@ -1,92 +1,66 @@
 <!-- resources/js/views/PaiementsView.vue -->
 <template>
-    <div class="flex h-full overflow-hidden bg-slate-50">
+    <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden bg-slate-50">
         <!-- ══════════════════════════════════════════════════════
              COLONNE GAUCHE — Liste patients
         ═══════════════════════════════════════════════════════ -->
         <div
             :class="[
-                'flex flex-col bg-white overflow-hidden transition-all duration-300',
+                'flex flex-col bg-white min-h-0 transition-all duration-300',
                 selectedPatient
-                    ? 'hidden lg:flex lg:w-full lg:max-w-md border-r border-slate-200'
-                    : 'w-full',
+                    ? 'hidden lg:flex lg:w-full lg:max-w-md lg:border-r border-slate-200'
+                    : 'flex-1',
             ]"
         >
             <!-- Header compact -->
             <div class="px-4 pt-4 pb-3 border-b border-slate-100">
-                <!-- Ligne 1 : titre + stats inline -->
-                <div class="flex items-center gap-3 mb-3">
-                    <h1 class="text-base font-semibold text-slate-800 shrink-0">
-                        Paiements
-                    </h1>
-                    <div class="flex items-center gap-2 flex-1 overflow-hidden">
-                        <span
-                            v-for="s in statCards"
-                            :key="s.label"
-                            class="flex items-center gap-1 shrink-0"
-                        >
-                            <span :class="['text-sm font-bold', s.color]">
-                                {{ fmt(s.value) }}
-                            </span>
-                            <span class="text-xs text-slate-400">{{
-                                s.label
-                            }}</span>
-                            <span class="text-slate-200 text-xs ml-1">·</span>
-                        </span>
+                <!-- Ligne 1 : titre -->
+                <div class="flex items-center justify-between mb-2">
+                    <h1 class="text-base font-semibold text-slate-800">Paiements</h1>
+                </div>
+
+                <!-- Stats en grid 3 colonnes -->
+                <div class="grid grid-cols-3 gap-1 mb-3 bg-slate-50 rounded-xl p-2">
+                    <div v-for="s in statCards" :key="s.label" class="text-center px-1">
+                        <p :class="['text-sm font-bold leading-tight', s.color]">{{ fmt(s.value) }}</p>
+                        <p class="text-[10px] text-slate-400 leading-tight mt-0.5">{{ s.label }}</p>
                     </div>
                 </div>
 
-                <!-- Ligne 2 : recherche + filtres -->
-                <div class="flex gap-2">
-                    <div class="relative flex-1">
-                        <svg
-                            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
-                            />
-                        </svg>
-                        <input
-                            v-model="searchQuery"
-                            placeholder="Patient…"
-                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"
-                        />
-                    </div>
-                    <div class="flex gap-1">
-                        <button
-                            v-for="f in filters"
-                            :key="f.value"
-                            @click="
-                                activeFilter =
-                                    activeFilter === f.value ? '' : f.value
-                            "
-                            :class="[
-                                'px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap',
-                                activeFilter === f.value
-                                    ? f.active
-                                    : 'border-slate-200 text-slate-500 hover:bg-slate-50',
-                            ]"
-                        >
-                            {{ f.label }}
-                            <span
-                                v-if="filterCount(f.value)"
-                                class="ml-0.5 font-bold"
-                            >
-                                {{ filterCount(f.value) }}
-                            </span>
-                        </button>
-                    </div>
+                <!-- Ligne 2 : recherche -->
+                <div class="relative mb-2">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                    </svg>
+                    <input v-model="searchQuery" placeholder="Patient…"
+                           class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"/>
+                </div>
+
+                <!-- Ligne 3 : filtres -->
+                <div class="flex gap-1.5 flex-wrap">
+                    <button
+                        v-for="f in filters"
+                        :key="f.value"
+                        @click="activeFilter = activeFilter === f.value ? '' : f.value"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors',
+                            activeFilter === f.value
+                                ? f.active
+                                : 'border-slate-200 text-slate-500 hover:bg-slate-50',
+                        ]"
+                    >
+                        {{ f.label }}
+                        <span v-if="filterCount(f.value)" class="ml-0.5 font-bold">
+                            {{ filterCount(f.value) }}
+                        </span>
+                    </button>
                 </div>
             </div>
 
             <!-- Liste patients -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto pb-20 lg:pb-0">
                 <!-- Skeleton -->
                 <div v-if="loading" class="divide-y divide-slate-100">
                     <div
@@ -114,30 +88,24 @@
                     class="flex flex-col items-center justify-center h-48 px-6 text-center"
                 >
                     <div
-                        class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3"
+                        class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-3"
                     >
                         <svg
-                            class="w-6 h-6 text-slate-400"
+                            class="w-7 h-7 text-slate-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
+                            stroke-width="1.5"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002
-                                     2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0
-                                     00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                         </svg>
                     </div>
-                    <p class="text-sm font-medium text-slate-500">
+                    <p class="text-sm font-semibold text-slate-600">
                         Aucun patient trouvé
                     </p>
-                    <p class="text-xs text-slate-400 mt-1">
-                        Les patients apparaissent ici dès qu'ils ont une
-                        consultation
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Les patients apparaissent ici<br>dès qu'ils ont une consultation
                     </p>
                 </div>
 
@@ -206,7 +174,7 @@
         <!-- ══════════════════════════════════════════════════════
              COLONNE DROITE — Panneau patient
         ═══════════════════════════════════════════════════════ -->
-        <div v-if="selectedPatient" class="flex-1 overflow-hidden">
+        <div v-if="selectedPatient" class="flex-1 min-h-0 flex flex-col overflow-hidden">
             <PaymentPanel
                 :patient="selectedPatient"
                 :is-dentist="isDentist"
@@ -391,7 +359,9 @@ onMounted(async () => {
                     patients.value.unshift(data.patient)
                     selectPatient(data.patient)
                 }
-            } catch {}
+            } catch (e) {
+                error.value = e.message ?? "Impossible de charger le patient.";
+            }
         }
     }
 })

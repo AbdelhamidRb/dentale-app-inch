@@ -1,4 +1,5 @@
 <template>
+    <div class="flex-1 min-h-0 overflow-y-auto bg-slate-50 px-3 sm:px-5 py-4 sm:py-6 pb-20 lg:pb-6">
     <div class="max-w-2xl mx-auto space-y-5">
         <!-- ══════════════════════════════════════════════════════════
          CARTE AVATAR
@@ -300,6 +301,7 @@
             </form>
         </div>
     </div>
+    </div>
 </template>
 
 <script setup>
@@ -354,14 +356,17 @@ function authHeaders() {
 
 // ─── Charger le profil au montage du composant ───────────────────────
 onMounted(async () => {
-    const res = await fetch("/api/profile", { headers: authHeaders() });
-    const data = await res.json();
-
-    // Rempli l'état local
-    Object.assign(profile, data);
-    form.name = data.name;
-    form.email = data.email;
-    form.phone = data.phone || "";
+    try {
+        const res = await fetch("/api/profile", { headers: authHeaders() });
+        if (!res.ok) throw new Error("Erreur lors du chargement du profil.");
+        const data = await res.json();
+        Object.assign(profile, data);
+        form.name  = data.name;
+        form.email = data.email;
+        form.phone = data.phone || "";
+    } catch (e) {
+        infoError.value = e.message;
+    }
 });
 
 // ─── Upload avatar ────────────────────────────────────────────────────

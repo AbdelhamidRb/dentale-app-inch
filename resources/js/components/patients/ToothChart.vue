@@ -102,12 +102,12 @@
                                 </button>
                             </div>
 
-                            <!-- Corps : SVG gauche + historique droite -->
-                            <div class="flex flex-1 min-h-0">
+                            <!-- Corps : SVG haut + historique bas (mobile) / SVG gauche + historique droite (desktop) -->
+                            <div class="flex flex-col sm:flex-row flex-1 min-h-0">
 
                                 <!-- Colonne SVG -->
-                                <div class="flex-1 flex items-center justify-center p-3
-                                            overflow-hidden border-r border-slate-100 min-h-0">
+                                <div class="flex-1 min-h-0 flex items-center justify-center p-3
+                                            overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-100">
                                     <div style="aspect-ratio: 3027/4850; height: 100%; max-width: 100%;">
                                         <ConsultationToothChart
                                             mode="view"
@@ -121,7 +121,7 @@
                                 </div>
 
                                 <!-- Colonne historique -->
-                                <div class="w-72 shrink-0 flex flex-col overflow-hidden">
+                                <div class="h-56 sm:h-auto sm:w-72 shrink-0 flex flex-col overflow-hidden">
 
                                     <!-- Légende couleurs (toujours visible en haut) -->
                                     <div class="px-4 py-2.5 border-b border-slate-100 shrink-0 bg-slate-50/60">

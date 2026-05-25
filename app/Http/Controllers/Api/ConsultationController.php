@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Consultation;
 use App\Models\ConsultationAct;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ConsultationController extends Controller
 {
@@ -22,7 +23,9 @@ class ConsultationController extends Controller
             'patient:id,first_name,last_name,phone',
             'dentist:id,name',
             'acts' => fn($q) => $q->with('catalogAct:id,code,name')->limit(3),
-        ])->withCount('acts')->latest();
+        ])->withCount('acts')
+          ->whereHas('patient', fn($q) => $q->where('is_archived', false))
+          ->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -77,34 +80,35 @@ class ConsultationController extends Controller
             'acts.*.notes'      => 'nullable|string',
         ]);
 
-        // ─── Création de la consultation ──────────────────────────
-        $consultation = Consultation::create([
-            'patient_id'     => $request->patient_id,
-            'appointment_id' => $request->appointment_id,
-            'created_by'     => auth()->id(),
-            'status'         => $request->status ?? 'BROUILLON',
-            'notes'          => $request->notes,
-            'session_dates'  => [now()->toDateString()], // 1ère séance = aujourd'hui
-        ]);
+        $consultation = DB::transaction(function () use ($request) {
+            // ─── Création de la consultation ──────────────────────
+            $consultation = Consultation::create([
+                'patient_id'     => $request->patient_id,
+                'appointment_id' => $request->appointment_id,
+                'created_by'     => auth()->id(),
+                'status'         => $request->status ?? 'BROUILLON',
+                'notes'          => $request->notes,
+                'session_dates'  => [now()->toDateString()],
+            ]);
 
-        // ─── Ajout des actes ──────────────────────────────────────
-        if ($request->filled('acts')) {
-            foreach ($request->acts as $act) {
-                ConsultationAct::create([
-                    'consultation_id' => $consultation->id,
-                    'catalog_act_id'  => $act['catalog_act_id'],
-                    'teeth'           => $act['teeth'] ?? [],
-                    'price'           => $act['price'],
-                    'notes'           => $act['notes'] ?? null,
-                ]);
+            // ─── Ajout des actes ──────────────────────────────────
+            if ($request->filled('acts')) {
+                foreach ($request->acts as $act) {
+                    ConsultationAct::create([
+                        'consultation_id' => $consultation->id,
+                        'catalog_act_id'  => $act['catalog_act_id'],
+                        'teeth'           => $act['teeth'] ?? [],
+                        'price'           => $act['price'],
+                        'notes'           => $act['notes'] ?? null,
+                    ]);
+                }
             }
-        }
 
-        // ─── Recalcule le total ───────────────────────────────────
-        $consultation->recalculateTotal();
+            $consultation->recalculateTotal();
+            $this->markAppointmentTermine($request->appointment_id);
 
-        // ─── Cas 1 : passe le RDV lié à TERMINE ──────────────────
-        $this->markAppointmentTermine($request->appointment_id);
+            return $consultation;
+        });
 
         $consultation->load([
             'patient:id,first_name,last_name,phone',

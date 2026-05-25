@@ -61,9 +61,13 @@ export function useAppointments() {
 
     // ─── Charge le catalogue des actes (une seule fois) ───────────
     async function fetchCatalogActs() {
-        if (catalogActs.value.length > 0) return; // cache : déjà chargé
-        const res = await appointmentsApi.getCatalogActs();
-        catalogActs.value = res;
+        if (catalogActs.value.length > 0) return;
+        try {
+            const res = await appointmentsApi.getCatalogActs();
+            catalogActs.value = res;
+        } catch (e) {
+            error.value = e.message;
+        }
     }
 
     // ─── Navigation jour précédent / suivant ──────────────────────
@@ -108,9 +112,9 @@ export function useAppointments() {
         );
         stats.value.total++;
         return res;
+        // Les erreurs remontent à l'appelant (AgendaView les catch)
     }
 
-    // ─── Modifier un RDV ──────────────────────────────────────────
     async function updateAppointment(id, data) {
         const res = await appointmentsApi.update(id, data);
         const idx = appointments.value.findIndex((a) => a.id === id);
@@ -118,7 +122,6 @@ export function useAppointments() {
         return res;
     }
 
-    // ─── Changer le statut ────────────────────────────────────────
     async function changeStatus(id, status) {
         const res = await appointmentsApi.updateStatus(id, status);
         const idx = appointments.value.findIndex((a) => a.id === id);
@@ -126,10 +129,8 @@ export function useAppointments() {
         return res;
     }
 
-    // ─── Annuler un RDV ───────────────────────────────────────────
     async function cancelAppointment(id) {
         await appointmentsApi.cancel(id);
-        // Suppression physique → retire de la liste directement
         appointments.value = appointments.value.filter((a) => a.id !== id);
         stats.value.total--;
     }

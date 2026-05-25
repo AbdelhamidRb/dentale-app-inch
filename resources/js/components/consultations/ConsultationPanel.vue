@@ -1,9 +1,18 @@
 <template>
     <Transition name="panel">
-        <div v-if="consultation" class="h-full flex flex-col bg-white border-l border-slate-200 overflow-hidden">
+        <div v-if="consultation" class="flex-1 min-h-0 flex flex-col bg-white lg:border-l border-slate-200 overflow-hidden">
 
             <!-- ── Header ─────────────────────────────────────────────── -->
-            <div class="flex items-start justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+            <div class="flex items-start justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+                <!-- Bouton retour mobile -->
+                <button @click="emit('close')"
+                        class="lg:hidden flex items-center gap-1 mr-3 shrink-0 text-blue-600 hover:text-blue-800 transition-colors py-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="text-xs font-medium">Retour</span>
+                </button>
+
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
                         <ConsultationStatusBadge :status="consultation.status" />
@@ -17,8 +26,10 @@
                         · {{ consultation.sessions_count }} séance{{ consultation.sessions_count !== 1 ? 's' : '' }}
                     </p>
                 </div>
+
+                <!-- Bouton fermer desktop -->
                 <button @click="emit('close')"
-                        class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg
+                        class="hidden lg:flex shrink-0 w-8 h-8 items-center justify-center rounded-lg
                                text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ml-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -27,7 +38,7 @@
             </div>
 
             <!-- ── Corps scrollable ───────────────────────────────────── -->
-            <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+            <div class="flex-1 overflow-y-auto divide-y divide-slate-100 pb-16 lg:pb-0">
 
                 <!-- ① Interventions — info principale en premier -->
                 <div class="px-4 py-4">
@@ -167,6 +178,7 @@
 
             <!-- ── Actions ────────────────────────────────────────────── -->
             <div class="border-t border-slate-100 px-4 pt-3 pb-20 lg:pb-3 shrink-0 space-y-2">
+                <!-- Clôturer : seulement si pas encore terminée -->
                 <button v-if="consultation.status !== 'TERMINE' && isDentist"
                         @click="handleClose"
                         :disabled="actionLoading"
@@ -179,18 +191,29 @@
                     Clôturer
                 </button>
 
-                <button v-if="consultation.status !== 'TERMINE'"
-                        @click="emit('edit', consultation)"
+                <!-- Modifier : toujours visible -->
+                <button @click="emit('edit', consultation)"
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
-                               border border-slate-200 text-slate-600 hover:bg-slate-50">
+                               border border-slate-200 bg-white text-slate-700 hover:bg-slate-50
+                               flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
                     Modifier
                 </button>
 
+                <!-- Supprimer : dentiste uniquement -->
                 <button v-if="isDentist"
                         @click="handleDelete"
                         :disabled="actionLoading"
-                        class="w-full py-2 rounded-xl text-sm font-medium transition-colors
-                               text-red-500 hover:bg-red-50">
+                        class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
+                               border border-red-200 bg-red-50 text-red-600 hover:bg-red-100
+                               disabled:opacity-50 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
                     Supprimer
                 </button>
             </div>
@@ -231,11 +254,11 @@
                             </button>
                         </div>
 
-                        <!-- Corps : SVG gauche + détail dent droite -->
-                        <div class="flex flex-1 min-h-0">
+                        <!-- Corps : SVG haut + détail dent bas (mobile) / SVG gauche + détail dent droite (desktop) -->
+                        <div class="flex flex-col sm:flex-row flex-1 min-h-0">
 
                             <!-- Colonne SVG -->
-                            <div class="flex-1 flex items-center justify-center p-3 overflow-hidden border-r border-slate-100 min-h-0">
+                            <div class="flex-1 min-h-0 flex items-center justify-center p-3 overflow-hidden border-b sm:border-b-0 sm:border-r border-slate-100">
                                 <div style="aspect-ratio: 3027/4850; height: 100%; max-width: 100%;">
                                     <ToothChart
                                         mode="view"
@@ -249,7 +272,7 @@
                             </div>
 
                             <!-- Colonne historique dent -->
-                            <div class="w-72 shrink-0 flex flex-col overflow-hidden">
+                            <div class="h-56 sm:h-auto sm:w-72 shrink-0 flex flex-col overflow-hidden">
 
                                 <!-- Légende -->
                                 <div class="px-4 py-2.5 border-b border-slate-100 shrink-0 bg-slate-50/60">

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex h-full gap-5">
+    <div class="flex flex-1 min-h-0 gap-5">
         <!-- ══════════════════════════════════════════════════════════
          COLONNE GAUCHE — Agenda
          ══════════════════════════════════════════════════════════ -->
@@ -61,25 +61,15 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- Toggle Jour / Semaine -->
-                    <div class="flex border border-slate-300 rounded-lg overflow-hidden text-sm">
+                    <!-- Toggle Jour / Semaine (desktop uniquement) -->
+                    <div class="hidden sm:flex border border-slate-300 rounded-lg overflow-hidden text-sm">
                         <button
                             @click="viewMode = 'day'"
-                            :class="[
-                                'px-3 py-2 transition-colors',
-                                viewMode === 'day'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-slate-600 hover:bg-slate-50',
-                            ]"
+                            :class="['px-3 py-2 transition-colors', viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
                         >Jour</button>
                         <button
                             @click="viewMode = 'week'"
-                            :class="[
-                                'px-3 py-2 transition-colors border-l border-slate-300',
-                                viewMode === 'week'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'text-slate-600 hover:bg-slate-50',
-                            ]"
+                            :class="['px-3 py-2 transition-colors border-l border-slate-300', viewMode === 'week' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
                         >Semaine</button>
                     </div>
 
@@ -89,38 +79,31 @@
                         type="date"
                         v-model="selectedDate"
                         @change="fetchAppointments(selectedDate)"
-                        class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-2 py-2 sm:px-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                         @click="viewMode === 'day' ? goToToday() : goToTodayWeek()"
-                        class="px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-white transition-colors"
+                        class="hidden sm:block px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-white transition-colors"
                     >
                         Aujourd'hui
                     </button>
+                    <!-- Nouveau RDV : texte sur desktop, icône seule sur mobile -->
                     <button
                         @click="openModal(null)"
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                     >
                         <Plus class="w-4 h-4" />
-                        Nouveau RDV
+                        <span class="hidden sm:inline">Nouveau RDV</span>
                     </button>
                 </div>
             </div>
 
-            <!-- ── Légende statuts ───────────────────────────────────── -->
-            <div class="flex items-center gap-4 mb-4 px-1">
-                <span class="text-[11px] text-slate-400 font-medium"
-                    >Statuts :</span
-                >
-                <div
-                    v-for="s in statusLegend"
-                    :key="s.label"
-                    class="flex items-center gap-1.5"
-                >
+            <!-- ── Légende statuts (desktop uniquement) ────────────── -->
+            <div class="hidden sm:flex items-center gap-4 mb-4 px-1">
+                <span class="text-[11px] text-slate-400 font-medium">Statuts :</span>
+                <div v-for="s in statusLegend" :key="s.label" class="flex items-center gap-1.5">
                     <div :class="`w-2 h-2 rounded-full ${s.dot}`"></div>
-                    <span class="text-[11px] text-slate-500">{{
-                        s.label
-                    }}</span>
+                    <span class="text-[11px] text-slate-500">{{ s.label }}</span>
                 </div>
             </div>
 
@@ -138,7 +121,7 @@
                 ref="timelineEl"
                 class="bg-white rounded-xl border border-slate-200 flex flex-col overflow-hidden"
                 :style="viewMode === 'week'
-                    ? 'height: calc(100vh - 200px)'
+                    ? 'height: calc(100vh - 190px)'
                     : 'flex: 1; overflow-y: auto; min-height: 0'"
             >
                 <!-- Skeleton — uniquement pour la vue jour en cours de chargement -->
@@ -189,15 +172,15 @@
                     <!-- Corps : grille heures × jours -->
                     <div class="flex flex-1 min-h-0" ref="weekGridRef">
                         <!-- Colonne heures -->
-                        <div class="w-16 shrink-0 relative bg-white z-10">
+                        <div class="w-16 shrink-0 relative bg-white z-10" :style="`height: ${slotH * SLOTS}px`">
                             <div
                                 v-for="slot in workHours"
                                 :key="slot"
                                 class="absolute right-0 pr-3 text-right"
-                                :style="{ top: slotPercent(slot) }"
+                                :style="{ top: slotTopPx(slot) }"
                             >
                                 <span
-                                    class="text-xs font-mono leading-none"
+                                    class="text-[11px] font-mono leading-none block"
                                     :class="slot.endsWith(':00') ? 'text-slate-400' : 'text-slate-200'"
                                 >{{ slot }}</span>
                             </div>
@@ -209,6 +192,7 @@
                             :key="day"
                             class="flex-1 min-w-0 border-l border-slate-100 relative"
                             :class="isToday(day) ? 'bg-blue-50/30' : ''"
+                            :style="`height: ${slotH * SLOTS}px`"
                         >
                             <!-- Lignes de fond -->
                             <div
@@ -216,7 +200,7 @@
                                 :key="slot"
                                 class="absolute left-0 right-0 border-t"
                                 :class="slot.endsWith(':00') ? 'border-slate-100' : 'border-slate-50'"
-                                :style="{ top: slotPercent(slot) }"
+                                :style="{ top: slotTopPx(slot) }"
                             ></div>
 
                             <!-- Cartes RDV -->
@@ -230,9 +214,8 @@
                                     colorConfig(appt.color).card,
                                 ]"
                                 :style="`
-                                    top: ${apptTopPct(appt)};
-                                    height: ${apptHeightPct(appt)};
-                                    min-height: 24px;
+                                    top: ${apptTopPx(appt)};
+                                    height: ${apptHeightPx(appt)};
                                     left: calc(${(appt.col / appt.maxCols) * 100}% + 2px);
                                     width: calc(${(1 / appt.maxCols) * 100}% - 4px);
                                 `"
@@ -404,7 +387,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { authStore } from '../stores/auth'
 const isDentist = computed(() => authStore.isDentist())
 import {
@@ -457,55 +440,73 @@ const editingAppointment = ref(null);
 const selectedAppointment = ref(null);
 
 onMounted(async () => {
+    if (window.innerWidth < 640) viewMode.value = 'day';
     await Promise.all([fetchAppointments(), fetchCatalogActs(), fetchWeek()]);
 });
 
 // Rafraîchit les données au changement de vue
-watch(viewMode, (mode) => {
-    if (mode === 'week') fetchWeek();
-    else fetchAppointments();
-});
+// watch viewMode géré dans le bloc ResizeObserver ci-dessous
 //
 // ─── Constantes timeline ──────────────────────────────────────────
-const START_HOUR    = 9;
-const END_HOUR      = 18;
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60; // 540 min
+const START_HOUR = 9;
+const END_HOUR   = 18;
+const SLOTS      = 18; // nombre de créneaux 30min entre 09:00 et 18:00
 
-const weekGridRef = ref(null); // utilisé dans template
+// Slots affichés : 09:00 → 18:00 inclus (19 marqueurs)
+const workHours = [
+    '09:00','09:30','10:00','10:30','11:00','11:30',
+    '12:00','12:30','13:00','13:30','14:00','14:30',
+    '15:00','15:30','16:00','16:30','17:00','17:30','18:00'
+];
 
-// Convertit "HH:MM" en minutes depuis START_HOUR
+// ─── Mesure du grid body (ResizeObserver) ─────────────────────────
+const weekGridRef    = ref(null);
+const weekGridHeight = ref(0);
+let   weekGridObs    = null;
 
-// Marqueurs de temps toutes les 30min
-const workHours = computed(() => {
-    const slots = [];
-    for (let h = START_HOUR; h < END_HOUR; h++) {
-        slots.push(`${String(h).padStart(2, "0")}:00`);
-        slots.push(`${String(h).padStart(2, "0")}:30`);
-    }
-    slots.push("18:00");
-    return slots;
+function observeWeekGrid() {
+    if (weekGridObs) weekGridObs.disconnect();
+    if (!weekGridRef.value) return;
+    weekGridHeight.value = weekGridRef.value.clientHeight;
+    weekGridObs = new ResizeObserver(() => {
+        weekGridHeight.value = weekGridRef.value.clientHeight;
+    });
+    weekGridObs.observe(weekGridRef.value);
+}
+
+watch(viewMode, (m) => {
+    if (m === 'week') { nextTick(observeWeekGrid); fetchWeek(); }
+    else { if (weekGridObs) weekGridObs.disconnect(); fetchAppointments(); }
 });
 
-// Convertit "HH:MM" en minutes depuis START_HOUR
+onMounted(() => nextTick(observeWeekGrid));
+onUnmounted(() => { if (weekGridObs) weekGridObs.disconnect(); });
+
+// SLOTS + 0.5 → laisse un buffer en bas pour que le label 18:00 ne soit pas coupé
+const slotH = computed(() => weekGridHeight.value > 0 ? weekGridHeight.value / (SLOTS + 0.5) : 40);
+
+// ─── Fonctions de positionnement (px) ────────────────────────────
 function timeToMinutes(time) {
-    const [h, m] = time.split(":").map(Number);
+    const [h, m] = time.split(':').map(Number);
     return (h - START_HOUR) * 60 + m;
 }
 
-// ─── Positions en % (approche CSS pure, pas de mesure JS) ────────
-function slotPercent(slot) {
-    return (timeToMinutes(slot) / TOTAL_MINUTES * 100).toFixed(4) + '%';
+// Position px d'un marqueur horaire
+function slotTopPx(slot) {
+    return (timeToMinutes(slot) / 30 * slotH.value) + 'px';
 }
 
-function apptTopPct(appt) {
-    return (timeToMinutes(appt.start_time) / TOTAL_MINUTES * 100).toFixed(4) + '%';
+// Position px du début d'un RDV
+function apptTopPx(appt) {
+    return (timeToMinutes(appt.start_time) / 30 * slotH.value) + 'px';
 }
 
-function apptHeightPct(appt) {
+// Hauteur px d'un RDV
+function apptHeightPx(appt) {
     const [sh, sm] = appt.start_time.split(':').map(Number);
     const [eh, em] = appt.end_time.split(':').map(Number);
-    const duration = Math.max(30, eh * 60 + em - (sh * 60 + sm));
-    return (duration / TOTAL_MINUTES * 100).toFixed(4) + '%';
+    const dur = Math.max(30, eh * 60 + em - (sh * 60 + sm));
+    return Math.max(dur / 30 * slotH.value, 22) + 'px';
 }
 
 function apptDuration(appt) {
@@ -586,27 +587,31 @@ function getWeekStartLocal(date) {
 // ─── Changer statut ───────────────────────────────────────────────
 async function handleStatusChange(id, status) {
     const scrollTop = timelineEl.value?.scrollTop ?? 0;
-    const res = await changeStatus(id, status);
-    const appt = res.appointment;
-    // Met à jour weekAppointments directement depuis la réponse
-    for (const d of Object.keys(weekAppointments.value)) {
-        const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
-        if (idx !== -1) { weekAppointments.value[d][idx] = appt; break; }
+    try {
+        const res = await changeStatus(id, status);
+        const appt = res.appointment;
+        for (const d of Object.keys(weekAppointments.value)) {
+            const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
+            if (idx !== -1) { weekAppointments.value[d][idx] = appt; break; }
+        }
+        if (selectedAppointment.value?.id === id) selectedAppointment.value = { ...appt };
+        await nextTick();
+        if (timelineEl.value) timelineEl.value.scrollTop = scrollTop;
+    } catch (e) {
+        error.value = e.message ?? "Impossible de changer le statut.";
     }
-    // Met à jour le panneau ouvert
-    if (selectedAppointment.value?.id === id) selectedAppointment.value = { ...appt };
-    await nextTick();
-    if (timelineEl.value) timelineEl.value.scrollTop = scrollTop;
 }
 
-// ─── Annuler ─────────────────────────────────────────────────────
 async function handleCancel(id) {
-    await cancelAppointment(id);
-    selectedAppointment.value = null;
-    // Retire directement de weekAppointments sans re-fetch
-    for (const d of Object.keys(weekAppointments.value)) {
-        const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
-        if (idx !== -1) { weekAppointments.value[d].splice(idx, 1); break; }
+    try {
+        await cancelAppointment(id);
+        selectedAppointment.value = null;
+        for (const d of Object.keys(weekAppointments.value)) {
+            const idx = weekAppointments.value[d].findIndex((a) => a.id === id);
+            if (idx !== -1) { weekAppointments.value[d].splice(idx, 1); break; }
+        }
+    } catch (e) {
+        error.value = e.message ?? "Impossible d'annuler le rendez-vous.";
     }
 }
 

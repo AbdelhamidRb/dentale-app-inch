@@ -13,56 +13,38 @@
 
                 <!-- Contenu -->
                 <div
-                    class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden"
+                    class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden"
                 >
                     <!-- ── Header ────────────────────────────────────────── -->
                     <div
-                        class="flex items-center justify-between px-6 py-4 border-b border-slate-100"
+                        class="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 shrink-0"
                     >
                         <div>
-                            <h2 class="text-lg font-semibold text-slate-800">
-                                {{
-                                    isEdit
-                                        ? "Modifier la consultation"
-                                        : "Nouvelle consultation"
-                                }}
+                            <h2 class="text-sm sm:text-lg font-semibold text-slate-800">
+                                {{ isEdit ? "Modifier" : "Nouvelle consultation" }}
                             </h2>
-                            <p class="text-xs text-slate-400 mt-0.5">
-                                {{
-                                    isEdit
-                                        ? `Consultation #${form.id}`
-                                        : "Remplissez les informations ci-dessous"
-                                }}
+                            <p class="text-xs text-slate-400 hidden sm:block mt-0.5">
+                                {{ isEdit ? `Consultation #${form.id}` : "Remplissez les informations ci-dessous" }}
                             </p>
                         </div>
                         <button
                             @click="close"
                             class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
 
                     <!-- ── Body ─────────────────────────────────────────── -->
-                    <div class="flex flex-1 overflow-hidden">
+                    <div class="flex flex-col sm:flex-row flex-1 min-h-0 overflow-hidden">
                         <!-- Colonne gauche : infos + actes -->
                         <div
-                            class="flex-1 overflow-y-auto px-6 py-5 space-y-5 border-r border-slate-100"
+                            class="flex-1 overflow-y-auto px-3 sm:px-6 py-3 sm:py-5 space-y-3 sm:space-y-5 sm:border-r border-slate-100"
                         >
                             <!-- Patient + Statut -->
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <!-- Patient avec recherche -->
                                 <div class="relative" ref="patientDropdownRef">
                                     <label
@@ -82,7 +64,7 @@
                                                 'Rechercher un patient…'
                                             "
                                             :class="[
-                                                'w-full border rounded-xl px-3 py-2.5 text-sm',
+                                                'w-full border rounded-xl px-3 py-2 sm:py-2.5 text-sm',
                                                 'focus:outline-none focus:ring-2 focus:ring-blue-300',
                                                 'disabled:bg-slate-50 disabled:text-slate-400',
                                                 form.patient_id
@@ -153,7 +135,7 @@
                                     >
                                     <select
                                         v-model="form.status"
-                                        class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                        class="w-full border border-slate-200 rounded-xl px-3 py-2 sm:py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
                                     >
                                         <option value="BROUILLON">
                                             Brouillon
@@ -180,7 +162,7 @@
                                 </label>
                                 <select
                                     v-model="form.appointment_id"
-                                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                    class="w-full border border-slate-200 rounded-xl px-3 py-2 sm:py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
                                 >
                                     <option :value="null">
                                         Sans rendez-vous
@@ -238,55 +220,35 @@
                                     >
                                         Ajouter une intervention
                                     </p>
-                                    <div class="flex gap-2 mb-3">
+                                    <!-- Ligne 1 : select acte (pleine largeur) -->
+                                    <div class="mb-2">
                                         <select
                                             v-model="newAct.catalog_act_id"
                                             @change="onActSelected"
-                                            class="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                            class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
                                         >
-                                            <option value="">
-                                                Choisir un acte du catalogue…
-                                            </option>
+                                            <option value="">Choisir un acte…</option>
                                             <option
                                                 v-for="ca in catalogActs"
                                                 :key="ca.id"
                                                 :value="ca.id"
                                             >
-                                                {{ ca.code }} —
-                                                {{ ca.name }} ({{
-                                                    ca.base_price
-                                                }}
-                                                MAD)
+                                                {{ ca.code }} — {{ ca.name }} ({{ ca.base_price }} MAD)
                                             </option>
                                         </select>
+                                    </div>
 
-                                        <!-- Prix par dent (éditable) -->
-                                        <div
-                                            class="flex flex-col gap-1 shrink-0"
-                                        >
-                                            <div
-                                                class="flex items-center gap-1"
-                                            >
-                                                <input
-                                                    type="number"
-                                                    v-model.number="
-                                                        newAct.pricePerTooth
-                                                    "
-                                                    min="0"
-                                                    placeholder="0"
-                                                    class="w-24 border border-blue-200 rounded-lg px-2 py-2 text-sm text-slate-700 bg-white text-right focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                                />
-                                                <span
-                                                    class="text-xs text-slate-400"
-                                                    >MAD</span
-                                                >
-                                            </div>
-                                            <span
-                                                class="text-[10px] text-blue-500 text-right"
-                                            >
-                                                par dent
-                                            </span>
-                                        </div>
+                                    <!-- Ligne 2 : prix par dent -->
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <label class="text-xs text-blue-600 shrink-0">Prix / dent</label>
+                                        <input
+                                            type="number"
+                                            v-model.number="newAct.pricePerTooth"
+                                            min="0"
+                                            placeholder="0"
+                                            class="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white text-right focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                        />
+                                        <span class="text-xs text-slate-400 shrink-0">MAD</span>
                                     </div>
 
                                     <!-- Total calculé -->
@@ -383,87 +345,77 @@
                         </div>
 
                         <!-- Colonne droite : schéma dentaire -->
-                        <div
-                            class="w-72 shrink-0 overflow-y-auto p-4 bg-slate-50"
-                        >
-                            <p class="text-xs font-medium text-slate-500 mb-3">
-                                Schéma dentaire
-                                <span
-                                    v-if="newAct.catalog_act_id"
-                                    class="text-blue-600"
-                                >
-                                    — cliquez pour sélectionner
+                        <div class="sm:w-72 shrink-0 bg-slate-50 border-t sm:border-t-0 sm:border-l border-slate-100">
+                            <!-- Toggle visible uniquement sur mobile -->
+                            <button
+                                @click="showChartPanel = !showChartPanel"
+                                class="sm:hidden w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-slate-600"
+                            >
+                                <span class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                                    </svg>
+                                    Schéma dentaire
+                                    <span v-if="newAct.catalog_act_id" class="text-blue-600">— cliquez pour sélectionner</span>
                                 </span>
-                            </p>
-                            <ToothChart
-                                mode="select"
-                                v-model:selectedTeeth="newAct.teeth"
-                                @tooth-clicked="recalcPrice"
-                            />
+                                <svg :class="['w-3.5 h-3.5 text-slate-400 transition-transform', showChartPanel ? 'rotate-180' : '']"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div :class="['overflow-y-auto p-4', showChartPanel ? 'h-56' : 'hidden', 'sm:block sm:h-full']">
+                                <p class="hidden sm:block text-xs font-medium text-slate-500 mb-3">
+                                    Schéma dentaire
+                                    <span v-if="newAct.catalog_act_id" class="text-blue-600">— cliquez pour sélectionner</span>
+                                </p>
+                                <ToothChart
+                                    mode="select"
+                                    v-model:selectedTeeth="newAct.teeth"
+                                    @tooth-clicked="recalcPrice"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     <!-- ── Footer ────────────────────────────────────────── -->
-                    <div
-                        class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white"
-                    >
-                        <!-- Total -->
-                        <div class="text-sm text-slate-500">
-                            <span>{{ form.acts.length }} intervention(s)</span>
-                            <span class="mx-2 text-slate-200">|</span>
-                            <span class="font-semibold text-slate-800">
-                                Total : {{ totalFormatted }} MAD
-                            </span>
+                    <div class="shrink-0 border-t border-slate-100 bg-white">
+                        <!-- Erreur -->
+                        <div v-if="error" class="mx-4 mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
+                            {{ error }}
                         </div>
-
-                        <!-- Actions -->
-                        <div class="flex items-center gap-3">
-                            <button
-                                @click="close"
-                                class="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                @click="submit"
-                                :disabled="!form.patient_id || loading"
-                                class="px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                <svg
-                                    v-if="loading"
-                                    class="w-4 h-4 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4">
+                            <!-- Total (hidden on very small screens) -->
+                            <div class="hidden sm:block text-sm text-slate-500">
+                                <span>{{ form.acts.length }} intervention(s)</span>
+                                <span class="mx-2 text-slate-200">|</span>
+                                <span class="font-semibold text-slate-800">Total : {{ totalFormatted }} MAD</span>
+                            </div>
+                            <!-- Total compact on mobile -->
+                            <p class="sm:hidden text-xs text-slate-500">
+                                {{ form.acts.length }} acte(s) · <span class="font-semibold text-slate-700">{{ totalFormatted }} MAD</span>
+                            </p>
+                            <!-- Boutons -->
+                            <div class="flex gap-2">
+                                <button
+                                    @click="close"
+                                    class="flex-1 sm:flex-none px-4 py-2 text-sm text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200 sm:border-0"
                                 >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                    />
-                                </svg>
-                                {{
-                                    isEdit
-                                        ? "Enregistrer"
-                                        : "Créer la consultation"
-                                }}
-                            </button>
+                                    Annuler
+                                </button>
+                                <button
+                                    @click="submit"
+                                    :disabled="!form.patient_id || loading"
+                                    class="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                    </svg>
+                                    {{ isEdit ? "Enregistrer" : "Créer" }}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Erreur -->
-                    <div
-                        v-if="error"
-                        class="mx-6 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600"
-                    >
-                        {{ error }}
                     </div>
                 </div>
             </div>
@@ -514,6 +466,7 @@ const { createConsultation, updateConsultation } = useConsultations();
 // ─── État du formulaire ───────────────────────────────────────────
 const loading = ref(false);
 const error = ref(null);
+const showChartPanel = ref(false);
 
 // ─── Recherche patient ────────────────────────────────────────────
 const patientSearch = ref("");

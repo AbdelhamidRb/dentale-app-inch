@@ -1,59 +1,36 @@
 <template>
-    <div class="flex h-full overflow-hidden bg-slate-50">
+    <div class="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden bg-slate-50">
         <!-- ══════════════════════════════════════════════════════════
              Colonne gauche : liste des consultations
         ═══════════════════════════════════════════════════════════ -->
         <div
             :class="[
-                'flex flex-col bg-white overflow-hidden transition-all duration-300',
+                'flex flex-col bg-white min-h-0 transition-all duration-300',
                 selectedConsultation
-                    ? 'hidden lg:flex lg:w-full lg:max-w-xl border-r border-slate-200'
-                    : 'w-full border-r-0',
+                    ? 'hidden lg:flex lg:w-full lg:max-w-xl lg:border-r border-slate-200'
+                    : 'flex-1',
             ]"
         >
             <!-- Header compact -->
             <div class="px-4 pt-4 pb-3 border-b border-slate-100">
-                <!-- Ligne 1 : titre + bouton + stats inline -->
-                <div class="flex items-center gap-3 mb-3">
-                    <h1 class="text-base font-semibold text-slate-800 shrink-0">
-                        Consultations
-                    </h1>
-                    <!-- Stats inline -->
-                    <div class="flex items-center gap-2 flex-1">
-                        <span
-                            v-for="stat in stats"
-                            :key="stat.label"
-                            class="flex items-center gap-1"
-                        >
-                            <span :class="['text-sm font-bold', stat.color]">
-                                {{ stat.value }}
-                            </span>
-                            <span class="text-xs text-slate-400">{{
-                                stat.label
-                            }}</span>
-                            <span class="text-slate-200 text-xs ml-1">·</span>
-                        </span>
-                    </div>
-                    <button
-                        v-if="isDentist"
-                        @click="openCreateModal()"
-                        class="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0"
-                    >
-                        <svg
-                            class="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 4v16m8-8H4"
-                            />
+                <!-- Ligne 1 : titre + bouton -->
+                <div class="flex items-center justify-between mb-2">
+                    <h1 class="text-base font-semibold text-slate-800">Consultations</h1>
+                    <button v-if="isDentist" @click="openCreateModal()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         Nouvelle
                     </button>
+                </div>
+
+                <!-- Stats (ligne 2) -->
+                <div class="flex items-center gap-3 mb-2 flex-wrap">
+                    <span v-for="stat in stats" :key="stat.label" class="flex items-center gap-1">
+                        <span :class="['text-sm font-bold', stat.color]">{{ stat.value }}</span>
+                        <span class="text-xs text-slate-400">{{ stat.label }}</span>
+                    </span>
                 </div>
 
                 <!-- Dates -->
@@ -80,51 +57,37 @@
                     </div>
                 </div>
 
-                <!-- Ligne 2 : recherche + filtres inline -->
-                <div class="flex gap-2">
-                    <div class="relative flex-1">
-                        <svg
-                            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
-                            />
-                        </svg>
-                        <input
-                            v-model="filters.search"
-                            placeholder="Patient…"
-                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-                        />
-                    </div>
-                    <div class="flex gap-1">
-                        <button
-                            v-for="s in statusOptions"
-                            :key="s.value"
-                            @click="
-                                filters.status =
-                                    filters.status === s.value ? '' : s.value
-                            "
-                            :class="[
-                                'px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap',
-                                filters.status === s.value
-                                    ? s.activeClass
-                                    : 'border-slate-200 text-slate-500 hover:bg-slate-50',
-                            ]"
-                        >
-                            {{ s.label }}
-                        </button>
-                    </div>
+                <!-- Ligne 2 : recherche -->
+                <div class="relative mb-2">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                    </svg>
+                    <input v-model="filters.search" placeholder="Patient…"
+                           class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"/>
+                </div>
+
+                <!-- Ligne 3 : filtres statut -->
+                <div class="flex gap-1.5 flex-wrap">
+                    <button
+                        v-for="s in statusOptions"
+                        :key="s.value"
+                        @click="filters.status = filters.status === s.value ? '' : s.value"
+                        :class="[
+                            'px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors',
+                            filters.status === s.value
+                                ? s.activeClass
+                                : 'border-slate-200 text-slate-500 hover:bg-slate-50',
+                        ]"
+                    >
+                        {{ s.label }}
+                    </button>
                 </div>
             </div>
 
             <!-- Liste -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto pb-20 lg:pb-0">
                 <!-- Loading -->
                 <!-- Skeleton loading -->
                 <div v-if="loading" class="divide-y divide-slate-100">
@@ -238,23 +201,18 @@
                 </div>
 
                 <!-- Pagination -->
-                <div
-                    v-if="meta.last_page > 1"
-                    class="flex items-center justify-center gap-2 py-4 border-t border-slate-100"
-                >
-                    <button
-                        v-for="p in meta.last_page"
-                        :key="p"
-                        @click="goToPage(p)"
-                        :class="[
-                            'w-8 h-8 text-xs font-medium rounded-lg transition-colors',
-                            meta.current_page === p
-                                ? 'bg-blue-600 text-white'
-                                : 'text-slate-500 hover:bg-slate-100',
-                        ]"
-                    >
-                        {{ p }}
-                    </button>
+                <div v-if="meta.last_page > 1" class="flex items-center justify-between px-4 py-3 border-t border-slate-100 shrink-0">
+                    <p class="text-xs text-slate-400">Page {{ meta.current_page }} / {{ meta.last_page }}</p>
+                    <div class="flex gap-1">
+                        <button @click="goToPage(meta.current_page - 1)" :disabled="meta.current_page === 1"
+                            class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            ← Préc.
+                        </button>
+                        <button @click="goToPage(meta.current_page + 1)" :disabled="meta.current_page === meta.last_page"
+                            class="px-3 py-1.5 text-xs border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                            Suiv. →
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,7 +220,7 @@
         <!-- ══════════════════════════════════════════════════════════
              Colonne droite : panneau détail
         ═══════════════════════════════════════════════════════════ -->
-        <div v-if="selectedConsultation" class="flex-1 overflow-hidden">
+        <div v-if="selectedConsultation" class="flex-1 min-h-0 flex flex-col overflow-hidden">
             <ConsultationPanel
                 v-if="selectedConsultation"
                 :consultation="selectedConsultation"
@@ -341,7 +299,9 @@ async function selectConsultation(c) {
         const res = await consultationsApi.get(c.id);
         consultationCache.set(c.id, res.consultation);
         selectedConsultation.value = res.consultation;
-    } catch {}
+    } catch (e) {
+        error.value = e.message ?? "Impossible de charger la consultation.";
+    }
 }
 
 // ─── Filtres locaux ───────────────────────────────────────────────
@@ -464,7 +424,9 @@ async function loadAppointments() {
         appointments.value = results.sort(
             (a, b) => new Date(b.scheduled_date) - new Date(a.scheduled_date),
         );
-    } catch {}
+    } catch (e) {
+        error.value = e.message ?? "Impossible de charger les rendez-vous.";
+    }
 }
 
 function openEditModal(c) {

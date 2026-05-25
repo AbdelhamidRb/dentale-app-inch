@@ -73,37 +73,53 @@ export function usePayments() {
     // Ajouter un versement
     // ═══════════════════════════════════════════════════════════════
     async function addTransaction(patientId, payload) {
-        const res = await paymentsApi.addTransaction(patientId, payload);
-        // Met à jour dans la liste
-        _updateInList(res.patient);
-        // Met à jour la fiche si ouverte
-        if (patient.value?.id === patientId) {
-            patient.value = { ...patient.value, ...res.patient };
-            if (res.transaction) {
-                patient.value.transactions = [
-                    res.transaction,
-                    ...(patient.value.transactions ?? []),
-                ];
+        loading.value = true;
+        error.value = null;
+        try {
+            const res = await paymentsApi.addTransaction(patientId, payload);
+            _updateInList(res.patient);
+            if (patient.value?.id === patientId) {
+                patient.value = { ...patient.value, ...res.patient };
+                if (res.transaction) {
+                    patient.value.transactions = [
+                        res.transaction,
+                        ...(patient.value.transactions ?? []),
+                    ];
+                }
             }
+            invalidateCache();
+            return res;
+        } catch (e) {
+            error.value = e.message ?? "Erreur lors de l'ajout du paiement.";
+            throw e;
+        } finally {
+            loading.value = false;
         }
-        invalidateCache();
-        return res;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // Supprimer un versement
     // ═══════════════════════════════════════════════════════════════
     async function deleteTransaction(transactionId, patientId) {
-        const res = await paymentsApi.deleteTransaction(transactionId);
-        _updateInList(res.patient);
-        if (patient.value?.id === patientId) {
-            patient.value = { ...patient.value, ...res.patient };
-            patient.value.transactions = (
-                patient.value.transactions ?? []
-            ).filter((t) => t.id !== transactionId);
+        loading.value = true;
+        error.value = null;
+        try {
+            const res = await paymentsApi.deleteTransaction(transactionId);
+            _updateInList(res.patient);
+            if (patient.value?.id === patientId) {
+                patient.value = { ...patient.value, ...res.patient };
+                patient.value.transactions = (
+                    patient.value.transactions ?? []
+                ).filter((t) => t.id !== transactionId);
+            }
+            invalidateCache();
+            return res;
+        } catch (e) {
+            error.value = e.message ?? "Erreur lors de la suppression du paiement.";
+            throw e;
+        } finally {
+            loading.value = false;
         }
-        invalidateCache();
-        return res;
     }
 
     // ─── Helpers ──────────────────────────────────────────────────

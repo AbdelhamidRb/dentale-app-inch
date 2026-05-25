@@ -142,7 +142,8 @@ class BackupController extends Controller
         if (file_exists($sqlFile)) {
             $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
             $cmd  = '"' . $this->mysql . '" -u ' . $this->dbUser
-                  . ' -p' . $this->dbPass . ' ' . $this->dbName;
+                  . ' -p' . $this->dbPass
+                  . ' --default-character-set=utf8mb4 ' . $this->dbName;
             $proc = proc_open($cmd, $descriptors, $pipes);
             fwrite($pipes[0], file_get_contents($sqlFile));
             fclose($pipes[0]);

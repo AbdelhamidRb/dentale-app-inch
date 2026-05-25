@@ -2,9 +2,18 @@
     <div class="flex flex-col h-full">
         <!-- ── En-tête du panneau ────────────────────────────────────── -->
         <div
-            class="flex items-start justify-between p-5 border-b border-slate-100"
+            class="flex items-start justify-between px-4 py-3 border-b border-slate-100"
         >
-            <div class="flex items-center gap-3">
+            <!-- Bouton retour mobile -->
+            <button @click="$emit('close')"
+                    class="lg:hidden flex items-center gap-1 mr-3 shrink-0 text-blue-600 hover:text-blue-800 transition-colors py-1 self-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="text-xs font-medium">Retour</span>
+            </button>
+
+            <div class="flex items-center gap-3 flex-1 min-w-0">
                 <!-- Avatar initiales -->
                 <div
                     class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0"
@@ -52,24 +61,21 @@
 
             <div class="flex items-center gap-1">
                 <!-- Bouton modifier -->
-                <button
-                    @click="$emit('edit')"
-                    class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
-                >
+                <button @click="$emit('edit')"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    title="Modifier">
                     <Pencil class="w-4 h-4" />
                 </button>
                 <!-- Bouton archiver -->
-                <button
-                    @click="$emit('archive', patient.id)"
-                    class="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                >
+                <button @click="$emit('archive', patient.id)"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                    title="Archiver">
                     <Archive class="w-4 h-4" />
                 </button>
-                <!-- Bouton fermer -->
-                <button
-                    @click="$emit('close')"
-                    class="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors"
-                >
+                <!-- Bouton fermer (desktop uniquement) -->
+                <button @click="$emit('close')"
+                    class="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    title="Fermer">
                     <X class="w-4 h-4" />
                 </button>
             </div>
@@ -106,10 +112,10 @@
         </div>
 
         <!-- ── Contenu scrollable ─────────────────────────────────────── -->
-        <div v-if="activeTab === 'schema'" class="flex-1 overflow-y-auto">
+        <div v-if="activeTab === 'schema'" class="flex-1 overflow-y-auto pb-16 lg:pb-0">
             <ToothChart :patient-id="patient.id" />
         </div>
-        <div v-else class="flex-1 overflow-y-auto p-5 space-y-5">
+        <div v-else class="flex-1 overflow-y-auto p-5 space-y-5 pb-16 lg:pb-5">
             <!-- ── Section : Alertes critiques (en haut si présentes) ─── -->
             <div
                 v-if="hasCriticalAlerts"
@@ -381,9 +387,11 @@
                         <!-- Aperçu PDF / autre -->
                         <div
                             v-else
-                            class="aspect-video bg-slate-50 flex items-center justify-center"
+                            class="aspect-video bg-slate-50 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 transition-colors group"
+                            @click="openDoc(doc.url)"
                         >
-                            <FileText class="w-8 h-8 text-slate-300" />
+                            <FileText class="w-8 h-8 text-slate-300 group-hover:text-blue-400 transition-colors" />
+                            <span class="text-[10px] text-slate-400 group-hover:text-blue-500">Ouvrir</span>
                         </div>
 
                         <!-- Infos doc -->
@@ -592,6 +600,9 @@ async function handleDeleteAlert(alertId) {
 }
 
 // ─── Documents ────────────────────────────────────────────────────
+function openDoc(url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
 const fileInput    = ref(null);
 const uploadingFile = ref(null);
 const docType      = ref("RADIO");

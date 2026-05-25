@@ -3,12 +3,23 @@
     <Transition name="panel">
         <div
             v-if="patient"
-            class="h-full flex flex-col bg-white border-l border-slate-200 overflow-hidden"
+            class="flex-1 min-h-0 flex flex-col bg-white lg:border-l border-slate-200 overflow-hidden"
         >
             <!-- ── Header ──────────────────────────────────────────── -->
             <div
-                class="flex items-start justify-between px-5 py-4 border-b border-slate-100"
+                class="flex items-start justify-between px-4 py-3 border-b border-slate-100"
             >
+                <!-- Bouton retour mobile -->
+                <button
+                    @click="emit('close')"
+                    class="lg:hidden flex items-center gap-1 mr-3 shrink-0 text-blue-600 hover:text-blue-800 transition-colors py-1"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="text-xs font-medium">Retour</span>
+                </button>
+
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
                         <PaymentStatusBadge :status="patient.balance_status" />
@@ -20,9 +31,11 @@
                         {{ patient.phone }}
                     </p>
                 </div>
+
+                <!-- Bouton fermer desktop -->
                 <button
                     @click="emit('close')"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    class="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                     <svg
                         class="w-4 h-4"
@@ -120,7 +133,7 @@
             </div>
 
             <!-- ── Corps scrollable ─────────────────────────────────── -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto pb-20 lg:pb-4">
                 <!-- Loading -->
                 <div
                     v-if="loadingDetail"
@@ -269,7 +282,7 @@
                                 <button
                                     v-if="isDentist"
                                     @click="handleDeleteTransaction(t.id)"
-                                    class="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                    class="lg:opacity-0 lg:group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
                                 >
                                     <svg
                                         class="w-3.5 h-3.5"

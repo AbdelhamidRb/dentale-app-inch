@@ -1,5 +1,5 @@
 <template>
-    <div class="h-full overflow-y-auto bg-slate-50 px-3 sm:px-6 py-4 sm:py-6">
+    <div class="flex-1 min-h-0 overflow-y-auto bg-slate-50 px-3 sm:px-6 py-4 sm:py-6 pb-20 lg:pb-6">
 
         <!-- Titre -->
         <div class="mb-6">
@@ -250,10 +250,12 @@ async function doRestore() {
         await api('/api/backup/restore', 'POST', { name: restoreTarget.value.name });
         restoreTarget.value = null;
         backupOk.value  = true;
-        backupMsg.value = 'Restauration terminée. Rechargez la page.';
+        backupMsg.value = 'Restauration terminée avec succès. Rechargez la page pour appliquer les changements.';
         activeTab.value = 'backup';
     } catch (e) {
-        alert('Erreur : ' + (e.message ?? 'Restauration échouée.'));
+        restoreTarget.value = null;
+        backupOk.value  = false;
+        backupMsg.value = e.message ?? 'La restauration a échoué. Veuillez réessayer.';
     } finally {
         restoring.value = false;
     }
@@ -299,8 +301,13 @@ async function api(url, method = 'GET', body = null) {
     const opts = { method, headers: headers() };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(url, opts);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? data.message ?? 'Erreur serveur');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        if (res.status === 401) throw new Error('Session expirée. Veuillez vous reconnecter.');
+        if (res.status === 403) throw new Error('Accès refusé. Cette action est réservée au dentiste.');
+        if (res.status === 500) throw new Error(data.error ?? data.message ?? 'Erreur serveur. Vérifiez que Laragon est bien démarré.');
+        throw new Error(data.error ?? data.message ?? `Erreur ${res.status}.`);
+    }
     return data;
 }
 
