@@ -145,6 +145,10 @@ class BackupController extends Controller
             return response()->json(['error' => 'Backup introuvable.'], 404);
         }
 
+        // ─── Sauvegarder le token actuel avant écrasement de la BDD ──
+        $currentToken = $request->user()->currentAccessToken();
+        $savedToken   = \DB::table('personal_access_tokens')->where('id', $currentToken->id)->first();
+
         // ─── Restaurer BDD ────────────────────────────────────────
         $sqlFile = $path . '\\database.sql';
         if (file_exists($sqlFile)) {
@@ -163,6 +167,14 @@ class BackupController extends Controller
             if ($code !== 0) {
                 return response()->json(['error' => 'Restauration MySQL échouée.', 'details' => $errors], 500);
             }
+        }
+
+        // ─── Réinsérer le token pour garder la session active ─────
+        if ($savedToken) {
+            \DB::table('personal_access_tokens')->updateOrInsert(
+                ['id' => $savedToken->id],
+                (array) $savedToken
+            );
         }
 
         // ─── Restaurer les images ─────────────────────────────────
