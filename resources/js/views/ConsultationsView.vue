@@ -18,9 +18,7 @@
                     <h1 class="text-base font-semibold text-slate-800">Consultations</h1>
                     <button v-if="isDentist" @click="openCreateModal()"
                         class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
+                        <Plus class="w-3.5 h-3.5" />
                         Nouvelle
                     </button>
                 </div>
@@ -59,11 +57,7 @@
 
                 <!-- Ligne 2 : recherche -->
                 <div class="relative mb-2">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                    </svg>
+                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input v-model="filters.search" placeholder="Patient…"
                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"/>
                 </div>
@@ -121,19 +115,7 @@
                     <div
                         class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3"
                     >
-                        <svg
-                            class="w-6 h-6 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                        </svg>
+                        <ClipboardList class="w-6 h-6 text-slate-400" />
                     </div>
                     <p class="text-sm font-medium text-slate-500">
                         Aucune consultation trouvée
@@ -250,6 +232,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { Plus, Search, ClipboardList } from 'lucide-vue-next';
 import { useRoute } from "vue-router";
 
 const route = useRoute();

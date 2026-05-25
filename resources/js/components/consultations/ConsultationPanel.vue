@@ -7,9 +7,7 @@
                 <!-- Bouton retour mobile -->
                 <button @click="emit('close')"
                         class="lg:hidden flex items-center gap-1 mr-3 shrink-0 text-blue-600 hover:text-blue-800 transition-colors py-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
+                    <ChevronLeft class="w-4 h-4" />
                     <span class="text-xs font-medium">Retour</span>
                 </button>
 
@@ -31,9 +29,7 @@
                 <button @click="emit('close')"
                         class="hidden lg:flex shrink-0 w-8 h-8 items-center justify-center rounded-lg
                                text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ml-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                    <X class="w-4 h-4" />
                 </button>
             </div>
 
@@ -104,10 +100,7 @@
                         <span v-for="(date, i) in consultation.session_dates" :key="i"
                               class="inline-flex items-center gap-1.5 px-2.5 py-1
                                      rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                            <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
+                            <Calendar class="w-3 h-3 shrink-0" />
                             {{ formatDate(date) }}
                         </span>
                         <span v-if="!consultation.session_dates?.length"
@@ -164,10 +157,7 @@
                                 <button @click="showChart = true"
                                         class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700
                                                text-white text-xs font-semibold rounded-lg shadow transition-colors">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-                                    </svg>
+                                    <Maximize2 class="w-3.5 h-3.5" />
                                     Ouvrir le schéma
                                 </button>
                             </div>
@@ -185,9 +175,7 @@
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
                                bg-green-600 text-white hover:bg-green-700
                                disabled:bg-green-200 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
+                    <Check class="w-4 h-4" />
                     Clôturer
                 </button>
 
@@ -198,10 +186,7 @@
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
                                border border-red-200 bg-red-50 text-red-600 hover:bg-red-100
                                disabled:opacity-50 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
+                    <Trash2 class="w-4 h-4" />
                     Supprimer
                 </button>
             </div>
@@ -248,9 +233,7 @@
                             </div>
                             <button @click="showChart = false"
                                     class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
+                                <X class="w-4 h-4" />
                             </button>
                         </div>
 
@@ -296,10 +279,7 @@
                                 <div v-if="!activeTooth"
                                      class="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
                                     <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                  d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
-                                        </svg>
+                                        <MousePointer class="w-5 h-5 text-slate-300" />
                                     </div>
                                     <div>
                                         <p class="text-sm font-medium text-slate-500">Sélectionnez une dent</p>
@@ -326,9 +306,7 @@
                                             <button @click="activeTooth = null"
                                                     class="ml-auto p-1 rounded-lg hover:bg-slate-100 text-slate-300
                                                            hover:text-slate-500 transition-colors">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                </svg>
+                                                <X class="w-3.5 h-3.5" />
                                             </button>
                                         </div>
                                     </div>
@@ -374,6 +352,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { ChevronLeft, X, Check, Trash2, Calendar, Maximize2, MousePointer } from 'lucide-vue-next';
 import ConsultationStatusBadge from './ConsultationStatusBadge.vue';
 import ToothChart from './ToothChart.vue';
 import ConfirmModal from '../ui/ConfirmModal.vue';

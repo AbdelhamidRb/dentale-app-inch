@@ -29,11 +29,7 @@
 
                 <!-- Ligne 2 : recherche -->
                 <div class="relative mb-2">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                    </svg>
+                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input v-model="searchQuery" placeholder="Patient…"
                            class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-300 bg-slate-50"/>
                 </div>
@@ -90,16 +86,7 @@
                     <div
                         class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-3"
                     >
-                        <svg
-                            class="w-7 h-7 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
-                        </svg>
+                        <UserCircle class="w-7 h-7 text-slate-400" />
                     </div>
                     <p class="text-sm font-semibold text-slate-600">
                         Aucun patient trouvé
@@ -188,6 +175,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { Search, UserCircle } from 'lucide-vue-next';
 import PaymentStatusBadge from "../components/payments/PaymentStatusBadge.vue";
 import PaymentPanel from "../components/payments/PaymentPanel.vue";
 import { usePayments } from "../composables/usePayments";

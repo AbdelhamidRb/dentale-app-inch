@@ -10,12 +10,7 @@
             <button @click="fetchDashboard" :disabled="loading"
                 class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500
                        border border-slate-200 rounded-lg hover:bg-white transition-colors disabled:opacity-50">
-                <svg :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0
-                             0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
+                <RefreshCw :class="['w-3.5 h-3.5', loading ? 'animate-spin' : '']" />
                 Actualiser
             </button>
         </div>
@@ -45,12 +40,7 @@
                 <!-- Visites ce mois -->
                 <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[7rem]">
                     <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857
-                                     M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857
-                                     m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                        <Users class="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
                         <p class="text-2xl font-bold text-slate-800">{{ data.patients.visited_this_month }}</p>
@@ -63,11 +53,7 @@
                 <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[7rem]">
                     <div class="flex items-start justify-between mb-2">
                         <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z
-                                         M3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
+                            <UserPlus class="w-5 h-5 text-emerald-600" />
                         </div>
                         <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">
                             Nouveaux
@@ -91,11 +77,7 @@
                 <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[7rem]">
                     <div class="flex items-start justify-between mb-2">
                         <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2
-                                         4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
+                            <Banknote class="w-5 h-5 text-emerald-600" />
                         </div>
                         <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">
                             {{ data.payments_today.count }} pmt{{ data.payments_today.count !== 1 ? 's' : '' }}
@@ -114,12 +96,7 @@
                 <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[7rem]">
                     <div class="flex items-start justify-between mb-2">
                         <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0
-                                         0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2
-                                         2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                            </svg>
+                            <TrendingUp class="w-5 h-5 text-blue-600" />
                         </div>
                         <span v-if="data.revenue.variation_pct !== null"
                               :class="['text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
@@ -143,11 +120,7 @@
                 <!-- À encaisser (impayés) -->
                 <div class="col-span-2 sm:col-span-1 bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[7rem]">
                     <div class="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center mb-2">
-                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732
-                                     4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
+                        <AlertCircle class="w-5 h-5 text-red-500" />
                     </div>
                     <div>
                         <p class="text-2xl font-bold text-red-600">
@@ -315,6 +288,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { RefreshCw, Users, UserPlus, Banknote, TrendingUp, AlertCircle } from 'lucide-vue-next';
 
 const data    = ref(null);
 const loading = ref(false);
