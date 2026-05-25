@@ -58,6 +58,10 @@ class BackupController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function run()
     {
+        if (!class_exists('ZipArchive')) {
+            return response()->json(['error' => 'Extension PHP "zip" non activée. Activez-la dans php.ini puis redémarrez Apache dans Laragon.'], 500);
+        }
+
         $timestamp = now()->format('Y-m-d_H-i');
         $dest      = $this->backupDir . '\\' . $timestamp;
 
@@ -128,6 +132,10 @@ class BackupController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function restore(Request $request)
     {
+        if (!class_exists('ZipArchive')) {
+            return response()->json(['error' => 'Extension PHP "zip" non activée. Activez-la dans php.ini puis redémarrez Apache dans Laragon.'], 500);
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}$/'],
         ]);
@@ -176,6 +184,9 @@ class BackupController extends Controller
             $zip->extractTo(dirname($imgPath));
             $zip->close();
         }
+
+        // Correction automatique des données corrompues (encodage CP850)
+        \Artisan::call('app:fix-encoding');
 
         return response()->json(['success' => true, 'restored' => $request->name]);
     }
