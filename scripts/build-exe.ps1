@@ -143,8 +143,10 @@ if ($result.Errors.Count -gt 0) {
 }
 Write-Host "OK  DentalApp.exe compile avec icone"
 
-# ─── Copier sur le Bureau ──────────────────────────────────────
-$desktop = "$env:USERPROFILE\Desktop"
+# ─── Copier sur le Bureau (OneDrive ou classique) ──────────────
+$desktop = "$env:USERPROFILE\OneDrive\Desktop"
+if (-not (Test-Path $desktop)) { $desktop = "$env:USERPROFILE\Desktop" }
+if (-not (Test-Path $desktop)) { $desktop = [Environment]::GetFolderPath("Desktop") }
 Copy-Item $output "$desktop\DentalApp.exe" -Force
 
 # ─── Créer raccourcis .lnk pour BACKUP et RESTAURER ───────────
@@ -169,6 +171,6 @@ $lnk2.Save()
 Write-Host "OK  Raccourcis crees sur le Bureau"
 Write-Host ""
 Write-Host "Bureau mis a jour :"
-Write-Host "  DentalApp.exe  (icone dent bleue)"
-Write-Host "  Backup.lnk     (icone sauvegarde)"
-Write-Host "  Restaurer.lnk  (icone restauration)"
+Write-Host "  DentalApp.exe    (demarrer / fermer l'app)"
+Write-Host "  Backup.lnk       (sauvegarde)"
+Write-Host "  Restaurer.lnk    (restauration)"

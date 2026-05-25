@@ -175,17 +175,9 @@ if ($isAdmin) {
 
 OK "Apache configure (dental-app-inch.test + http://$localIP)"
 
-# ── Raccourcis Bureau ──────────────────────────────────────────
-Copy-Item "$APP_DIR\scripts\DEMARRER.bat"  "$DESKTOP\DEMARRER.bat"  -Force
-Copy-Item "$APP_DIR\scripts\FERMER.bat"    "$DESKTOP\FERMER.bat"    -Force
-Copy-Item "$APP_DIR\scripts\BACKUP.bat"    "$DESKTOP\BACKUP.bat"    -Force
-Copy-Item "$APP_DIR\scripts\RESTAURER.bat" "$DESKTOP\RESTAURER.bat" -Force
-
-# Compiler et copier DentalApp.exe
-& $PHP "$APP_DIR\artisan" 2>&1 | Out-Null
-powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1" 2>&1 | Out-Null
-
-OK "Raccourcis crees sur le Bureau"
+# ── DentalApp.exe + raccourcis Bureau ─────────────────────────
+powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1"
+OK "DentalApp.exe et raccourcis crees sur le Bureau"
 
 # ── Resume final ───────────────────────────────────────────────
 Write-Host ""
