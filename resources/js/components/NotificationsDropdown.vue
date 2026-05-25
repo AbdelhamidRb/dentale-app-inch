@@ -18,6 +18,7 @@
         </button>
 
         <!-- ── Dropdown ───────────────────────────────────────────── -->
+        <Teleport to="body">
         <Transition
             enter-active-class="transition duration-150 ease-out"
             enter-from-class="opacity-0 scale-95 -translate-y-1"
@@ -28,7 +29,9 @@
         >
             <div
                 v-if="open"
-                class="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 z-[200] overflow-hidden"
+                :style="dropdownStyle"
+                class="fixed z-[500] bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden
+                       w-[calc(100vw-2rem)] max-w-sm sm:w-80"
             >
                 <!-- Header -->
                 <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
@@ -137,6 +140,7 @@
                 </div>
             </div>
         </Transition>
+        </Teleport>
     </div>
 </template>
 
@@ -149,6 +153,19 @@ const loading       = ref(false);
 const appointments  = ref([]);
 const template      = ref('Bonjour {nom}, nous vous rappelons votre rendez-vous demain {date} à {heure} au cabinet dentaire. Merci de confirmer votre présence. 🦷');
 const containerRef  = ref(null);
+const btnRect       = ref(null);
+
+const dropdownStyle = computed(() => {
+    if (!btnRect.value) return {};
+    const margin = 8;
+    const panelW = Math.min(window.innerWidth - 32, 320);
+    let left = btnRect.value.right - panelW;
+    if (left < 16) left = 16;
+    return {
+        top:  `${btnRect.value.bottom + margin}px`,
+        left: `${left}px`,
+    };
+});
 
 const tomorrowDate = computed(() => {
     const d = new Date();
@@ -168,6 +185,9 @@ const pendingCount = computed(() =>
 
 // ── Ouvrir / fermer ───────────────────────────────────────────────
 async function toggle() {
+    if (!open.value) {
+        btnRect.value = containerRef.value?.getBoundingClientRect() ?? null;
+    }
     open.value = !open.value;
     if (open.value && !appointments.value.length) {
         await loadData();
