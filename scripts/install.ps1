@@ -73,6 +73,7 @@ if (Test-Path $APP_DIR) {
 }
 & $GIT clone "https://github.com/$GITHUB_REPO.git" $APP_DIR --branch $BRANCH --depth 1 2>&1 | Out-Null
 if (-not (Test-Path "$APP_DIR\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
+& $GIT config --global --add safe.directory ($APP_DIR -replace '\\', '/')
 Copy-Item $licFile "$APP_DIR\dental-app.lic" -Force
 OK "Application telechargee"
 
