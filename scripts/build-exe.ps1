@@ -128,7 +128,9 @@ Write-Host "OK  DentalApp.exe compile avec icone"
 
 # ─── Copier sur le Bureau (OneDrive ou classique) ──────────────
 $desktop = "$env:USERPROFILE\OneDrive\Desktop"
+if (-not (Test-Path $desktop)) { $desktop = "$env:USERPROFILE\OneDrive\Bureau" }
 if (-not (Test-Path $desktop)) { $desktop = "$env:USERPROFILE\Desktop" }
+if (-not (Test-Path $desktop)) { $desktop = "$env:USERPROFILE\Bureau" }
 if (-not (Test-Path $desktop)) { $desktop = [Environment]::GetFolderPath("Desktop") }
 Copy-Item $output "$desktop\DentalApp.exe" -Force
 
