@@ -118,10 +118,10 @@ Write-Host "      Declenche automatiquement a chaque branchement USB"
 Write-Host "      Synchronise les backups manquants vers la cle DENTAL-BKP"
 Write-Host ""
 
-# ═══════════════════════════════════════════════════════════════
-#  TÂCHE 3 : Laravel Scheduler (toutes les minutes)
-#  Nécessaire pour l'archivage automatique des patients
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
+#  TACHE 3 : Laravel Scheduler (toutes les minutes)
+#  Necessaire pour l'archivage automatique des patients
+# ===============================================================
 $taskScheduler = "DentalApp-Scheduler"
 Unregister-ScheduledTask -TaskName $taskScheduler -Confirm:$false -ErrorAction SilentlyContinue
 
@@ -143,11 +143,11 @@ Register-ScheduledTask `
     -Trigger $triggerScheduler `
     -Settings $settingsScheduler `
     -RunLevel Highest `
-    -Description "Déclenche le scheduler Laravel chaque minute (archivage patients automatique à 01h00)" `
+    -Description "Laravel scheduler - archivage automatique patients a 01h00" `
     -Force | Out-Null
 
 Write-Host "  OK  $taskScheduler" -ForegroundColor Green
-Write-Host "      Chaque minute — archivage automatique a 01h00"
+Write-Host "      Chaque minute - archivage automatique a 01h00"
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
@@ -159,6 +159,6 @@ Write-Host ""
 Write-Host "Pour tester la sync USB (branchez d'abord la cle DENTAL-BKP) :"
 Write-Host "  Start-ScheduledTask -TaskName '$taskUSB'"
 Write-Host ""
-Write-Host "Pour tester l'archivage maintenant :"
+Write-Host "Pour tester l archivage maintenant :"
 Write-Host "  Start-ScheduledTask -TaskName '$taskScheduler'"
 Write-Host ""
