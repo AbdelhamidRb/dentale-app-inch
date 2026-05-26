@@ -74,17 +74,26 @@ $licFile = Join-Path $PSScriptRoot "dental-app.lic"
 if (-not (Test-Path $licFile)) { ERR "dental-app.lic introuvable dans le meme dossier que INSTALLER.bat" }
 OK "Licence trouvee"
 
-# ── 3. Activer extension zip dans PHP ─────────────────────────
+# ── 3. Configurer PHP (zip + OPcache) ─────────────────────────
 Step 3 8 "Configuration PHP..."
 $phpIni = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.ini"
 if (Test-Path $phpIni) {
-    $ini = Get-Content $phpIni
-    if ($ini -match ';extension=zip') {
-        ($ini) -replace ';extension=zip', 'extension=zip' | Set-Content $phpIni
-        OK "Extension zip activee"
-    } else {
-        OK "Extension zip deja active"
-    }
+    $ini = Get-Content $phpIni -Raw
+
+    # Activer extension zip
+    $ini = $ini -replace ';extension=zip', 'extension=zip'
+
+    # Configurer OPcache pour des reponses rapides
+    $ini = $ini -replace ';opcache.enable=\d',          'opcache.enable=1'
+    $ini = $ini -replace ';opcache.enable_cli=\d',      'opcache.enable_cli=1'
+    $ini = $ini -replace ';opcache.memory_consumption=\d+', 'opcache.memory_consumption=128'
+    $ini = $ini -replace ';opcache.max_accelerated_files=\d+', 'opcache.max_accelerated_files=10000'
+    $ini = $ini -replace ';opcache.revalidate_freq=\d+', 'opcache.revalidate_freq=0'
+    $ini = $ini -replace ';opcache.validate_timestamps=\d', 'opcache.validate_timestamps=0'
+    $ini = $ini -replace ';opcache.interned_strings_buffer=\d+', 'opcache.interned_strings_buffer=16'
+
+    Set-Content $phpIni $ini -Encoding UTF8
+    OK "PHP configure (zip + OPcache)"
 }
 
 # ── 4. Cloner le projet ────────────────────────────────────────
