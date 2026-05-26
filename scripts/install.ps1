@@ -35,6 +35,18 @@ Write-Host "=================================================="
 Write-Host "   Installation Dental App"
 Write-Host "=================================================="
 Write-Host ""
+
+# ── Informations du dentiste ───────────────────────────────────
+Write-Host "Informations du compte dentiste :" -ForegroundColor Cyan
+Write-Host ""
+$DENTIST_NAME  = Read-Host "  Nom complet du dentiste (ex: Dr. Salim Benali)"
+$DENTIST_EMAIL = Read-Host "  Email du dentiste (ex: salim@gmail.com)"
+$DENTIST_PASS  = Read-Host "  Mot de passe (min. 8 caracteres)"
+if ($DENTIST_NAME -eq "")  { $DENTIST_NAME  = "Dr. Dentiste" }
+if ($DENTIST_EMAIL -eq "") { $DENTIST_EMAIL = "dentiste@cabinet.ma" }
+if ($DENTIST_PASS -eq "")  { $DENTIST_PASS  = "ChangeMe2024!" }
+Write-Host ""
+
 $needRestart = $false
 
 # ── 1. Verifier Laragon ────────────────────────────────────────
@@ -99,6 +111,10 @@ DB_DATABASE=$DB_NAME
 DB_USERNAME=$DB_USER
 DB_PASSWORD=$DB_PASS
 
+DENTIST_NAME=$DENTIST_NAME
+DENTIST_EMAIL=$DENTIST_EMAIL
+DENTIST_PASSWORD=$DENTIST_PASS
+
 FILESYSTEM_DISK=local
 SESSION_DRIVER=cookie
 SESSION_LIFETIME=480
@@ -134,7 +150,7 @@ if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base. MySQL est-il demar
 
 & $PHP "$APP_DIR\artisan" migrate --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
-& $PHP "$APP_DIR\artisan" db:seed --class=DemoDataSeeder --force 2>&1 | Out-Null
+& $PHP "$APP_DIR\artisan" db:seed --class=ProductionSeeder --force 2>&1 | Out-Null
 & $PHP "$APP_DIR\artisan" storage:link --force 2>&1 | Out-Null
 & $PHP "$APP_DIR\artisan" optimize 2>&1 | Out-Null
 OK "Base de donnees initialisee"
@@ -188,11 +204,11 @@ Write-Host ""
 Write-Host "  PC dentiste      : http://dental-app-inch.test"
 Write-Host "  Autres appareils : http://$localIP"
 Write-Host ""
-Write-Host "  Comptes par defaut :"
-Write-Host "    Dentiste  : dentiste@demo.com  / password"
-Write-Host "    Assistant : assistant@demo.com / password"
+Write-Host "  Compte dentiste :"
+Write-Host "    Email        : $DENTIST_EMAIL"
+Write-Host "    Mot de passe : $DENTIST_PASS"
 Write-Host ""
-Write-Host "  PENSEZ A CHANGER LES MOTS DE PASSE !" -ForegroundColor Yellow
+Write-Host "  CHANGEZ LE MOT DE PASSE APRES LA PREMIERE CONNEXION !" -ForegroundColor Yellow
 Write-Host ""
 
 if ($needRestart) {

@@ -16,10 +16,8 @@ return new class extends Migration
         });
 
         DB::table('settings')->insert([
-            'key'        => 'whatsapp_message',
-            'value'      => 'Bonjour {nom}, nous vous rappelons votre rendez-vous demain {date} à {heure} au cabinet dentaire. Merci de confirmer votre présence. 🦷',
-            'created_at' => now(),
-            'updated_at' => now(),
+            ['key' => 'whatsapp_message',    'value' => 'Bonjour {nom}, nous vous rappelons votre rendez-vous demain {date} à {heure} au cabinet dentaire. Merci de confirmer votre présence.', 'created_at' => now(), 'updated_at' => now()],
+            ['key' => 'archive_after_months','value' => '18', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 

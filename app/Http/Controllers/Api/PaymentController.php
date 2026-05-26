@@ -16,6 +16,12 @@ class PaymentController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function index(Request $request)
     {
+        $request->validate([
+            'search' => 'nullable|string|max:100',
+            'status' => 'nullable|in:PARTIEL,PAYÉ,AVANCE',
+            'page'   => 'nullable|integer|min:1',
+        ]);
+
         $perPage = 30;
         $page    = max(1, (int) $request->get('page', 1));
 
@@ -123,9 +129,9 @@ class PaymentController extends Controller
         $patient = Patient::findOrFail($patientId);
 
         $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0.01|max:999999',
             'date'   => 'required|date',
-            'notes'  => 'nullable|string',
+            'notes'  => 'nullable|string|max:500',
         ]);
 
         $transaction = PaymentTransaction::create([

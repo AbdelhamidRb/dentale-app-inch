@@ -47,8 +47,8 @@ class Patient extends Model
     // Appelé dans le controller avant la création
     public static function generateNumeroDossier(): string
     {
-        // max('id') au lieu de withTrashed() car on n'utilise pas SoftDeletes
-        $last = self::max('id') ?? 0;
+        $last = (int) self::selectRaw("COALESCE(MAX(CAST(SUBSTRING(numero_dossier, 5) AS UNSIGNED)), 0) AS n")
+            ->value('n');
         return 'PAT-' . str_pad($last + 1, 4, '0', STR_PAD_LEFT);
     }
 

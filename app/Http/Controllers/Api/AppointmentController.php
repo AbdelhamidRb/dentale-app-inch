@@ -109,7 +109,7 @@ class AppointmentController extends Controller
         )) {
             return response()->json([
                 'message' => 'Ce créneau est déjà occupé par un autre rendez-vous.'
-            ], 422);
+            ], 409);
         }
 
         // ─── Création du RDV ──────────────────────────────────────
@@ -175,7 +175,7 @@ class AppointmentController extends Controller
         )) {
             return response()->json([
                 'message' => 'Ce créneau est déjà occupé par un autre rendez-vous.'
-            ], 422);
+            ], 409);
         }
 
         $appointment->update([

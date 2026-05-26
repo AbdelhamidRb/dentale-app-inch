@@ -67,7 +67,17 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'patient_id'        => 'required|exists:patients,id',
-            'appointment_id'    => 'nullable|exists:appointments,id',
+            'appointment_id'    => [
+                'nullable',
+                'exists:appointments,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && Appointment::where('id', $value)
+                            ->where('patient_id', $request->patient_id)
+                            ->doesntExist()) {
+                        $fail('Ce rendez-vous n\'appartient pas à ce patient.');
+                    }
+                },
+            ],
             'status'            => 'nullable|in:EN_COURS,TERMINE',
             'notes'             => 'nullable|string',
 
@@ -76,7 +86,7 @@ class ConsultationController extends Controller
             'acts.*.catalog_act_id' => 'required|exists:catalog_acts,id',
             'acts.*.teeth'      => 'nullable|array',
             'acts.*.teeth.*'    => 'integer|min:11|max:85',
-            'acts.*.price'      => 'required|numeric|min:0',
+            'acts.*.price'      => 'required|numeric|min:0|max:999999',
             'acts.*.notes'      => 'nullable|string',
         ]);
 
@@ -156,7 +166,7 @@ class ConsultationController extends Controller
             'acts.*.catalog_act_id' => 'required|exists:catalog_acts,id',
             'acts.*.teeth'      => 'nullable|array',
             'acts.*.teeth.*'    => 'integer|min:11|max:85',
-            'acts.*.price'      => 'required|numeric|min:0',
+            'acts.*.price'      => 'required|numeric|min:0|max:999999',
             'acts.*.notes'      => 'nullable|string',
         ]);
 
