@@ -155,22 +155,9 @@ OK "Dependances PHP installees + cle generee"
 Step 7 8 "Base de donnees..."
 
 # Verifier que MySQL est accessible
-$mysqlReady = $false
 $ping = & $MYSQLADMIN -u root ping 2>$null
-if ($ping -match "alive") { $mysqlReady = $true }
-
-if (-not $mysqlReady) {
-    Write-Host ""
-    Write-Host "  MySQL n'est pas demarre." -ForegroundColor Yellow
-    Write-Host "  --> Ouvrez Laragon et cliquez 'Start All' (ou demarrez MySQL)." -ForegroundColor Yellow
-    Write-Host ""
-    for ($i = 0; $i -lt 3; $i++) {
-        Read-Host "  Appuyez sur Entree une fois MySQL demarre"
-        $ping = & $MYSQLADMIN -u root ping 2>$null
-        if ($ping -match "alive") { $mysqlReady = $true; break }
-        Write-Host "  MySQL toujours inaccessible, reessayez..." -ForegroundColor Yellow
-    }
-    if (-not $mysqlReady) { ERR "MySQL inaccessible. Verifiez que Laragon est demarre." }
+if ($ping -notmatch "alive") {
+    ERR "MySQL n'est pas demarre. Ouvrez Laragon et cliquez 'Start All', puis relancez INSTALLER.bat."
 }
 Write-Host "  MySQL pret." -ForegroundColor Gray
 
