@@ -4,6 +4,7 @@ $HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.ex
 $MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
 $MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
 $MYSQL_INI  = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\my.ini"
+$VHOST_FILE = "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
@@ -13,13 +14,32 @@ $env:PATH = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64;" +
             "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin;" +
             $env:PATH
 
+# Detecter IP locale
+$localIP = (Get-NetIPAddress -AddressFamily IPv4 |
+    Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
+    Sort-Object InterfaceMetric | Select-Object -First 1).IPAddress
+if (-not $localIP) { $localIP = "127.0.0.1" }
+
+# Ecrire le VirtualHost avec l'IP actuelle (avant de demarrer Apache)
+@"
+<VirtualHost *:80>
+    ServerName dental-app-inch.test
+    ServerAlias dental.local dental $localIP
+    DocumentRoot "C:/laragon/www/dental-app-inch/public"
+    <Directory "C:/laragon/www/dental-app-inch/public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+"@ | Set-Content $VHOST_FILE -Encoding UTF8
+
 # Demarrer Apache si pas en cours
 if (-not (Get-Process "httpd" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath $HTTPD -WindowStyle Hidden
     Start-Sleep -Seconds 2
 }
 
-# Demarrer MySQL si pas en cours (avec le bon my.ini de Laragon)
+# Demarrer MySQL si pas en cours
 if (-not (Get-Process "mysqld" -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath $MYSQLD -ArgumentList "--defaults-file=`"$MYSQL_INI`"" -WindowStyle Hidden
 }
@@ -32,12 +52,6 @@ do {
     $ping = & $MYSQLADMIN -u root ping 2>$null
     if ($ping -match "alive") { break }
 } while ($attempts -lt 25)
-
-# Detecter IP locale
-$localIP = (Get-NetIPAddress -AddressFamily IPv4 |
-    Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
-    Sort-Object InterfaceMetric | Select-Object -First 1).IPAddress
-if (-not $localIP) { $localIP = "127.0.0.1" }
 
 # Afficher popup
 Add-Type -AssemblyName System.Windows.Forms
