@@ -108,7 +108,7 @@
                             <!-- Bouton WhatsApp ou check -->
                             <button
                                 v-if="!appt.whatsapp_notified_at"
-                                @click="sendWhatsapp(appt)"
+                                @click.stop="sendWhatsapp(appt)"
                                 class="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-green-500 hover:bg-green-600
                                        text-white text-xs font-medium rounded-lg transition-colors"
                             >
@@ -227,8 +227,13 @@ async function loadData() {
 
 // ── Envoyer WhatsApp + marquer comme notifié ─────────────────────
 function sendWhatsapp(appt) {
-    // Ouvrir le lien AVANT de modifier l'état Vue (évite que le DOM change avant navigation)
-    window.open(whatsappLink(appt), '_blank', 'noopener,noreferrer');
+    const a = document.createElement('a');
+    a.href = whatsappLink(appt);
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     markNotified(appt);
 }
 

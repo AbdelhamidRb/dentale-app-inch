@@ -13,6 +13,7 @@ class DashboardController extends Controller
         $now        = Carbon::now();
         $today      = $now->toDateString();
         $monthStart = $now->copy()->startOfMonth()->toDateString();
+        $monthEnd   = $now->copy()->endOfMonth()->toDateString();
         $prevStart  = $now->copy()->subMonth()->startOfMonth()->toDateString();
         $prevEnd    = $now->copy()->subMonth()->endOfMonth()->toDateString();
 
@@ -42,7 +43,7 @@ class DashboardController extends Controller
             FROM payment_transactions pt
             JOIN patients p ON p.id = pt.patient_id
             WHERE p.is_archived = 0
-        ", [$monthStart, $today, $prevStart, $prevEnd]);
+        ", [$monthStart, $monthEnd, $prevStart, $prevEnd]);
 
         $variationPct = (($revenueStats->prev_month ?? 0) > 0)
             ? round(($revenueStats->month - $revenueStats->prev_month) / $revenueStats->prev_month * 100, 1)
