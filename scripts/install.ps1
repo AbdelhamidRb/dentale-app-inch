@@ -186,20 +186,18 @@ OK "Base de donnees initialisee"
 # ── 8. Apache + Firewall + Taches ─────────────────────────────
 Step 8 8 "Configuration reseau et demarrage..."
 
+# VirtualHost Apache - un seul fichier catch-all (capture dental-app-inch.test ET toutes les IPs)
+$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh -Encoding utf8
+# Supprimer les anciens fichiers si existants
+Remove-Item "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Force -ErrorAction SilentlyContinue
+Remove-Item "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf"          -Force -ErrorAction SilentlyContinue
+Remove-Item "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf"             -Force -ErrorAction SilentlyContinue
+
 $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
     Sort-Object InterfaceMetric | Select-Object -First 1).IPAddress
 if (-not $localIP) { $localIP = "127.0.0.1" }
-
-# VirtualHosts Apache
-$vh1 = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
-Set-Content "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Value $vh1 -Encoding utf8
-
-$vh2 = "<VirtualHost *:80>`n    ServerName dental.local`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
-Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf" -Value $vh2 -Encoding utf8
-
-$vh3 = "<VirtualHost *:80>`n    ServerName $localIP`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
-Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf" -Value $vh3 -Encoding utf8
 
 # Firewall
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
