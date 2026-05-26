@@ -186,9 +186,15 @@ OK "Base de donnees initialisee"
 # ── 8. Apache + Firewall + Taches ─────────────────────────────
 Step 8 8 "Configuration reseau et demarrage..."
 
-# VirtualHost Apache - un seul fichier catch-all (capture dental-app-inch.test ET toutes les IPs)
-$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
-Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh -Encoding utf8
+# VirtualHost 1 : hostname (dental-app-inch.test et dental.local)
+$vh1 = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh1 -Encoding utf8
+
+# VirtualHost 2 : catch-all pour acces par IP (tel, tablette, autre PC)
+# Nomme 00- pour etre charge en premier et devenir le VirtualHost par defaut
+$vh2 = "<VirtualHost *:80>`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "C:\laragon\etc\apache2\sites-enabled\00-dental-default.conf" -Value $vh2 -Encoding utf8
+
 # Supprimer les anciens fichiers si existants
 Remove-Item "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Force -ErrorAction SilentlyContinue
 Remove-Item "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf"          -Force -ErrorAction SilentlyContinue
