@@ -17,7 +17,7 @@ $MYSQL      = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
 $MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
 $MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
 $HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
-$MYSQL_DATA = "C:\laragon\data\mysql"
+$MYSQL_DATA = "C:\laragon\data\mysql-8.4"
 
 # Ajouter Git au PATH pour que Composer puisse l'utiliser
 $env:Path = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:Path"

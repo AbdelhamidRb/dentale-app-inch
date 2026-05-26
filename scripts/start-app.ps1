@@ -1,17 +1,17 @@
 # start-app.ps1 - Demarrer Dental App
 
-# Configurer le PATH comme Laragon (indispensable pour que Apache charge PHP)
+$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
+$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
+$MYSQL_INI  = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\my.ini"
+$APP_URL    = "http://dental-app-inch.test"
+$PROFILE    = "C:\dental-app-browser"
+
+# PATH necessaire pour que Apache charge le module PHP
 $env:PATH = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64;" +
             "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin;" +
             "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin;" +
             $env:PATH
-
-$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
-$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
-$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
-$MYSQL_DATA = "C:\laragon\data\mysql"
-$APP_URL    = "http://dental-app-inch.test"
-$PROFILE    = "C:\dental-app-browser"
 
 # Demarrer Apache si pas en cours
 if (-not (Get-Process "httpd" -ErrorAction SilentlyContinue)) {
@@ -19,9 +19,9 @@ if (-not (Get-Process "httpd" -ErrorAction SilentlyContinue)) {
     Start-Sleep -Seconds 2
 }
 
-# Demarrer MySQL si pas en cours
+# Demarrer MySQL si pas en cours (avec le bon my.ini de Laragon)
 if (-not (Get-Process "mysqld" -ErrorAction SilentlyContinue)) {
-    Start-Process -FilePath $MYSQLD -ArgumentList "--datadir=`"$MYSQL_DATA`"" -WindowStyle Hidden
+    Start-Process -FilePath $MYSQLD -ArgumentList "--defaults-file=`"$MYSQL_INI`"" -WindowStyle Hidden
 }
 
 # Attendre que MySQL soit pret (max 20 secondes)
