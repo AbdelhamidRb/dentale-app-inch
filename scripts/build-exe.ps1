@@ -1,41 +1,13 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# ─── Créer l'icône (dent bleue) ────────────────────────────────
-$bmp = New-Object Drawing.Bitmap(32, 32)
-$g   = [Drawing.Graphics]::FromImage($bmp)
-$g.SmoothingMode = [Drawing.Drawing2D.SmoothingMode]::AntiAlias
-$g.Clear([Drawing.Color]::Transparent)
-
-# Fond bleu rond
-$g.FillEllipse(
-    (New-Object Drawing.SolidBrush([Drawing.Color]::FromArgb(37,99,235))),
-    0, 0, 31, 31
-)
-
-# Forme dent blanche (rectangle arrondi en bas + bosses en haut)
-$white = New-Object Drawing.SolidBrush([Drawing.Color]::White)
-# Corps de la dent
-$g.FillRectangle($white, 9, 14, 14, 12)
-# Bosses du haut (3 ronds)
-$g.FillEllipse($white, 7,  10, 6, 8)
-$g.FillEllipse($white, 13, 8,  6, 8)
-$g.FillEllipse($white, 19, 10, 6, 8)
-# Racines
-$g.FillRectangle($white, 9,  24, 4, 4)
-$g.FillRectangle($white, 19, 24, 4, 4)
-
-$g.Dispose()
-
-# Sauvegarder en .ico
+# Icone personnalisee dental.ico (fournie dans le dossier scripts)
 $icoPath = "C:\laragon\www\dental-app-inch\scripts\dental.ico"
-$icon    = [Drawing.Icon]::FromHandle($bmp.GetHicon())
-$fs      = [IO.File]::Open($icoPath, [IO.FileMode]::Create)
-$icon.Save($fs)
-$fs.Close()
-$bmp.Dispose()
-
-Write-Host "OK  dental.ico cree"
+if (-not (Test-Path $icoPath)) {
+    Write-Host "ERREUR : dental.ico introuvable dans scripts/" -ForegroundColor Red
+    exit 1
+}
+Write-Host "OK  dental.ico charge"
 
 # ─── Compiler DentalApp.exe avec l'icône ──────────────────────
 $code = @"
