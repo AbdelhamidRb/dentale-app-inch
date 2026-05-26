@@ -36,15 +36,23 @@ Write-Host "   Installation Dental App"
 Write-Host "=================================================="
 Write-Host ""
 
-# ── Informations du dentiste ───────────────────────────────────
-Write-Host "Informations du compte dentiste :" -ForegroundColor Cyan
-Write-Host ""
-$DENTIST_NAME  = Read-Host "  Nom complet du dentiste (ex: Dr. Salim Benali)"
-$DENTIST_EMAIL = Read-Host "  Email du dentiste (ex: salim@gmail.com)"
+# ── Informations des comptes ───────────────────────────────────
+Write-Host "Compte DENTISTE :" -ForegroundColor Cyan
+$DENTIST_NAME  = Read-Host "  Nom complet (ex: Dr. Salim Benali)"
+$DENTIST_EMAIL = Read-Host "  Email (ex: salim@gmail.com)"
 $DENTIST_PASS  = Read-Host "  Mot de passe (min. 8 caracteres)"
 if ($DENTIST_NAME -eq "")  { $DENTIST_NAME  = "Dr. Dentiste" }
 if ($DENTIST_EMAIL -eq "") { $DENTIST_EMAIL = "dentiste@cabinet.ma" }
 if ($DENTIST_PASS -eq "")  { $DENTIST_PASS  = "ChangeMe2024!" }
+
+Write-Host ""
+Write-Host "Compte ASSISTANT :" -ForegroundColor Cyan
+$ASSISTANT_NAME  = Read-Host "  Nom complet (ex: Sara Idrissi)"
+$ASSISTANT_EMAIL = Read-Host "  Email (ex: sara@gmail.com)"
+$ASSISTANT_PASS  = Read-Host "  Mot de passe (min. 8 caracteres)"
+if ($ASSISTANT_NAME -eq "")  { $ASSISTANT_NAME  = "Assistant" }
+if ($ASSISTANT_EMAIL -eq "") { $ASSISTANT_EMAIL = "assistant@cabinet.ma" }
+if ($ASSISTANT_PASS -eq "")  { $ASSISTANT_PASS  = "ChangeMe2024!" }
 Write-Host ""
 
 $needRestart = $false
@@ -114,6 +122,10 @@ DB_PASSWORD=$DB_PASS
 DENTIST_NAME=$DENTIST_NAME
 DENTIST_EMAIL=$DENTIST_EMAIL
 DENTIST_PASSWORD=$DENTIST_PASS
+
+ASSISTANT_NAME=$ASSISTANT_NAME
+ASSISTANT_EMAIL=$ASSISTANT_EMAIL
+ASSISTANT_PASSWORD=$ASSISTANT_PASS
 
 FILESYSTEM_DISK=local
 SESSION_DRIVER=cookie
@@ -204,11 +216,10 @@ Write-Host ""
 Write-Host "  PC dentiste      : http://dental-app-inch.test"
 Write-Host "  Autres appareils : http://$localIP"
 Write-Host ""
-Write-Host "  Compte dentiste :"
-Write-Host "    Email        : $DENTIST_EMAIL"
-Write-Host "    Mot de passe : $DENTIST_PASS"
+Write-Host "  Dentiste  : $DENTIST_EMAIL  /  $DENTIST_PASS"
+Write-Host "  Assistant : $ASSISTANT_EMAIL  /  $ASSISTANT_PASS"
 Write-Host ""
-Write-Host "  CHANGEZ LE MOT DE PASSE APRES LA PREMIERE CONNEXION !" -ForegroundColor Yellow
+Write-Host "  CHANGEZ LES MOTS DE PASSE APRES LA PREMIERE CONNEXION !" -ForegroundColor Yellow
 Write-Host ""
 
 if ($needRestart) {

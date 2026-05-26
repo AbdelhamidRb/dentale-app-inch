@@ -9,25 +9,39 @@ class ProductionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Compte dentiste (créé seulement s'il n'existe pas déjà)
-        $email    = env('DENTIST_EMAIL', 'dentiste@cabinet.ma');
-        $password = env('DENTIST_PASSWORD', 'ChangeMe2024!');
-        $name     = env('DENTIST_NAME', 'Dr. Dentiste');
+        // Compte dentiste
+        $dentistEmail = env('DENTIST_EMAIL', 'dentiste@cabinet.ma');
+        $dentistPass  = env('DENTIST_PASSWORD', 'ChangeMe2024!');
+        $dentistName  = env('DENTIST_NAME', 'Dr. Dentiste');
 
         User::firstOrCreate(
-            ['email' => $email],
+            ['email' => $dentistEmail],
             [
-                'name'     => $name,
-                'password' => bcrypt($password),
+                'name'     => $dentistName,
+                'password' => bcrypt($dentistPass),
                 'role'     => 'DENTIST',
+            ]
+        );
+
+        // Compte assistant
+        $assistantEmail = env('ASSISTANT_EMAIL', 'assistant@cabinet.ma');
+        $assistantPass  = env('ASSISTANT_PASSWORD', 'ChangeMe2024!');
+        $assistantName  = env('ASSISTANT_NAME', 'Assistant');
+
+        User::firstOrCreate(
+            ['email' => $assistantEmail],
+            [
+                'name'     => $assistantName,
+                'password' => bcrypt($assistantPass),
+                'role'     => 'ASSISTANT',
             ]
         );
 
         // Catalogue des actes de base
         $this->call(CatalogActSeeder::class);
 
-        $this->command->info("Compte dentiste : {$email}");
-        $this->command->info("Mot de passe    : {$password}");
-        $this->command->info("CHANGEZ le mot de passe apres la premiere connexion !");
+        $this->command->info("Dentiste  : {$dentistEmail} / {$dentistPass}");
+        $this->command->info("Assistant : {$assistantEmail} / {$assistantPass}");
+        $this->command->info("CHANGEZ les mots de passe apres la premiere connexion !");
     }
 }
