@@ -77,12 +77,12 @@ public class DentalApp : Form
 
     private void RunScript(string script)
     {
+        string vbs = @"C:\laragon\www\dental-app-inch\scripts\run-hidden.vbs";
         ProcessStartInfo psi = new ProcessStartInfo();
-        psi.FileName        = "powershell.exe";
-        psi.Arguments       = "-NonInteractive -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"" + script + "\"";
-        psi.CreateNoWindow  = true;
+        psi.FileName        = "wscript.exe";
+        psi.Arguments       = "//B //NoLogo \"" + vbs + "\" \"" + script + "\"";
         psi.UseShellExecute = false;
-        psi.WindowStyle     = System.Diagnostics.ProcessWindowStyle.Hidden;
+        psi.CreateNoWindow  = true;
         Process.Start(psi);
     }
 
