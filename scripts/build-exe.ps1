@@ -79,9 +79,10 @@ public class DentalApp : Form
     {
         ProcessStartInfo psi = new ProcessStartInfo();
         psi.FileName        = "powershell.exe";
-        psi.Arguments       = "-ExecutionPolicy Bypass -WindowStyle Hidden -File \"" + script + "\"";
+        psi.Arguments       = "-NonInteractive -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"" + script + "\"";
         psi.CreateNoWindow  = true;
         psi.UseShellExecute = false;
+        psi.WindowStyle     = System.Diagnostics.ProcessWindowStyle.Hidden;
         Process.Start(psi);
     }
 
