@@ -15,9 +15,10 @@ class BackupController extends Controller
     private string $backupDir  = 'C:\\backups\\dental-app';
     private string $mysqldump  = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe';
     private string $mysql      = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysql.exe';
-    private string $dbName     = 'dental_db_inch';
-    private string $dbUser     = 'root';
-    private string $dbPass     = 'hamid2003';
+
+    private function dbName(): string { return config('database.connections.mysql.database', 'dental_db_inch'); }
+    private function dbUser(): string { return config('database.connections.mysql.username', 'root'); }
+    private function dbPass(): string { return config('database.connections.mysql.password', ''); }
 
     // ═══════════════════════════════════════════════════════════════
     // GET /api/backup/list
@@ -74,10 +75,11 @@ class BackupController extends Controller
         // ─── Export BDD ──────────────────────────────────────────
         $sqlFile     = $dest . '\\database.sql';
         $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-        $cmd = '"' . $this->mysqldump . '" -u ' . $this->dbUser
-             . ' -p' . $this->dbPass
+        $pass = $this->dbPass();
+        $cmd = '"' . $this->mysqldump . '" -u ' . $this->dbUser()
+             . ($pass !== '' ? ' -p' . $pass : '')
              . ' --single-transaction --default-character-set=utf8mb4 --routines '
-             . $this->dbName;
+             . $this->dbName();
 
         $proc = proc_open($cmd, $descriptors, $pipes);
         fclose($pipes[0]);
@@ -155,9 +157,10 @@ class BackupController extends Controller
         $sqlFile = $path . '\\database.sql';
         if (file_exists($sqlFile)) {
             $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-            $cmd  = '"' . $this->mysql . '" -u ' . $this->dbUser
-                  . ' -p' . $this->dbPass
-                  . ' --default-character-set=utf8mb4 ' . $this->dbName;
+            $pass = $this->dbPass();
+            $cmd  = '"' . $this->mysql . '" -u ' . $this->dbUser()
+                  . ($pass !== '' ? ' -p' . $pass : '')
+                  . ' --default-character-set=utf8mb4 ' . $this->dbName();
             $proc = proc_open($cmd, $descriptors, $pipes);
             fwrite($pipes[0], file_get_contents($sqlFile));
             fclose($pipes[0]);

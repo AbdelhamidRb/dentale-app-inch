@@ -48,14 +48,24 @@ class DashboardController extends Controller
             ? round(($revenueStats->month - $revenueStats->prev_month) / $revenueStats->prev_month * 100, 1)
             : null;
 
-        // ── 4. Impayés (ce que les patients doivent encore) ──────────
-        $totalDette = (float) DB::selectOne("
-            SELECT COALESCE(SUM(c.total_price), 0) AS s
-            FROM consultations c
-            JOIN patients p ON p.id = c.patient_id
+        // ── 4. Impayés — somme des soldes positifs par patient ───────
+        // (un crédit d'un patient ne compense pas la dette d'un autre)
+        $unpaid = (float) DB::selectOne("
+            SELECT COALESCE(SUM(GREATEST(
+                COALESCE(pc.total, 0) - COALESCE(pp.total, 0),
+                0
+            )), 0) AS s
+            FROM patients p
+            LEFT JOIN (
+                SELECT patient_id, SUM(total_price) AS total
+                FROM consultations GROUP BY patient_id
+            ) pc ON pc.patient_id = p.id
+            LEFT JOIN (
+                SELECT patient_id, SUM(amount) AS total
+                FROM payment_transactions GROUP BY patient_id
+            ) pp ON pp.patient_id = p.id
             WHERE p.is_archived = 0
         ")->s;
-        $unpaid = max(0, $totalDette - (float) ($revenueStats->total_ever ?? 0));
 
         // ── 5. Absentéisme du mois ───────────────────────────────────
         $absStats = DB::selectOne("
