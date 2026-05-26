@@ -205,34 +205,12 @@ if (-not $fwRule) {
     New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
 }
 
-# Creer my.ini pour le service MySQL (datadir obligatoire dans le fichier)
-$myIni = "C:\laragon\data\mysql\dental-service.ini"
-@"
-[mysqld]
-datadir=C:/laragon/data/mysql
-port=3306
-"@ | Set-Content $myIni -Encoding ASCII
-
-# Donner acces SYSTEM au dossier Laragon (necessaire pour les services)
-icacls "C:\laragon" /grant "NT AUTHORITY\SYSTEM:(OI)(CI)F" /T /Q 2>&1 | Out-Null
-
-# Enregistrer Apache comme service Windows (demarrage manuel)
-& $HTTPD -k uninstall -n "DentalApache" 2>&1 | Out-Null
-& $HTTPD -k install  -n "DentalApache" 2>&1 | Out-Null
-Set-Service "DentalApache" -StartupType Manual -ErrorAction SilentlyContinue
-
-# Enregistrer MySQL comme service Windows avec le bon my.ini
-& $MYSQLD --remove DentalMySQL 2>&1 | Out-Null
-& $MYSQLD --install DentalMySQL --defaults-file="$myIni" 2>&1 | Out-Null
-Set-Service "DentalMySQL" -StartupType Manual -ErrorAction SilentlyContinue
-
-# Demarrer les services pour finaliser l'installation
-Stop-Process -Name "httpd","mysqld" -Force -ErrorAction SilentlyContinue
+# Redemarrer Apache avec le bon PATH (necessaire pour charger PHP)
+$env:PATH = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64;$env:PATH"
+Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
-Start-Service "DentalApache" -ErrorAction SilentlyContinue
-Start-Service "DentalMySQL"  -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 4
-OK "Services Apache et MySQL enregistres"
+Start-Process -FilePath $HTTPD -WindowStyle Hidden
+Start-Sleep -Seconds 2
 
 # Taches planifiees (backup + scheduler)
 if ($isAdmin) {

@@ -18,12 +18,11 @@ foreach ($name in @("msedge", "chrome")) {
     }
 }
 
-# Arreter via services si disponibles, sinon forcer les processus
-$mysqlSvc  = Get-Service "DentalMySQL"  -ErrorAction SilentlyContinue
-$apacheSvc = Get-Service "DentalApache" -ErrorAction SilentlyContinue
+# Arreter MySQL proprement puis Apache
+& $MYSQLADMIN -u root shutdown 2>$null
+Start-Sleep -Seconds 1
+& $HTTPD -k stop 2>&1 | Out-Null
+Start-Sleep -Seconds 1
 
-if ($mysqlSvc)  { Stop-Service "DentalMySQL"  -Force -ErrorAction SilentlyContinue }
-else            { & $MYSQLADMIN -u root shutdown 2>$null; Stop-Process -Name "mysqld" -Force -ErrorAction SilentlyContinue }
-
-if ($apacheSvc) { Stop-Service "DentalApache" -Force -ErrorAction SilentlyContinue }
-else            { & $HTTPD -k stop 2>&1 | Out-Null; Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue }
+# Forcer si toujours actifs
+Stop-Process -Name "mysqld","httpd" -Force -ErrorAction SilentlyContinue
