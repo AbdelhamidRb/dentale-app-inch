@@ -1,12 +1,28 @@
 # start-app.ps1 - Demarrer Dental App
 
+$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
 $MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
+$MYSQL_DATA = "C:\laragon\data\mysql"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
-# Demarrer les services Windows
-Start-Service "DentalApache" -ErrorAction SilentlyContinue
-Start-Service "DentalMySQL"  -ErrorAction SilentlyContinue
+# Demarrer Apache
+$apacheSvc = Get-Service "DentalApache" -ErrorAction SilentlyContinue
+if ($apacheSvc) {
+    Start-Service "DentalApache" -ErrorAction SilentlyContinue
+} elseif (-not (Get-Process -Name "httpd" -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $HTTPD -WindowStyle Hidden
+    Start-Sleep -Seconds 2
+}
+
+# Demarrer MySQL
+$mysqlSvc = Get-Service "DentalMySQL" -ErrorAction SilentlyContinue
+if ($mysqlSvc) {
+    Start-Service "DentalMySQL" -ErrorAction SilentlyContinue
+} elseif (-not (Get-Process -Name "mysqld" -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $MYSQLD -ArgumentList "--datadir=`"$MYSQL_DATA`"" -WindowStyle Hidden
+}
 
 # Attendre que MySQL soit pret (max 16 secondes)
 $attempts = 0

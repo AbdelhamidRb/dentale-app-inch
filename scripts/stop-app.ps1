@@ -1,6 +1,8 @@
 # stop-app.ps1 - Fermer Dental App
 
-$PROFILE = "C:\dental-app-browser"
+$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
+$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$PROFILE    = "C:\dental-app-browser"
 
 # Fermer le navigateur (uniquement le profil dental-app)
 foreach ($name in @("msedge", "chrome")) {
@@ -16,6 +18,12 @@ foreach ($name in @("msedge", "chrome")) {
     }
 }
 
-# Arreter les services et liberer les ressources
-Stop-Service "DentalMySQL"  -Force -ErrorAction SilentlyContinue
-Stop-Service "DentalApache" -Force -ErrorAction SilentlyContinue
+# Arreter via services si disponibles, sinon forcer les processus
+$mysqlSvc  = Get-Service "DentalMySQL"  -ErrorAction SilentlyContinue
+$apacheSvc = Get-Service "DentalApache" -ErrorAction SilentlyContinue
+
+if ($mysqlSvc)  { Stop-Service "DentalMySQL"  -Force -ErrorAction SilentlyContinue }
+else            { & $MYSQLADMIN -u root shutdown 2>$null; Stop-Process -Name "mysqld" -Force -ErrorAction SilentlyContinue }
+
+if ($apacheSvc) { Stop-Service "DentalApache" -Force -ErrorAction SilentlyContinue }
+else            { & $HTTPD -k stop 2>&1 | Out-Null; Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue }
