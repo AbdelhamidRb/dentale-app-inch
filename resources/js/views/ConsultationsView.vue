@@ -374,28 +374,16 @@ async function loadAppointments() {
     const token = localStorage.getItem("token");
     const h = { Authorization: `Bearer ${token}`, Accept: "application/json" };
     try {
-        const results = [];
         const today = new Date();
-        const dates = Array.from({ length: 14 }, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() - 7 + i);
-            return d.toISOString().split("T")[0];
-        });
-        const responses = await Promise.allSettled(
-            dates.map((dateStr) =>
-                fetch(`/api/appointments?date=${dateStr}`, { headers: h }).then(
-                    (r) => r.json(),
-                ),
-            ),
-        );
-        responses.forEach((res) => {
-            if (res.status === "fulfilled") {
-                (res.value.appointments ?? []).forEach((rdv) => {
-                    if (!results.find((x) => x.id === rdv.id))
-                        results.push(rdv);
-                });
-            }
-        });
+        const start = new Date(today); start.setDate(today.getDate() - 7);
+        const end   = new Date(today); end.setDate(today.getDate() + 6);
+        const startStr = start.toISOString().split("T")[0];
+        const endStr   = end.toISOString().split("T")[0];
+
+        const res  = await fetch(`/api/appointments?start_date=${startStr}&end_date=${endStr}`, { headers: h });
+        const data = await res.json();
+        const grouped = Array.isArray(data.appointments) ? {} : (data.appointments ?? {});
+        const results = Object.values(grouped).flat();
         appointments.value = results.sort(
             (a, b) => new Date(b.scheduled_date) - new Date(a.scheduled_date),
         );
@@ -494,31 +482,18 @@ onMounted(async () => {
     // ── RDV en arrière-plan (non bloquant) ────────────────────────
     (async () => {
         try {
-            const results = [];
             const today = new Date();
-            const dates = Array.from({ length: 14 }, (_, i) => {
-                const d = new Date(today);
-                d.setDate(today.getDate() - 7 + i);
-                return d.toISOString().split("T")[0];
-            });
-            const responses = await Promise.allSettled(
-                dates.map((dateStr) =>
-                    fetch(`/api/appointments?date=${dateStr}`, {
-                        headers: h,
-                    }).then((r) => r.json()),
-                ),
-            );
-            responses.forEach((res) => {
-                if (res.status === "fulfilled") {
-                    (res.value.appointments ?? []).forEach((rdv) => {
-                        if (!results.find((x) => x.id === rdv.id))
-                            results.push(rdv);
-                    });
-                }
-            });
+            const start = new Date(today); start.setDate(today.getDate() - 7);
+            const end   = new Date(today); end.setDate(today.getDate() + 6);
+            const startStr = start.toISOString().split("T")[0];
+            const endStr   = end.toISOString().split("T")[0];
+
+            const res  = await fetch(`/api/appointments?start_date=${startStr}&end_date=${endStr}`, { headers: h });
+            const data = await res.json();
+            const grouped = Array.isArray(data.appointments) ? {} : (data.appointments ?? {});
+            const results = Object.values(grouped).flat();
             appointments.value = results.sort(
-                (a, b) =>
-                    new Date(b.scheduled_date) - new Date(a.scheduled_date),
+                (a, b) => new Date(b.scheduled_date) - new Date(a.scheduled_date),
             );
         } catch {}
     })();
