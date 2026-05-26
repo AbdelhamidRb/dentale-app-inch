@@ -205,11 +205,22 @@ if (-not $fwRule) {
     New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
 }
 
-# Redemarrer Apache pour charger le nouveau VirtualHost
-Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
-Start-Process -FilePath $HTTPD -WindowStyle Hidden
-Start-Sleep -Seconds 2
+# Enregistrer Apache comme service Windows (demarrage manuel)
+& $HTTPD -k uninstall -n "DentalApache" 2>&1 | Out-Null
+& $HTTPD -k install  -n "DentalApache" 2>&1 | Out-Null
+Set-Service "DentalApache" -StartupType Manual -ErrorAction SilentlyContinue
+
+# Enregistrer MySQL comme service Windows (demarrage manuel)
+& $MYSQLD --remove DentalMySQL 2>&1 | Out-Null
+& $MYSQLD --install DentalMySQL --datadir="$MYSQL_DATA" 2>&1 | Out-Null
+Set-Service "DentalMySQL" -StartupType Manual -ErrorAction SilentlyContinue
+
+# Demarrer les services pour finaliser l'installation
+Stop-Process -Name "httpd","mysqld" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+Start-Service "DentalApache" -ErrorAction SilentlyContinue
+Start-Service "DentalMySQL"  -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 3
 
 # Taches planifiees (backup + scheduler)
 if ($isAdmin) {
