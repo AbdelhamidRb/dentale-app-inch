@@ -10,17 +10,21 @@ $DB_USER     = "root"
 $DB_PASS     = ""
 $APP_URL     = "http://dental-app-inch.test"
 
-$PHP      = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
-$COMPOSER = "C:\laragon\bin\composer\composer.phar"
-$GIT      = "C:\laragon\bin\git\bin\git.exe"
-$MYSQL    = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
+$PHP        = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
+$COMPOSER   = "C:\laragon\bin\composer\composer.phar"
+$GIT        = "C:\laragon\bin\git\bin\git.exe"
+$MYSQL      = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
+$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
+$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
+$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$MYSQL_DATA = "C:\laragon\data\mysql"
 
 # Ajouter Git au PATH pour que Composer puisse l'utiliser
 $env:Path = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:Path"
 
 function Step($n, $t, $msg) { Write-Host ""; Write-Host "[$n/$t] $msg" -ForegroundColor Cyan }
 function OK($msg)   { Write-Host "  OK  $msg" -ForegroundColor Green }
-function ERR($msg)  { Write-Host "  [ERREUR] $msg" -ForegroundColor Red; Read-Host "Appuyez sur Entree pour quitter"; exit 1 }
+function ERR($msg)  { Write-Host ""; Write-Host "  [ERREUR] $msg" -ForegroundColor Red; Read-Host "Appuyez sur Entree pour quitter"; exit 1 }
 function WARN($msg) { Write-Host "  ATTENTION  $msg" -ForegroundColor Yellow }
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -139,14 +143,32 @@ OK ".env cree"
 
 # ── 6. Composer + cle Laravel ──────────────────────────────────
 Step 6 8 "Installation des dependances PHP..."
-$composerCmd = "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_DIR`""
-cmd /c $composerCmd 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { ERR "composer install a echoue." }
+$composerOut = cmd /c "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_DIR`"" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ($composerOut -join "`n") -ForegroundColor Red
+    ERR "composer install a echoue. Voir erreur ci-dessus."
+}
 & $PHP "$APP_DIR\artisan" key:generate --force 2>&1 | Out-Null
 OK "Dependances PHP installees + cle generee"
 
 # ── 7. Base de donnees ─────────────────────────────────────────
-Step 7 8 "Creation de la base de donnees..."
+Step 7 8 "Base de donnees..."
+
+# Demarrer MySQL si pas en cours
+if (-not (Get-Process -Name "mysqld" -ErrorAction SilentlyContinue)) {
+    Write-Host "  Demarrage de MySQL..." -ForegroundColor Gray
+    Start-Process -FilePath $MYSQLD -ArgumentList "--datadir=`"$MYSQL_DATA`"" -WindowStyle Hidden
+    # Attendre que MySQL soit pret (max 30 secondes)
+    $ready = $false
+    for ($i = 0; $i -lt 15; $i++) {
+        Start-Sleep -Milliseconds 2000
+        $ping = & $MYSQLADMIN -u root ping 2>$null
+        if ($ping -match "alive") { $ready = $true; break }
+    }
+    if (-not $ready) { ERR "MySQL n'a pas demarre. Lancez Laragon manuellement et reessayez." }
+}
+
+# Creer la base de donnees
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName              = $MYSQL
 $psi.Arguments             = "-u $DB_USER"
@@ -158,54 +180,66 @@ $proc = [System.Diagnostics.Process]::Start($psi)
 $proc.StandardInput.WriteLine("CREATE DATABASE IF NOT EXISTS ``$DB_NAME`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
 $proc.StandardInput.Close()
 $proc.WaitForExit()
-if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base. MySQL est-il demarre dans Laragon ?" }
+if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base de donnees." }
 
 & $PHP "$APP_DIR\artisan" migrate --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
 & $PHP "$APP_DIR\artisan" db:seed --class=ProductionSeeder --force 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { ERR "Seeder echoue." }
 & $PHP "$APP_DIR\artisan" storage:link --force 2>&1 | Out-Null
 & $PHP "$APP_DIR\artisan" optimize 2>&1 | Out-Null
 OK "Base de donnees initialisee"
 
-# ── 8. Apache + Firewall + IP ──────────────────────────────────
-Step 8 8 "Configuration reseau..."
+# ── 8. Apache + Firewall + Taches ─────────────────────────────
+Step 8 8 "Configuration reseau et demarrage..."
 
 $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
     Sort-Object InterfaceMetric | Select-Object -First 1).IPAddress
 if (-not $localIP) { $localIP = "127.0.0.1" }
 
+# VirtualHosts Apache
 $vh1 = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
 Set-Content "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Value $vh1 -Encoding utf8
 
 $vh2 = "<VirtualHost *:80>`n    ServerName dental.local`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
 Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf" -Value $vh2 -Encoding utf8
 
-$vh3 = "<VirtualHost ${localIP}:80>`n    ServerName $localIP`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+$vh3 = "<VirtualHost *:80>`n    ServerName $localIP`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
 Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf" -Value $vh3 -Encoding utf8
 
+# Firewall
 $fwRule = Get-NetFirewallRule -DisplayName "Dental App HTTP" -ErrorAction SilentlyContinue
 if (-not $fwRule) {
     New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
-    OK "Firewall port 80 ouvert"
 }
 
+# Demarrer ou redemarrer Apache
+if (Get-Process -Name "httpd" -ErrorAction SilentlyContinue) {
+    & $HTTPD -k graceful 2>&1 | Out-Null
+} else {
+    Start-Process -FilePath $HTTPD -WindowStyle Hidden
+}
+Start-Sleep -Seconds 2
+
+# Taches planifiees (backup + scheduler)
+if ($isAdmin) {
+    powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\schedule-tasks.ps1" | Out-Null
+    OK "Taches automatiques planifiees"
+}
+
+# Renommer le PC
 if ($isAdmin -and $env:COMPUTERNAME -ne "dental") {
     Rename-Computer -NewName "dental" -Force -ErrorAction SilentlyContinue
-    OK "PC renomme en 'dental' (dental.local actif apres redemarrage)"
+    OK "PC renomme en 'dental'"
     $needRestart = $true
 }
 
-if ($isAdmin) {
-    & "$APP_DIR\scripts\schedule-tasks.ps1" | Out-Null
-    OK "Sauvegardes automatiques planifiees"
-}
+# DentalApp.exe + raccourcis
+powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1" | Out-Null
+OK "DentalApp.exe cree sur le Bureau"
 
-OK "Apache configure (dental-app-inch.test + http://$localIP)"
-
-# ── DentalApp.exe + raccourcis Bureau ─────────────────────────
-powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1"
-OK "DentalApp.exe et raccourcis crees sur le Bureau"
+OK "Apache demarre (dental-app-inch.test + http://$localIP)"
 
 # ── Resume final ───────────────────────────────────────────────
 Write-Host ""
