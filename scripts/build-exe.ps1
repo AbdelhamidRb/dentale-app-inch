@@ -95,6 +95,16 @@ public class DentalApp : Form
 
     [STAThread]
     public static void Main() {
+        var principal = new System.Security.Principal.WindowsPrincipal(
+            System.Security.Principal.WindowsIdentity.GetCurrent());
+        if (!principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator)) {
+            ProcessStartInfo psi2 = new ProcessStartInfo();
+            psi2.FileName        = Application.ExecutablePath;
+            psi2.Verb            = "runas";
+            psi2.UseShellExecute = true;
+            try { Process.Start(psi2); } catch { }
+            return;
+        }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new DentalApp());
