@@ -2,7 +2,6 @@
 /private.pem
 /dental-app.lic
 /scripts/DentalApp.exe
-/scripts/dental.ico
 .DS_Store
 .env
 .env.backup
