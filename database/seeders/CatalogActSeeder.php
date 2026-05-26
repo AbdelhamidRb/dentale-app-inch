@@ -23,7 +23,7 @@ class CatalogActSeeder extends Seeder
         ];
 
         foreach ($acts as $act) {
-            CatalogAct::create($act);
+            CatalogAct::firstOrCreate(['code' => $act['code']], $act);
         }
     }
 }
