@@ -9,12 +9,12 @@ class CheckLicense
 {
     public function handle(Request $request, Closure $next)
     {
-        // Skip en local dev (sur le PC du dev uniquement)
         if (config('app.license_skip', false)) {
             return $next($request);
         }
 
-        $result = $this->verify();
+        // Cache 24h : getmac + verification RSA ne changent jamais en cours d'utilisation
+        $result = cache()->remember('license_check', 86400, fn() => $this->verify());
 
         if ($result['valid']) {
             return $next($request);
