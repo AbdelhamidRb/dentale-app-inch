@@ -154,19 +154,25 @@ OK "Dependances PHP installees + cle generee"
 # ── 7. Base de donnees ─────────────────────────────────────────
 Step 7 8 "Base de donnees..."
 
-# Demarrer MySQL si pas en cours
-if (-not (Get-Process -Name "mysqld" -ErrorAction SilentlyContinue)) {
-    Write-Host "  Demarrage de MySQL..." -ForegroundColor Gray
-    Start-Process -FilePath $MYSQLD -ArgumentList "--datadir=`"$MYSQL_DATA`"" -WindowStyle Hidden
-    # Attendre que MySQL soit pret (max 30 secondes)
-    $ready = $false
-    for ($i = 0; $i -lt 15; $i++) {
-        Start-Sleep -Milliseconds 2000
+# Verifier que MySQL est accessible
+$mysqlReady = $false
+$ping = & $MYSQLADMIN -u root ping 2>$null
+if ($ping -match "alive") { $mysqlReady = $true }
+
+if (-not $mysqlReady) {
+    Write-Host ""
+    Write-Host "  MySQL n'est pas demarre." -ForegroundColor Yellow
+    Write-Host "  --> Ouvrez Laragon et cliquez 'Start All' (ou demarrez MySQL)." -ForegroundColor Yellow
+    Write-Host ""
+    for ($i = 0; $i -lt 3; $i++) {
+        Read-Host "  Appuyez sur Entree une fois MySQL demarre"
         $ping = & $MYSQLADMIN -u root ping 2>$null
-        if ($ping -match "alive") { $ready = $true; break }
+        if ($ping -match "alive") { $mysqlReady = $true; break }
+        Write-Host "  MySQL toujours inaccessible, reessayez..." -ForegroundColor Yellow
     }
-    if (-not $ready) { ERR "MySQL n'a pas demarre. Lancez Laragon manuellement et reessayez." }
+    if (-not $mysqlReady) { ERR "MySQL inaccessible. Verifiez que Laragon est demarre." }
 }
+Write-Host "  MySQL pret." -ForegroundColor Gray
 
 # Creer la base de donnees
 $psi = New-Object System.Diagnostics.ProcessStartInfo
