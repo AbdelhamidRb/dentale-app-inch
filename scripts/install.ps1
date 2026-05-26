@@ -205,12 +205,10 @@ if (-not $fwRule) {
     New-NetFirewallRule -DisplayName "Dental App HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow | Out-Null
 }
 
-# Demarrer ou redemarrer Apache
-if (Get-Process -Name "httpd" -ErrorAction SilentlyContinue) {
-    & $HTTPD -k graceful 2>&1 | Out-Null
-} else {
-    Start-Process -FilePath $HTTPD -WindowStyle Hidden
-}
+# Redemarrer Apache pour charger le nouveau VirtualHost
+Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+Start-Process -FilePath $HTTPD -WindowStyle Hidden
 Start-Sleep -Seconds 2
 
 # Taches planifiees (backup + scheduler)
