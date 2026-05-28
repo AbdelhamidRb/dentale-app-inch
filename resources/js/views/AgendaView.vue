@@ -441,7 +441,8 @@ const selectedAppointment = ref(null);
 
 onMounted(async () => {
     if (window.innerWidth < 640) viewMode.value = 'day';
-    await Promise.all([fetchAppointments(), fetchCatalogActs(), fetchWeek()]);
+    await Promise.all([fetchAppointments(), fetchWeek()]);
+    fetchCatalogActs();
 });
 
 // Rafraîchit les données au changement de vue

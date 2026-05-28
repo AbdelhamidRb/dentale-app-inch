@@ -10,6 +10,13 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        return response()->json(
+            cache()->remember('dashboard_stats', 300, fn() => $this->compute())
+        );
+    }
+
+    private function compute(): array
+    {
         $now        = Carbon::now();
         $today      = $now->toDateString();
         $monthStart = $now->copy()->startOfMonth()->toDateString();
@@ -117,7 +124,7 @@ class DashboardController extends Controller
             WHERE is_archived = 0
         ");
 
-        return response()->json([
+        return [
             'patients' => [
                 'total'          => (int) ($patientStats->total ?? 0),
                 'new_this_month' => (int) ($patientStats->new_month ?? 0),
@@ -148,6 +155,7 @@ class DashboardController extends Controller
                     '50+'   => (int) ($demo->age_50_plus ?? 0),
                 ],
             ],
-        ]);
+        ];
     }
 }
+

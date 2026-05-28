@@ -76,13 +76,14 @@ class CheckLicense
 
     public function getMac(): string
     {
-        // Windows : getmac /fo csv /nh
-        exec('getmac /fo csv /nh 2>nul', $lines);
-        foreach ($lines as $line) {
-            if (preg_match('/"([0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2})"/', $line, $m)) {
-                return strtolower(str_replace('-', ':', $m[1]));
+        return cache()->remember('app_mac_address', 86400, function () {
+            exec('getmac /fo csv /nh 2>nul', $lines);
+            foreach ($lines as $line) {
+                if (preg_match('/"([0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2})"/', $line, $m)) {
+                    return strtolower(str_replace('-', ':', $m[1]));
+                }
             }
-        }
-        return '';
+            return '';
+        });
     }
 }

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/laragon/www/dental-app-inch\" log --oneline -3)",
+      "Bash(git -C \"c:/laragon/www/dental-app-inch\" add app/Http/Controllers/Api/AppointmentController.php app/Http/Controllers/Api/SettingsController.php app/Models/Setting.php database/migrations/2026_05_05_000000_create_appointments_table.php database/migrations/2026_05_24_102158_create_settings_table.php database/seeders/DemoDataSeeder.php resources/js/components/consultations/ConsultationPanel.vue resources/js/components/NotificationsDropdown.vue resources/js/layouts/AppLayout.vue resources/js/views/ConsultationsView.vue resources/js/views/DashboardView.vue resources/js/views/PaiementsView.vue resources/js/views/PatientsView.vue routes/api.php)",
+      "Bash(git -C c:/laragon/www/dental-app-inch commit -m ' *)",
+      "Bash(git -C \"c:/laragon/www/dental-app-inch\" push origin main)",
+      "PowerShell(cmd /c \"dir C:\\\\laragon /b\")",
+      "PowerShell(cmd /c \"dir C:\\\\laragon\\\\bin /b\")",
+      "PowerShell(Get-ScheduledTask -TaskName \"DentalApp-Backup\" -ErrorAction SilentlyContinue | Select-Object TaskName, State, @{N=\"NextRun\";E={\\(Get-ScheduledTaskInfo -TaskName $_.TaskName\\).NextRunTime}})",
+      "PowerShell(schtasks /query /tn \"DentalApp-Backup\" 2>&1)",
+      "PowerShell(cmd /c \"dir C:\\\\laragon\\\\bin\\\\apache /b\")",
+      "PowerShell(cmd /c \"dir C:\\\\laragon\\\\bin\\\\apache\\\\bin\\\\httpd.exe 2>nul\")",
+      "PowerShell(cd \"C:\\\\laragon\\\\www\\\\dental-app-inch\"; $env:OPENSSL_CONF = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64\\\\extras\\\\ssl\\\\openssl.cnf\"; php artisan license:keys 2>&1)",
+      "PowerShell(cd \"C:\\\\laragon\\\\www\\\\dental-app-inch\"; $env:OPENSSL_CONF = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64\\\\extras\\\\ssl\\\\openssl.cnf\"; php artisan license:generate \"hamidrherib@gmail.com\" \"e0:2b:e9:73:19:c3\" \"Cabinet Dentaire\" 2>&1)"
+    ]
+  }
+}

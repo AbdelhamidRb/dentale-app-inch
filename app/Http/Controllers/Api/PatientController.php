@@ -201,24 +201,20 @@ class PatientController extends Controller
             ->where('status', '!=', 'DECEDE')
             ->where(function ($q) use ($cutoff) {
                 $q->where(function ($q1) use ($cutoff) {
-                    $q1->whereExists(function ($sub) {
-                            $sub->select(DB::raw(1))->from('appointments')
-                                ->whereColumn('appointments.patient_id', 'patients.id')
-                                ->where('appointments.status', 'TERMINE');
-                        })
+                    $q1->whereExists(fn($sub) => $sub->select(DB::raw(1))->from('appointments')
+                            ->whereColumn('appointments.patient_id', 'patients.id')
+                            ->where('appointments.status', 'TERMINE'))
                         ->whereRaw('(SELECT MAX(scheduled_date) FROM appointments WHERE patient_id = patients.id AND status = ?) <= ?', ['TERMINE', $cutoff]);
                 })
-                ->orWhere(function ($q2) use ($cutoff) {
-                    $q2->whereNotExists(function ($sub) {
-                            $sub->select(DB::raw(1))->from('appointments')
-                                ->whereColumn('appointments.patient_id', 'patients.id')
-                                ->where('appointments.status', 'TERMINE');
-                        })
-                        ->where('patients.created_at', '<=', $cutoff);
-                });
+                ->orWhere(fn($q2) => $q2
+                    ->whereNotExists(fn($sub) => $sub->select(DB::raw(1))->from('appointments')
+                        ->whereColumn('appointments.patient_id', 'patients.id')
+                        ->where('appointments.status', 'TERMINE'))
+                    ->where('patients.created_at', '<=', $cutoff));
             })
             ->withCount(['medicalAlerts', 'criticalAlerts'])
             ->latest()
+            ->limit(200)
             ->get();
 
         return response()->json([

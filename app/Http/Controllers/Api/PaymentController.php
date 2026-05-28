@@ -7,6 +7,7 @@ use App\Models\Patient;
 use App\Models\PaymentTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -23,18 +24,58 @@ class PaymentController extends Controller
         ]);
 
         $perPage = 30;
-        $page    = max(1, (int) $request->get('page', 1));
 
-        $query = Patient::select('id', 'first_name', 'last_name', 'phone', 'couverture')
-            ->where('is_archived', false)
-            ->whereHas('consultations', fn($q) => $q->whereNotIn('status', ['BROUILLON']))
-            ->withSum(
-                ['consultations as total_consultations' => fn($q) => $q->whereNotIn('status', ['BROUILLON'])],
-                'total_price'
-            )
-            ->withSum('paymentTransactions as total_paid', 'amount');
+        $consultSum = "COALESCE((SELECT SUM(total_price) FROM consultations WHERE patient_id = patients.id AND status NOT IN ('BROUILLON')), 0)";
+        $paidSum    = "COALESCE((SELECT SUM(amount) FROM payment_transactions WHERE patient_id = patients.id), 0)";
+        $balanceExp = "({$paidSum}) - ({$consultSum})";
 
-        // Recherche en SQL
+        // Stats globales en une seule requête SQL (avant filtre statut)
+        $statsBase = Patient::where('is_archived', false)
+            ->whereExists(fn($q) => $q->select(DB::raw(1))
+                ->from('consultations')
+                ->whereColumn('patient_id', 'patients.id')
+                ->whereNotIn('status', ['BROUILLON']));
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $statsBase->where(fn($q) => $q
+                ->where('first_name', 'like', "%{$s}%")
+                ->orWhere('last_name',  'like', "%{$s}%")
+                ->orWhere('phone',      'like', "%{$s}%")
+            );
+        }
+
+        $statsRow = $statsBase->selectRaw("
+            COALESCE(SUM({$consultSum}), 0)                                    AS total_du,
+            COALESCE(SUM({$paidSum}), 0)                                       AS total_encaisse,
+            COALESCE(SUM(GREATEST(-({$balanceExp}), 0)), 0)                    AS total_restant,
+            SUM(({$balanceExp}) < -0.01)                                       AS count_partiel,
+            SUM(ABS({$balanceExp}) <= 0.01)                                    AS count_paye,
+            SUM(({$balanceExp}) > 0.01)                                        AS count_avance
+        ")->first();
+
+        $stats = [
+            'total_du'       => (float) ($statsRow->total_du ?? 0),
+            'total_encaisse' => (float) ($statsRow->total_encaisse ?? 0),
+            'total_restant'  => (float) ($statsRow->total_restant ?? 0),
+            'count_partiel'  => (int)   ($statsRow->count_partiel ?? 0),
+            'count_paye'     => (int)   ($statsRow->count_paye ?? 0),
+            'count_avance'   => (int)   ($statsRow->count_avance ?? 0),
+        ];
+
+        // Requête principale paginée en SQL
+        $query = Patient::select(
+            'id', 'first_name', 'last_name', 'phone', 'couverture',
+            DB::raw("{$consultSum} AS total_consultations"),
+            DB::raw("{$paidSum}    AS total_paid"),
+            DB::raw("{$balanceExp} AS balance_raw"),
+        )
+        ->where('is_archived', false)
+        ->whereExists(fn($q) => $q->select(DB::raw(1))
+            ->from('consultations')
+            ->whereColumn('patient_id', 'patients.id')
+            ->whereNotIn('status', ['BROUILLON']));
+
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn($q) => $q
@@ -44,37 +85,20 @@ class PaymentController extends Controller
             );
         }
 
-        // Calcul balance sur toute la sélection (pour les stats globales)
-        $all = $query->get()->map(fn($p) => $this->formatBalance($p));
+        if ($request->filled('status')) {
+            match ($request->status) {
+                'PARTIEL' => $query->havingRaw("{$balanceExp} < -0.01"),
+                'PAYÉ'    => $query->havingRaw("ABS({$balanceExp}) <= 0.01"),
+                'AVANCE'  => $query->havingRaw("{$balanceExp} > 0.01"),
+            };
+        }
 
-        // Stats toujours calculées sur TOUS les résultats (avant filtre statut)
-        $stats = [
-            'total_du'       => $all->sum('total_consultations'),
-            'total_encaisse' => $all->sum('total_paid'),
-            'total_restant'  => $all->sum(fn($p) => max(0, -$p['balance'])),
-            'count_partiel'  => $all->where('balance_status', 'PARTIEL')->count(),
-            'count_paye'     => $all->where('balance_status', 'PAYÉ')->count(),
-            'count_avance'   => $all->where('balance_status', 'AVANCE')->count(),
-        ];
+        $query->orderByRaw("{$balanceExp} ASC");
 
-        // Filtre statut en PHP (valeur calculée, non exprimable simplement en SQL)
-        $filtered = $request->filled('status')
-            ? $all->filter(fn($p) => $p['balance_status'] === $request->status)->values()
-            : $all->values();
-
-        // Tri : plus endetté en premier
-        $sorted = $filtered->sortBy('balance')->values();
-
-        // Pagination sur la collection
-        $paginated = new LengthAwarePaginator(
-            $sorted->slice(($page - 1) * $perPage, $perPage)->values(),
-            $sorted->count(),
-            $perPage,
-            $page,
-        );
+        $paginated = $query->paginate($perPage);
 
         return response()->json([
-            'data'  => $paginated->items(),
+            'data'  => $paginated->map(fn($p) => $this->formatBalance($p)),
             'stats' => $stats,
             'meta'  => [
                 'current_page' => $paginated->currentPage(),
@@ -182,7 +206,6 @@ class PaymentController extends Controller
     // Accepte un patient avec relations chargées OU avec withSum attributes
     private function formatBalance(Patient $p): array
     {
-        // withSum retourne des attributs scalaires ; sinon on utilise la collection
         $totalConsultations = isset($p->total_consultations)
             ? (float) $p->total_consultations
             : (float) ($p->relationLoaded('consultations') ? $p->consultations->sum('total_price') : 0);
@@ -191,7 +214,9 @@ class PaymentController extends Controller
             ? (float) $p->total_paid
             : (float) ($p->relationLoaded('paymentTransactions') ? $p->paymentTransactions->sum('amount') : 0);
 
-        $balance = $totalPaid - $totalConsultations;
+        $balance = isset($p->balance_raw)
+            ? (float) $p->balance_raw
+            : $totalPaid - $totalConsultations;
 
         $status = match (true) {
             $balance >  0.01 => 'AVANCE',
