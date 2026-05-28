@@ -130,8 +130,8 @@ $artisan = "C:\laragon\www\dental-app-inch\artisan"
 
 $triggerScheduler = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -Once -At "00:00"
 $actionScheduler  = New-ScheduledTaskAction `
-    -Execute $PHP `
-    -Argument "`"$artisan`" schedule:run"
+    -Execute "powershell.exe" `
+    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"& '$PHP' '$artisan' schedule:run`""
 
 $settingsScheduler = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
