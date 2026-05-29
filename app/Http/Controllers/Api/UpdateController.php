@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class UpdateController extends Controller
 {
@@ -257,9 +258,11 @@ class UpdateController extends Controller
             : "Cabinet  : $cabinet\nVersion  : $fromV (inchangee)\nDate     : $date\nErreur   : $error\nRollback : Effectue automatiquement";
 
         try {
-            mail($to, $subject, $body);
+            Mail::raw($body, function ($msg) use ($to, $subject) {
+                $msg->to($to)->subject($subject);
+            });
         } catch (\Exception $e) {
-            Log::info('[UpdateController] notification update', ['subject' => $subject, 'body' => $body]);
+            Log::warning('[UpdateController] notification email échouée', ['error' => $e->getMessage(), 'subject' => $subject]);
         }
     }
 }
