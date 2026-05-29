@@ -5,11 +5,13 @@ echo =============================================
 echo    Installation Dental App
 echo =============================================
 echo.
+echo Telechargement du script d'installation...
 
-:: Verifier que install.ps1 est present dans le meme dossier
+powershell.exe -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/AbdelhamidRb/dentale-app-inch/main/scripts/install.ps1' -OutFile '%~dp0install.ps1' -UseBasicParsing"
+
 if not exist "%~dp0install.ps1" (
-    echo [ERREUR] install.ps1 introuvable dans le dossier.
-    echo Assurez-vous que INSTALLER.bat et install.ps1 sont dans le meme dossier.
+    echo.
+    echo [ERREUR] Telechargement echoue. Verifiez la connexion internet.
     pause
     exit /b 1
 )
