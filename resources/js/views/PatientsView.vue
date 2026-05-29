@@ -9,27 +9,23 @@
                 ? 'hidden lg:flex lg:flex-col lg:w-[420px] lg:shrink-0 lg:mr-5'
                 : 'flex flex-col flex-1'"
         >
-            <!-- ── En-tête : titre + bouton nouveau ─────────────────── -->
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h1 class="text-base font-semibold text-slate-800">
-                        Patients
-                    </h1>
-                    <p class="text-xs text-slate-400 mt-0.5">
-                        {{ meta.total }} patients au total
-                    </p>
+            <!-- ── En-tête ───────────────────────────────────────────── -->
+            <div class="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+                <div class="flex items-center justify-between mb-1.5">
+                    <h1 class="text-base font-semibold text-slate-800">Patients</h1>
+                    <button
+                        @click="openForm(null)"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors shrink-0"
+                    >
+                        <Plus class="w-3.5 h-3.5" />
+                        Nouveau patient
+                    </button>
                 </div>
-                <button
-                    @click="openForm(null)"
-                    class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                    <Plus class="w-4 h-4" />
-                    <span class="hidden sm:inline">Nouveau patient</span>
-                </button>
+                <p class="text-xs text-slate-400">{{ meta.total }} patients au total</p>
             </div>
 
             <!-- ── Barre de recherche + filtres ─────────────────────── -->
-            <div class="flex gap-2 mb-3">
+            <div class="flex gap-2 mb-3 px-4 pt-3">
                 <div class="relative flex-1">
                     <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
                     <input
@@ -63,7 +59,7 @@
             <!-- ── Alerte erreur ──────────────────────────────────────── -->
             <div
                 v-if="error"
-                class="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
+                class="mb-3 mx-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
             >
                 {{ error }}
             </div>

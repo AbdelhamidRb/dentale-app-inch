@@ -5,7 +5,8 @@
          ══════════════════════════════════════════════════════════ -->
         <div class="flex flex-col flex-1 min-w-0">
             <!-- ── En-tête ───────────────────────────────────────────── -->
-            <div class="flex items-center justify-between mb-4">
+            <div class="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
+            <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
                     <!-- Navigation jour -->
                     <template v-if="viewMode === 'day'">
@@ -62,14 +63,14 @@
 
                 <div class="flex items-center gap-2">
                     <!-- Toggle Jour / Semaine (desktop uniquement) -->
-                    <div class="hidden sm:flex border border-slate-300 rounded-lg overflow-hidden text-sm">
+                    <div class="hidden sm:flex border border-slate-300 rounded-lg overflow-hidden text-xs">
                         <button
                             @click="viewMode = 'day'"
-                            :class="['px-3 py-2 transition-colors', viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
+                            :class="['px-3 py-1.5 transition-colors', viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
                         >Jour</button>
                         <button
                             @click="viewMode = 'week'"
-                            :class="['px-3 py-2 transition-colors border-l border-slate-300', viewMode === 'week' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
+                            :class="['px-3 py-1.5 transition-colors border-l border-slate-300', viewMode === 'week' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
                         >Semaine</button>
                     </div>
 
@@ -79,33 +80,35 @@
                         type="date"
                         v-model="selectedDate"
                         @change="fetchAppointments(selectedDate)"
-                        class="px-2 py-2 sm:px-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="px-2 py-1.5 sm:px-3 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                         @click="viewMode === 'day' ? goToToday() : goToTodayWeek()"
-                        class="hidden sm:block px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-white transition-colors"
+                        class="hidden sm:block px-3 py-1.5 border border-slate-300 rounded-lg text-xs text-slate-600 hover:bg-white transition-colors"
                     >
                         Aujourd'hui
                     </button>
                     <!-- Nouveau RDV : texte sur desktop, icône seule sur mobile -->
                     <button
                         @click="openModal(null)"
-                        class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
                     >
-                        <Plus class="w-4 h-4" />
+                        <Plus class="w-3.5 h-3.5" />
                         <span class="hidden sm:inline">Nouveau RDV</span>
                     </button>
                 </div>
             </div>
 
             <!-- ── Légende statuts (desktop uniquement) ────────────── -->
-            <div class="hidden sm:flex items-center gap-4 mb-4 px-1">
+            <div class="hidden sm:flex items-center gap-4 px-1">
                 <span class="text-[11px] text-slate-400 font-medium">Statuts :</span>
                 <div v-for="s in statusLegend" :key="s.label" class="flex items-center gap-1.5">
                     <div :class="`w-2 h-2 rounded-full ${s.dot}`"></div>
                     <span class="text-[11px] text-slate-500">{{ s.label }}</span>
                 </div>
             </div>
+
+            </div><!-- fin px-4 header -->
 
             <!-- ── Erreur ─────────────────────────────────────────────── -->
             <div

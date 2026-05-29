@@ -19,7 +19,7 @@
                     <button v-if="isDentist" @click="openCreateModal()"
                         class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shrink-0">
                         <Plus class="w-3.5 h-3.5" />
-                        Nouvelle
+                        Nouvelle consultation
                     </button>
                 </div>
 
