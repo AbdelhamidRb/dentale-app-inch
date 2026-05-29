@@ -29,6 +29,7 @@
         >
             <div
                 v-if="open"
+                ref="dropdownRef"
                 :style="dropdownStyle"
                 class="fixed z-[500] bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden
                        w-[calc(100vw-2rem)] max-w-sm sm:w-80"
@@ -153,6 +154,7 @@ const loading       = ref(false);
 const appointments  = ref([]);
 const template      = ref('Bonjour {nom}, nous vous rappelons votre rendez-vous demain {date} à {heure} au cabinet dentaire. Merci de confirmer votre présence. 🦷');
 const containerRef  = ref(null);
+const dropdownRef   = ref(null);
 const btnRect       = ref(null);
 
 const dropdownStyle = computed(() => {
@@ -196,7 +198,9 @@ async function toggle() {
 
 // ── Fermer au clic extérieur ──────────────────────────────────────
 function onClickOutside(e) {
-    if (containerRef.value && !containerRef.value.contains(e.target)) {
+    const inBtn      = containerRef.value?.contains(e.target);
+    const inDropdown = dropdownRef.value?.contains(e.target);
+    if (!inBtn && !inDropdown) {
         open.value = false;
     }
 }
