@@ -551,7 +551,7 @@
                 <!-- En cours de mise à jour -->
                 <div v-if="updating"
                      class="flex flex-col items-center gap-3 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div class="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                     <div class="text-center">
                         <p class="text-sm font-medium text-slate-700">Mise à jour en cours…</p>
                         <p class="text-xs text-slate-400 mt-1">Ne fermez pas l'application</p>

@@ -78,15 +78,16 @@ class UpdateController extends Controller
             'started' => now()->toISOString(),
         ]));
 
-        // 6. git pull origin main
-        $pullOutput = shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" pull origin main 2>&1');
+        // 6. git fetch + reset --hard (évite les conflits de fichiers locaux)
+        shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" fetch origin main 2>&1');
+        $pullOutput = shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" reset --hard origin/main 2>&1') ?? '';
 
         if (
             str_contains(strtolower($pullOutput), 'error') ||
             str_contains(strtolower($pullOutput), 'fatal')
         ) {
             $this->rollback($currentCommit, $backupFile);
-            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, 'git pull échoué : ' . $pullOutput);
+            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, 'git reset --hard échoué : ' . $pullOutput);
             return response()->json(['error' => 'Mise à jour échouée. Votre application a été restaurée automatiquement.', 'details' => $pullOutput], 500);
         }
 
