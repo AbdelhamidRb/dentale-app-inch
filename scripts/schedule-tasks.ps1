@@ -31,9 +31,10 @@ $triggerSat = New-ScheduledTaskTrigger -Weekly `
     -DaysOfWeek Saturday `
     -At "12:30"
 
+$vbs = "$SCRIPTS_DIR\run-hidden.vbs"
 $actionBackup = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$backupScript`""
+    -Execute "wscript.exe" `
+    -Argument "//B //NoLogo `"$vbs`" `"$backupScript`""
 
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
@@ -104,8 +105,8 @@ $taskXml = @"
   </Settings>
   <Actions>
     <Exec>
-      <Command>powershell.exe</Command>
-      <Arguments>-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "$usbScript"</Arguments>
+      <Command>wscript.exe</Command>
+      <Arguments>//B //NoLogo "$vbs" "$usbScript"</Arguments>
     </Exec>
   </Actions>
 </Task>
@@ -131,8 +132,9 @@ $artisan = "C:\laragon\www\dental-app-inch\artisan"
 
 $triggerScheduler = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -Once -At "00:00"
 $actionScheduler  = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"& '$PHP' '$artisan' schedule:run`""
+    -Execute $PHP `
+    -Argument "`"$artisan`" schedule:run" `
+    -WorkingDirectory $APP_DIR
 
 $settingsScheduler = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
