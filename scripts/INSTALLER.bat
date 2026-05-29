@@ -1,8 +1,24 @@
 @echo off
-echo Installation Dental App en cours...
-echo Telechargement du script d'installation...
+chcp 65001 > nul
+echo.
+echo =============================================
+echo    Installation Dental App
+echo =============================================
+echo.
 
-powershell.exe -ExecutionPolicy Bypass -Command ^
-  "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/AbdelhamidRb/dentale-app-inch/main/scripts/install.ps1' -OutFile '%~dp0install.ps1' -UseBasicParsing"
+:: Verifier que install.ps1 est present dans le meme dossier
+if not exist "%~dp0install.ps1" (
+    echo [ERREUR] install.ps1 introuvable dans le dossier.
+    echo Assurez-vous que INSTALLER.bat et install.ps1 sont dans le meme dossier.
+    pause
+    exit /b 1
+)
 
 powershell.exe -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [ERREUR] L'installation a echoue. Voir les messages ci-dessus.
+    pause
+    exit /b 1
+)

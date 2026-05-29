@@ -10,13 +10,26 @@ $DB_USER     = "root"
 $DB_PASS     = ""
 $APP_URL     = "http://dental-app-inch.test"
 
-$PHP        = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
+# ── Détection automatique des chemins Laragon ─────────────────
+$phpDir = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+          Where-Object { $_.Name -match '^php-8\.' } |
+          Sort-Object Name -Descending | Select-Object -First 1
+if (-not $phpDir) { Write-Host "[ERREUR] PHP 8.x introuvable dans C:\laragon\bin\php" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
+$PHP = Join-Path $phpDir.FullName "php.exe"
+
+$mysqlDir = Get-ChildItem "C:\laragon\bin\mysql" -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending | Select-Object -First 1
+if (-not $mysqlDir) { Write-Host "[ERREUR] MySQL introuvable dans C:\laragon\bin\mysql" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
+$MYSQL      = Join-Path $mysqlDir.FullName "bin\mysql.exe"
+$MYSQLD     = Join-Path $mysqlDir.FullName "bin\mysqld.exe"
+$MYSQLADMIN = Join-Path $mysqlDir.FullName "bin\mysqladmin.exe"
+
+$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory -ErrorAction SilentlyContinue |
+             Sort-Object Name -Descending | Select-Object -First 1
+$HTTPD = if ($apacheDir) { Join-Path $apacheDir.FullName "bin\httpd.exe" } else { "C:\laragon\bin\apache\httpd.exe" }
+
 $COMPOSER   = "C:\laragon\bin\composer\composer.phar"
 $GIT        = "C:\laragon\bin\git\bin\git.exe"
-$MYSQL      = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
-$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
-$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
-$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
 $MYSQL_DATA = "C:\laragon\data\mysql-8.4"
 
 # Ajouter Git au PATH pour que Composer puisse l'utiliser
@@ -64,9 +77,9 @@ $needRestart = $false
 # ── 1. Verifier Laragon ────────────────────────────────────────
 Step 1 8 "Verification de Laragon..."
 foreach ($tool in @($PHP, $COMPOSER, $GIT, $MYSQL)) {
-    if (-not (Test-Path $tool)) { ERR "Outil manquant : $tool`nInstallez Laragon depuis https://laragon.org/download/" }
+    if (-not (Test-Path $tool)) { ERR "Outil manquant : $tool`nInstallez Laragon depuis laragon.org puis relancez INSTALLER.bat." }
 }
-OK "Laragon detecte"
+OK "Laragon detecte (PHP : $($phpDir.Name))"
 
 # ── 2. Verifier licence ────────────────────────────────────────
 Step 2 8 "Verification de la licence..."
@@ -76,7 +89,7 @@ OK "Licence trouvee"
 
 # ── 3. Configurer PHP (zip + OPcache) ─────────────────────────
 Step 3 8 "Configuration PHP..."
-$phpIni = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.ini"
+$phpIni = Join-Path $phpDir.FullName "php.ini"
 if (Test-Path $phpIni) {
     $ini = Get-Content $phpIni -Raw
 
@@ -217,7 +230,7 @@ if (-not $fwRule) {
 }
 
 # Redemarrer Apache avec le bon PATH (necessaire pour charger PHP)
-$env:PATH = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64;$env:PATH"
+$env:PATH = "$($phpDir.FullName);$env:PATH"
 Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 Start-Process -FilePath $HTTPD -WindowStyle Hidden
