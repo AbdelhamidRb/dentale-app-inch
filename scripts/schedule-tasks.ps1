@@ -125,7 +125,8 @@ Write-Host ""
 $taskScheduler = "DentalApp-Scheduler"
 Unregister-ScheduledTask -TaskName $taskScheduler -Confirm:$false -ErrorAction SilentlyContinue
 
-$PHP     = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe"
+$phpDir  = Get-ChildItem "C:\laragon\bin\php" -Directory | Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
+$PHP     = Join-Path $phpDir.FullName "php.exe"
 $artisan = "C:\laragon\www\dental-app-inch\artisan"
 
 $triggerScheduler = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -Once -At "00:00"

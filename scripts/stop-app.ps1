@@ -1,7 +1,11 @@
 # stop-app.ps1 - Fermer Dental App
 
-$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
-$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+# Detection automatique des chemins Laragon
+$mysqlDir  = Get-ChildItem "C:\laragon\bin\mysql"  -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+
+$MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
+$HTTPD      = Join-Path $apacheDir.FullName "bin\httpd.exe"
 $PROFILE    = "C:\dental-app-browser"
 
 # Fermer le navigateur (uniquement le profil dental-app)

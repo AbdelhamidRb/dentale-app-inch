@@ -1,17 +1,22 @@
 # start-app.ps1 - Demarrer Dental App
 
-$HTTPD      = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
-$MYSQLD     = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqld.exe"
-$MYSQLADMIN = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysqladmin.exe"
-$MYSQL_INI  = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\my.ini"
+# Detection automatique des chemins Laragon
+$phpDir    = Get-ChildItem "C:\laragon\bin\php"    -Directory | Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
+$mysqlDir  = Get-ChildItem "C:\laragon\bin\mysql"  -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+
+$HTTPD      = Join-Path $apacheDir.FullName "bin\httpd.exe"
+$MYSQLD     = Join-Path $mysqlDir.FullName  "bin\mysqld.exe"
+$MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
+$MYSQL_INI  = Join-Path $mysqlDir.FullName  "my.ini"
 $VHOST_FILE = "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
 # PATH necessaire pour que Apache charge le module PHP
-$env:PATH = "C:\laragon\bin\php\php-8.3.30-Win32-vs16-x64;" +
-            "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin;" +
-            "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin;" +
+$env:PATH = "$($phpDir.FullName);" +
+            "$($mysqlDir.FullName)\bin;" +
+            "$($apacheDir.FullName)\bin;" +
             $env:PATH
 
 # Detecter IP locale
