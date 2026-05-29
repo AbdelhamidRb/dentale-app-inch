@@ -28,7 +28,10 @@
                         <component :is="item.icon" class="w-5 h-5 transition-colors"
                             :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'" />
                         <span>{{ item.label }}</span>
-                        <span v-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                        <!-- Badge mise à jour sur Paramètres -->
+                        <span v-if="item.route === 'parametres' && updateAvailable"
+                              class="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span v-else-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
                     </RouterLink>
                 </template>
             </nav>
@@ -110,11 +113,13 @@
                     v-for="item in mobileNavItems"
                     :key="item.route"
                     :to="{ name: item.route }"
-                    class="flex flex-col items-center gap-0.5 py-2 px-0.5 flex-1 transition-colors min-w-0"
+                    class="flex flex-col items-center gap-0.5 py-2 px-0.5 flex-1 transition-colors min-w-0 relative"
                     :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400'"
                 >
-                    <component :is="item.icon" class="w-4.5 h-4.5 w-[18px] h-[18px]" />
+                    <component :is="item.icon" class="w-[18px] h-[18px]" />
                     <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
+                    <span v-if="item.route === 'parametres' && updateAvailable"
+                          class="absolute top-1 right-1/4 w-1.5 h-1.5 bg-red-500 rounded-full" />
                 </RouterLink>
             </div>
         </nav>
@@ -122,7 +127,7 @@
 </template>
 
 <script setup>
-import { computed, markRaw } from "vue";
+import { computed, markRaw, onMounted } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { authStore } from "../stores/auth";
 import {
@@ -130,8 +135,10 @@ import {
     CreditCard, LogOut, Activity, UserCircle, Settings,
 } from "lucide-vue-next";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
+import { useUpdate } from "../composables/useUpdate";
 
 const user = computed(() => authStore.user);
+const { updateAvailable, checkLock, checkVersion } = useUpdate();
 
 const userInitials = computed(() => {
     if (!user.value?.name) return "?";
@@ -164,7 +171,6 @@ const filteredNavItems = computed(() => {
     return navItems.filter((item) => !item.roles || item.roles.includes(role));
 });
 
-// Nav mobile : items essentiels sans dividers
 const mobileNavItems = computed(() => {
     const role = user.value?.role;
     if (role === "DENTIST") {
@@ -200,6 +206,13 @@ function isActive(routeName) {
 async function handleLogout() {
     await authStore.logout();
 }
+
+onMounted(async () => {
+    if (user.value?.role === 'DENTIST') {
+        await checkLock();
+        checkVersion(); // non-bloquant
+    }
+});
 </script>
 
 <style scoped>

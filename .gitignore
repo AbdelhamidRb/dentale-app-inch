@@ -1,4 +1,5 @@
 *.log
+/.update_lock
 /private.pem
 /dental-app.lic
 /generate-license.php

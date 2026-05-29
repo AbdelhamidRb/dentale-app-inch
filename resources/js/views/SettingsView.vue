@@ -8,16 +8,18 @@
         </div>
 
         <!-- Onglets -->
-        <div class="flex gap-1 mb-6 bg-white border border-slate-200 rounded-xl p-1 w-fit">
+        <div class="flex gap-1 mb-6 bg-white border border-slate-200 rounded-xl p-1 w-fit flex-wrap">
             <button
                 v-for="tab in tabs" :key="tab.id"
                 @click="activeTab = tab.id"
-                :class="['px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                :class="['relative px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
                          activeTab === tab.id
                              ? 'bg-blue-600 text-white'
                              : 'text-slate-500 hover:text-slate-700']"
             >
                 {{ tab.label }}
+                <span v-if="tab.id === 'update' && updateAvailable"
+                      class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
             </button>
         </div>
 
@@ -499,6 +501,87 @@
             </div>
         </Transition>
 
+        <!-- ══ Onglet Mise à jour ══════════════════════════════════ -->
+        <div v-if="activeTab === 'update'" class="space-y-4 max-w-2xl">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+
+                <!-- En-tête -->
+                <div class="flex items-start justify-between mb-5">
+                    <div>
+                        <p class="font-semibold text-slate-800">Mise à jour de l'application</p>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Version actuelle : <span class="font-mono font-medium text-slate-600">{{ localVersion }}</span>
+                        </p>
+                    </div>
+                    <button @click="checkVersion" :disabled="checking"
+                        class="text-xs text-blue-600 hover:underline disabled:opacity-40">
+                        {{ checking ? 'Vérification…' : 'Vérifier maintenant' }}
+                    </button>
+                </div>
+
+                <!-- Statut : à jour -->
+                <div v-if="!updateAvailable && !checking && !updateError && !updateSuccess"
+                     class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <CheckCircle class="w-5 h-5 text-green-500 shrink-0" />
+                    <div>
+                        <p class="text-sm font-medium text-green-800">Vous utilisez la dernière version</p>
+                        <p class="text-xs text-green-600 mt-0.5">{{ localVersion }}</p>
+                    </div>
+                </div>
+
+                <!-- Statut : mise à jour disponible -->
+                <div v-if="updateAvailable && !updating && !updateSuccess"
+                     class="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-4">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-blue-800">Nouvelle version disponible</p>
+                        <p class="text-xs text-blue-600 mt-0.5">
+                            {{ localVersion }} → <span class="font-semibold">{{ latestVersion }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bouton mettre à jour -->
+                <button v-if="updateAvailable && !updating && !updateSuccess"
+                    @click="runUpdate"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
+                    Mettre à jour vers {{ latestVersion }}
+                </button>
+
+                <!-- En cours de mise à jour -->
+                <div v-if="updating"
+                     class="flex flex-col items-center gap-3 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <div class="text-center">
+                        <p class="text-sm font-medium text-slate-700">Mise à jour en cours…</p>
+                        <p class="text-xs text-slate-400 mt-1">Ne fermez pas l'application</p>
+                    </div>
+                </div>
+
+                <!-- Succès -->
+                <div v-if="updateSuccess"
+                     class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <CheckCircle class="w-5 h-5 text-green-500 shrink-0" />
+                    <div>
+                        <p class="text-sm font-medium text-green-800">{{ updateSuccess }}</p>
+                        <p class="text-xs text-green-600 mt-0.5">Rechargement en cours…</p>
+                    </div>
+                </div>
+
+                <!-- Erreur -->
+                <div v-if="updateError"
+                     class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <XCircle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                        <p class="text-sm font-medium text-red-800">Mise à jour échouée</p>
+                        <p class="text-xs text-red-600 mt-0.5">{{ updateError }}</p>
+                        <p class="text-xs text-red-500 mt-1">Votre application a été restaurée automatiquement.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -507,6 +590,11 @@ import { ref, computed, onMounted } from 'vue';
 import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
          Plus, Pencil, Trash2, X, Stethoscope, Archive } from 'lucide-vue-next';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
+import { useUpdate } from '../composables/useUpdate';
+
+// ── Mise à jour ─────────────────────────────────────────────────
+const { updateAvailable, localVersion, latestVersion, checking, updating,
+        updateError, updateSuccess, checkVersion, runUpdate } = useUpdate();
 
 const activeTab = ref('backup');
 const tabs = [
@@ -514,6 +602,7 @@ const tabs = [
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'acts',     label: 'Actes' },
     { id: 'archive',  label: 'Archivage' },
+    { id: 'update',   label: 'Mise à jour' },
 ];
 
 // ── Backup ──────────────────────────────────────────────────────

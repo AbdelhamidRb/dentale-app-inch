@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BackupController;
+use App\Http\Controllers\Api\UpdateController;
 use App\Http\Controllers\Api\CatalogActController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SettingsController;
@@ -95,6 +96,13 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
 
         // ─── Marquer RDV notifié WhatsApp ──────────────────────────────
         Route::patch('/appointments/{appointment}/whatsapp-notified', [AppointmentController::class, 'markWhatsappNotified']);
+    });
+
+    // ─── Mise à jour application (Dentiste uniquement) ───────────────
+    Route::middleware('dentist')->group(function () {
+        Route::get('/update/check',      [UpdateController::class, 'check']);
+        Route::get('/update/check-lock', [UpdateController::class, 'checkLock']);
+        Route::post('/update/run',       [UpdateController::class, 'run']);
     });
 
     // ─── Backup / Restauration (Dentiste uniquement) ─────────────────
