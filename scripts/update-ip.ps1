@@ -4,7 +4,8 @@
 # ═══════════════════════════════════════════════════════════════
 
 $CONF_FILE = "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf"
-$HTTPD     = "C:\laragon\bin\apache\httpd-2.4.66-260223-Win64-VS18\bin\httpd.exe"
+$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$HTTPD     = Join-Path $apacheDir.FullName "bin\httpd.exe"
 
 Add-Type -AssemblyName System.Windows.Forms
 

@@ -5,17 +5,30 @@
 # ═══════════════════════════════════════════════════════════════
 
 # ─── Configuration ─────────────────────────────────────────────
-$DB_NAME    = "dental_db_inch"
-$DB_USER    = "root"
-$DB_PASS    = "hamid2003"
 $APP_ROOT   = "C:\laragon\www\dental-app-inch"
 $BACKUP_DIR = "C:\backups\dental-app"
 $USB_LABEL  = "DENTAL-BKP"
-$mysql      = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
+
+# Lire DB depuis .env
+function Get-EnvVal($key) {
+    $line = Get-Content "$APP_ROOT\.env" -ErrorAction SilentlyContinue |
+            Where-Object { $_ -match "^$key=" } | Select-Object -First 1
+    if ($line) { return ($line -split '=', 2)[1].Trim('"').Trim("'") }
+    return ""
+}
+$DB_NAME = Get-EnvVal "DB_DATABASE"
+$DB_USER = Get-EnvVal "DB_USERNAME"
+$DB_PASS = Get-EnvVal "DB_PASSWORD"
+if (-not $DB_NAME) { $DB_NAME = "dental_db_inch" }
+if (-not $DB_USER) { $DB_USER = "root" }
+
+# Auto-détecter MySQL
+$mysqlDir = Get-ChildItem "C:\laragon\bin\mysql" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$mysql    = Join-Path $mysqlDir.FullName "bin\mysql.exe"
 
 # ─── Verifier mysql.exe ────────────────────────────────────────
-if (-not (Test-Path $mysql)) {
-    Write-Host "[ERREUR] mysql.exe introuvable : $mysql" -ForegroundColor Red
+if (-not $mysqlDir -or -not (Test-Path $mysql)) {
+    Write-Host "[ERREUR] mysql.exe introuvable dans C:\laragon\bin\mysql" -ForegroundColor Red
     exit 1
 }
 
@@ -30,7 +43,7 @@ if (Test-Path $BACKUP_DIR) {
 
 $usbVol = Get-Volume | Where-Object { $_.FileSystemLabel -eq $USB_LABEL } | Select-Object -First 1
 if ($usbVol) {
-    $usbRoot = "$($usbVol.DriveLetter):\backups\dental-app"
+    $usbRoot = "$($usbVol.DriveLetter):\dental-app-backups"
     if (Test-Path $usbRoot) {
         $localNames = $backups | ForEach-Object { $_.Name }
         Get-ChildItem $usbRoot -Directory | Sort-Object Name -Descending | ForEach-Object {
