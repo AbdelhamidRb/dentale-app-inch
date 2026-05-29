@@ -120,14 +120,21 @@ class BackupController extends Controller
             $imgSizeKB = file_exists($zipFile) ? round(filesize($zipFile) / 1024) : 0;
         }
 
-        // ─── Supprimer anciens backups (garder 30) ───────────────
-        $this->pruneBackups(30);
+        // ─── Rotation adaptative selon taille du backup ───────────
+        $backupSizeBytes = $this->dirSize($dest);
+        $this->pruneBackups($backupSizeBytes);
+
+        $backupCount = count(array_filter(scandir($this->backupDir), fn($d) =>
+            $d !== '.' && $d !== '..' && is_dir($this->backupDir . '\\' . $d)
+        ));
 
         return response()->json([
-            'success'    => true,
-            'name'       => $timestamp,
-            'db_size_kb' => round(filesize($sqlFile) / 1024),
-            'img_size_kb' => $imgSizeKB,
+            'success'      => true,
+            'name'         => $timestamp,
+            'db_size_kb'   => round(filesize($sqlFile) / 1024),
+            'img_size_kb'  => $imgSizeKB,
+            'backup_count' => $backupCount,
+            'max_backups'  => $this->maxBackups($backupSizeBytes),
         ]);
     }
 
@@ -209,20 +216,42 @@ class BackupController extends Controller
         return response()->json(['success' => true, 'restored' => $request->name]);
     }
 
-    // ─── Supprimer les backups les plus anciens ───────────────────
-    private function pruneBackups(int $keep): void
+    // ─── Nombre de backups à garder selon la taille ──────────────
+    private function maxBackups(int $sizeBytes): int
+    {
+        $sizeMB = $sizeBytes / 1024 / 1024;
+        if ($sizeMB < 50)  return 30;
+        if ($sizeMB < 200) return 20;
+        if ($sizeMB < 500) return 10;
+        return 5;
+    }
+
+    // ─── Rotation : supprime les plus anciens selon palier ────────
+    private function pruneBackups(int $backupSizeBytes): void
     {
         if (!is_dir($this->backupDir)) return;
 
-        $dirs = array_filter(scandir($this->backupDir), fn($d) =>
+        $keep = $this->maxBackups($backupSizeBytes);
+
+        $dirs = array_values(array_filter(scandir($this->backupDir), fn($d) =>
             $d !== '.' && $d !== '..' && is_dir($this->backupDir . '\\' . $d)
-        );
-        sort($dirs);
+        ));
+        sort($dirs); // du plus ancien au plus récent
 
         $toDelete = array_slice($dirs, 0, max(0, count($dirs) - $keep));
         foreach ($toDelete as $d) {
             $this->deleteDir($this->backupDir . '\\' . $d);
         }
+    }
+
+    private function dirSize(string $path): int
+    {
+        $size = 0;
+        if (!is_dir($path)) return 0;
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, RecursiveDirectoryIterator::SKIP_DOTS)) as $f) {
+            $size += $f->getSize();
+        }
+        return $size;
     }
 
     private function deleteDir(string $path): void

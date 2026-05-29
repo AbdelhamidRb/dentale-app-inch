@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
 #  backup.ps1  —  Sauvegarde automatique  |  Dental App
-#  Destinations : local (30) + OneDrive (dynamique) + USB (sync auto)
+#  Destinations : local (adaptatif) + OneDrive (dynamique) + USB (sync auto)
 # ═══════════════════════════════════════════════════════════════
 
 $DB_NAME    = "dental_db_inch"
@@ -9,9 +9,17 @@ $DB_PASS    = "hamid2003"
 $APP_ROOT   = "C:\laragon\www\dental-app-inch"
 $BACKUP_DIR = "C:\backups\dental-app"
 $USB_LABEL  = "DENTAL-BKP"
-$MAX_LOCAL  = 30
 $MYSQL_BIN  = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin"
 $mysqldump  = "$MYSQL_BIN\mysqldump.exe"
+
+# ─── Nombre de backups à conserver selon la taille ────────────
+function Get-MaxBackups([long]$sizeBytes) {
+    $sizeMB = $sizeBytes / 1MB
+    if ($sizeMB -lt 50)  { return 30 }
+    if ($sizeMB -lt 200) { return 20 }
+    if ($sizeMB -lt 500) { return 10 }
+    return 5
+}
 
 # ─── Vérifier mysqldump ────────────────────────────────────────
 if (-not (Test-Path $mysqldump)) {
@@ -111,32 +119,50 @@ if ($onedrivePath) {
     Write-Host "  ATTENTION  OneDrive non trouve. Installez Google Drive for Desktop ou connectez OneDrive." -ForegroundColor Yellow
 }
 
-# ─── [4/4] Copie vers la clé USB si présente ──────────────────
+# ─── Calcul taille backup + nombre max à conserver ────────────
+$backupSizeBytes = (Get-ChildItem $dest -Recurse | Measure-Object -Property Length -Sum).Sum
+if (-not $backupSizeBytes -or $backupSizeBytes -eq 0) { $backupSizeBytes = 5MB }
+$maxLocal = Get-MaxBackups $backupSizeBytes
+
+# ─── [4/4] Copie + sync vers la clé USB si présente ──────────
 Write-Host "[4/4] Copie vers la cle USB..."
 $usbVol = Get-Volume | Where-Object { $_.FileSystemLabel -eq $USB_LABEL } | Select-Object -First 1
 
 if ($usbVol) {
-    $usbRoot = "$($usbVol.DriveLetter):\backups\dental-app"
-    $usbDest = Join-Path $usbRoot $timestamp
-    New-Item -ItemType Directory -Force -Path $usbDest | Out-Null
-    Copy-Item -Path "$dest\*" -Destination $usbDest -Recurse -Force
-    Write-Host "  OK  USB $($usbVol.DriveLetter):\ ($USB_LABEL)" -ForegroundColor Green
+    $usbRoot    = "$($usbVol.DriveLetter):\dental-app-backups"
+    New-Item -ItemType Directory -Force -Path $usbRoot | Out-Null
 
-    # Garder les 30 derniers sur la clé aussi
-    $oldUSB = Get-ChildItem $usbRoot -Directory | Sort-Object Name | Select-Object -SkipLast $MAX_LOCAL
+    # Sync : copier tous les backups locaux manquants sur la clé
+    $localBackups = Get-ChildItem $BACKUP_DIR -Directory -ErrorAction SilentlyContinue | Sort-Object Name
+    $usbNames     = Get-ChildItem $usbRoot -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+    $missing      = $localBackups | Where-Object { $_.Name -notin $usbNames }
+
+    foreach ($bkp in $missing) {
+        $usbDest = Join-Path $usbRoot $bkp.Name
+        Copy-Item $bkp.FullName $usbDest -Recurse -Force
+    }
+
+    $copiedCount = $missing.Count
+    $maxUsb      = Get-MaxBackups $backupSizeBytes
+
+    # Rotation USB
+    $oldUSB = Get-ChildItem $usbRoot -Directory | Sort-Object Name | Select-Object -SkipLast $maxUsb
     foreach ($b in $oldUSB) { Remove-Item $b.FullName -Recurse -Force }
+
+    Write-Host "  OK  USB $($usbVol.DriveLetter):\ ($USB_LABEL) — $copiedCount backup(s) synchronise(s), max $maxUsb gardes" -ForegroundColor Green
 } else {
     Write-Host "  INFO  Cle USB non branchee — sera synchronisee automatiquement au prochain branchement." -ForegroundColor Cyan
 }
 
-# ─── Supprimer anciens backups locaux (garder 30) ──────────────
+# ─── Rotation locale adaptative ────────────────────────────────
 $old = Get-ChildItem $BACKUP_DIR -Directory -ErrorAction SilentlyContinue |
-       Sort-Object Name | Select-Object -SkipLast $MAX_LOCAL
+       Sort-Object Name | Select-Object -SkipLast $maxLocal
 foreach ($b in $old) { Remove-Item $b.FullName -Recurse -Force }
 
 # ─── Résumé ────────────────────────────────────────────────────
+$backupSizeMB = [math]::Round($backupSizeBytes / 1MB, 1)
 Write-Host ""
 Write-Host "  BACKUP TERMINE : $timestamp" -ForegroundColor Cyan
-Write-Host "  Local    : $dest"
+Write-Host "  Local    : $dest  ($backupSizeMB MB, max $maxLocal backups)"
 if ($onedrivePath) { Write-Host "  OneDrive : $odDest" }
 Write-Host ""
