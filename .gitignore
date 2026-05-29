@@ -1,6 +1,7 @@
 *.log
 /private.pem
 /dental-app.lic
+/generate-license.php
 /scripts/DentalApp.exe
 .DS_Store
 .env
