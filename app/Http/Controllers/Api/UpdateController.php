@@ -14,12 +14,14 @@ class UpdateController extends Controller
     private string $appRoot;
     private string $repoOwner = 'AbdelhamidRb';
     private string $repoName  = 'dentale-app-inch';
-    private string $mysqldump = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe';
-    private string $mysql     = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysql.exe';
+    private string $mysqldump;
+    private string $mysql;
 
     public function __construct()
     {
-        $this->appRoot = base_path();
+        $this->appRoot  = base_path();
+        $this->mysqldump = $this->findMysqlBin('mysqldump.exe');
+        $this->mysql     = $this->findMysqlBin('mysql.exe');
     }
 
     // ── GET /api/update/check ─────────────────────────────────────
@@ -101,20 +103,30 @@ class UpdateController extends Controller
             return response()->json(['error' => 'Migration échouée. Votre application a été restaurée automatiquement.', 'details' => $e->getMessage()], 500);
         }
 
-        // 8. Cache clear
+        // 8. Cache clear + OPcache reset
         Artisan::call('cache:clear');
         Cache::forget('github_latest_version');
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
 
-        // 9. Supprimer lock
+        // 9. Appliquer les optimisations .env (BCRYPT, OPcache)
+        $this->applyEnvOptimizations();
+
+        // 10. Reconstruire les caches Laravel
+        Artisan::call('optimize');
+
+        // 11. Supprimer lock
         @unlink(base_path('.update_lock'));
 
-        // 10. Notification succès
+        // 12. Notification succès
         $this->notify($devEmail, $cabinet, $localVersion, $newVersion, true, null);
 
         return response()->json([
             'success'        => true,
             'version_before' => $localVersion,
             'version_after'  => $newVersion,
+            'optimized'      => true,
         ]);
     }
 
@@ -186,6 +198,40 @@ class UpdateController extends Controller
             if (file_exists($path)) return $path;
         }
         return 'git';
+    }
+
+    private function findMysqlBin(string $bin): string
+    {
+        $base = 'C:\\laragon\\bin\\mysql';
+        if (is_dir($base)) {
+            $dirs = glob($base . '\\*', GLOB_ONLYDIR);
+            if ($dirs) {
+                rsort($dirs);
+                $path = $dirs[0] . '\\bin\\' . $bin;
+                if (file_exists($path)) return $path;
+            }
+        }
+        return $bin;
+    }
+
+    private function applyEnvOptimizations(): void
+    {
+        $envFile = base_path('.env');
+        if (!file_exists($envFile)) return;
+
+        $env = file_get_contents($envFile);
+        $changed = false;
+
+        // Réduire BCRYPT_ROUNDS à 10 si encore à 12
+        if (preg_match('/^BCRYPT_ROUNDS=12$/m', $env)) {
+            $env     = preg_replace('/^BCRYPT_ROUNDS=12$/m', 'BCRYPT_ROUNDS=10', $env);
+            $changed = true;
+        }
+
+        if ($changed) {
+            file_put_contents($envFile, $env);
+            Log::info('[UpdateController] .env optimisé : BCRYPT_ROUNDS=10');
+        }
     }
 
     private function backupDatabase(): array
