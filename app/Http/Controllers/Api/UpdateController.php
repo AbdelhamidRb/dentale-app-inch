@@ -44,14 +44,22 @@ class UpdateController extends Controller
     // ── POST /api/update/run ──────────────────────────────────────
     public function run()
     {
+        set_time_limit(300);
+        ini_set('memory_limit', '256M');
+
         $localVersion = $this->localVersion();
         $devEmail     = env('DEV_EMAIL', 'hamidrherib@gmail.com');
-        $cabinet      = \App\Models\Setting::get('cabinet_name', config('app.name', 'Cabinet Dentaire'));
+
+        try {
+            $cabinet = \App\Models\Setting::get('cabinet_name', config('app.name', 'Cabinet Dentaire'));
+        } catch (\Throwable $e) {
+            $cabinet = config('app.name', 'Cabinet Dentaire');
+        }
 
         // 1. Vérifier internet
         try {
             Http::timeout(5)->get('https://github.com');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Pas de connexion internet.'], 503);
         }
 
@@ -73,61 +81,69 @@ class UpdateController extends Controller
         }
         $backupFile = $backupResult['file'];
 
-        // 5. Fichier lock — détecte une mise à jour interrompue
-        file_put_contents(base_path('.update_lock'), json_encode([
-            'commit'  => $currentCommit,
-            'backup'  => $backupFile,
-            'version' => $localVersion,
-            'started' => now()->toISOString(),
-        ]));
-
-        // 6. git fetch + reset --hard (évite les conflits de fichiers locaux)
-        shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" fetch origin main 2>&1');
-        $pullOutput = shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" reset --hard origin/main 2>&1') ?? '';
-
-        if (
-            str_contains(strtolower($pullOutput), 'error') ||
-            str_contains(strtolower($pullOutput), 'fatal')
-        ) {
-            $this->rollback($currentCommit, $backupFile);
-            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, 'git reset --hard échoué : ' . $pullOutput);
-            return response()->json(['error' => 'Mise à jour échouée. Votre application a été restaurée automatiquement.', 'details' => $pullOutput], 500);
-        }
-
-        // 7. php artisan migrate --force
         try {
+            // 5. Fichier lock — détecte une mise à jour interrompue
+            file_put_contents(base_path('.update_lock'), json_encode([
+                'commit'  => $currentCommit,
+                'backup'  => $backupFile,
+                'version' => $localVersion,
+                'started' => now()->toISOString(),
+            ]));
+
+            // 6. git fetch + reset --hard (évite les conflits de fichiers locaux)
+            shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" fetch origin main 2>&1');
+            $pullOutput = shell_exec('"' . $gitPath . '" -C "' . $this->appRoot . '" reset --hard origin/main 2>&1') ?? '';
+
+            if (
+                str_contains(strtolower($pullOutput), 'error') ||
+                str_contains(strtolower($pullOutput), 'fatal')
+            ) {
+                $this->rollback($currentCommit, $backupFile);
+                $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, 'git reset --hard échoué : ' . $pullOutput);
+                return response()->json(['error' => 'Mise à jour échouée. Votre application a été restaurée automatiquement.', 'details' => $pullOutput], 500);
+            }
+
+            // 7. php artisan migrate --force
             Artisan::call('migrate', ['--force' => true]);
-        } catch (\Exception $e) {
+
+            // 8. Cache clear + OPcache reset
+            Artisan::call('cache:clear');
+            Cache::forget('github_latest_version');
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+            }
+
+            // 9. Appliquer les optimisations .env (BCRYPT, OPcache)
+            $this->applyEnvOptimizations();
+
+            // 10. Reconstruire les caches Laravel
+            Artisan::call('optimize');
+
+            // 11. Supprimer lock
+            @unlink(base_path('.update_lock'));
+
+            // 12. Notification succès
+            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, true, null);
+
+            return response()->json([
+                'success'        => true,
+                'version_before' => $localVersion,
+                'version_after'  => $newVersion,
+                'optimized'      => true,
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('[UpdateController] Erreur inattendue', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
             $this->rollback($currentCommit, $backupFile);
-            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, 'Migration échouée : ' . $e->getMessage());
-            return response()->json(['error' => 'Migration échouée. Votre application a été restaurée automatiquement.', 'details' => $e->getMessage()], 500);
+            $this->notify($devEmail, $cabinet, $localVersion, $newVersion, false, $e->getMessage());
+            return response()->json([
+                'error'   => 'Erreur inattendue : ' . $e->getMessage(),
+                'details' => 'Votre application a été restaurée automatiquement.',
+            ], 500);
         }
-
-        // 8. Cache clear + OPcache reset
-        Artisan::call('cache:clear');
-        Cache::forget('github_latest_version');
-        if (function_exists('opcache_reset')) {
-            opcache_reset();
-        }
-
-        // 9. Appliquer les optimisations .env (BCRYPT, OPcache)
-        $this->applyEnvOptimizations();
-
-        // 10. Reconstruire les caches Laravel
-        Artisan::call('optimize');
-
-        // 11. Supprimer lock
-        @unlink(base_path('.update_lock'));
-
-        // 12. Notification succès
-        $this->notify($devEmail, $cabinet, $localVersion, $newVersion, true, null);
-
-        return response()->json([
-            'success'        => true,
-            'version_before' => $localVersion,
-            'version_after'  => $newVersion,
-            'optimized'      => true,
-        ]);
     }
 
     // ── GET /api/update/check-lock ────────────────────────────────
