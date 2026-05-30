@@ -207,12 +207,18 @@ class UpdateController extends Controller
     {
         $paths = [
             'C:\\laragon\\bin\\git\\bin\\git.exe',
+            'C:\\laragon\\bin\\git\\cmd\\git.exe',
             'C:\\Program Files\\Git\\bin\\git.exe',
+            'C:\\Program Files\\Git\\cmd\\git.exe',
             'C:\\Program Files (x86)\\Git\\bin\\git.exe',
+            'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
         ];
         foreach ($paths as $path) {
             if (file_exists($path)) return $path;
         }
+        // Fallback : chercher dans PATH via where
+        $found = trim(shell_exec('where git 2>nul') ?? '');
+        if ($found) return explode("\n", $found)[0];
         return 'git';
     }
 
