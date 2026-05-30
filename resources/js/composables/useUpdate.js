@@ -1,57 +1,64 @@
 import { ref, readonly } from 'vue';
-import axios from 'axios';
 
 const updateAvailable = ref(false);
-const localVersion    = ref('v1.0.0');
-const latestVersion   = ref('v1.0.0');
+const localVersion    = ref('');
+const latestVersion   = ref('');
 const checking        = ref(false);
 const updating        = ref(false);
 const updateError     = ref(null);
 const updateSuccess   = ref(null);
 
-// Vérifie au démarrage si une MAJ interrompue existe
+function authHeaders() {
+    return {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+    };
+}
+
 async function checkLock() {
     try {
-        const { data } = await axios.get('/api/update/check-lock');
+        const res  = await fetch('/api/update/check-lock', { headers: authHeaders() });
+        const data = await res.json();
         if (data.interrupted) {
             console.warn('[Update] MAJ interrompue détectée — rollback effectué automatiquement.');
         }
     } catch {}
 }
 
-// Vérifie la version GitHub (résultat mis en cache 24h côté serveur)
 async function checkVersion() {
     if (checking.value) return;
-    checking.value = true;
+    checking.value    = true;
+    updateError.value = null;
     try {
-        const { data } = await axios.get('/api/update/check');
-        localVersion.value  = data.local;
-        latestVersion.value = data.latest;
+        const res  = await fetch('/api/update/check', { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message ?? `Erreur ${res.status}`);
+        localVersion.value    = data.local;
+        latestVersion.value   = data.latest;
         updateAvailable.value = data.available;
-    } catch {
-        // Pas d'internet ou GitHub indisponible — on ignore silencieusement
+    } catch (err) {
+        updateError.value = err.message ?? 'Impossible de vérifier la version.';
     } finally {
         checking.value = false;
     }
 }
 
-// Lance la mise à jour
 async function runUpdate() {
     if (updating.value) return;
-    updating.value  = true;
+    updating.value      = true;
     updateError.value   = null;
     updateSuccess.value = null;
 
     try {
-        const { data } = await axios.post('/api/update/run');
-        updateSuccess.value  = `Mise à jour réussie : ${data.version_before} → ${data.version_after}`;
+        const res  = await fetch('/api/update/run', { method: 'POST', headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? `Erreur ${res.status}`);
+        updateSuccess.value   = `Mise à jour réussie : ${data.version_before} → ${data.version_after}`;
         updateAvailable.value = false;
-
-        // Recharge la page après 2s pour appliquer le nouveau code
         setTimeout(() => window.location.reload(), 2000);
     } catch (err) {
-        updateError.value = err.response?.data?.error
-            ?? 'Erreur inattendue. Votre application a été restaurée automatiquement.';
+        updateError.value = err.message ?? 'Erreur inattendue. Votre application a été restaurée automatiquement.';
     } finally {
         updating.value = false;
     }
