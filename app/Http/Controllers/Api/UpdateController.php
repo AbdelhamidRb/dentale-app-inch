@@ -103,11 +103,13 @@ class UpdateController extends Controller
                 return response()->json(['error' => 'Mise à jour échouée. Votre application a été restaurée automatiquement.', 'details' => $pullOutput], 500);
             }
 
-            // 7. php artisan migrate --force
-            Artisan::call('migrate', ['--force' => true]);
+            // 7. php artisan migrate + optimize via shell (evite conflits bootstrap)
+            $php     = $this->findPhp();
+            $artisan = $this->appRoot . DIRECTORY_SEPARATOR . 'artisan';
+            shell_exec('"' . $php . '" "' . $artisan . '" migrate --force 2>&1');
+            shell_exec('"' . $php . '" "' . $artisan . '" cache:clear 2>&1');
 
-            // 8. Cache clear + OPcache reset
-            Artisan::call('cache:clear');
+            // 8. OPcache reset
             Cache::forget('github_latest_version');
             if (function_exists('opcache_reset')) {
                 opcache_reset();
@@ -116,8 +118,8 @@ class UpdateController extends Controller
             // 9. Appliquer les optimisations .env (BCRYPT, OPcache)
             $this->applyEnvOptimizations();
 
-            // 10. Reconstruire les caches Laravel
-            Artisan::call('optimize');
+            // 10. Reconstruire les caches via shell
+            shell_exec('"' . $php . '" "' . $artisan . '" optimize 2>&1');
 
             // 11. Supprimer lock
             @unlink(base_path('.update_lock'));
@@ -220,6 +222,24 @@ class UpdateController extends Controller
         $found = trim(shell_exec('where git 2>nul') ?? '');
         if ($found) return explode("\n", $found)[0];
         return 'git';
+    }
+
+    private function findPhp(): string
+    {
+        // PHP_BINARY est toujours disponible et pointe vers le bon exécutable
+        if (defined('PHP_BINARY') && file_exists(PHP_BINARY)) {
+            return PHP_BINARY;
+        }
+        $base = 'C:\\laragon\\bin\\php';
+        if (is_dir($base)) {
+            $dirs = glob($base . '\\php-8.*', GLOB_ONLYDIR);
+            if ($dirs) {
+                rsort($dirs);
+                $path = $dirs[0] . '\\php.exe';
+                if (file_exists($path)) return $path;
+            }
+        }
+        return 'php';
     }
 
     private function findMysqlBin(string $bin): string
