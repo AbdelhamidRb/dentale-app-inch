@@ -73,10 +73,6 @@ $usbTriggerXml = @'
 </QueryList>
 '@
 
-$actionUSB = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$usbScript`""
-
 # Créer la tâche via XML pour supporter le trigger événement USB
 $taskXml = @"
 <?xml version="1.0" encoding="UTF-16"?>
@@ -101,12 +97,13 @@ $taskXml = @"
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
     <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
     <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
+    <Hidden>true</Hidden>
     <Enabled>true</Enabled>
   </Settings>
   <Actions>
     <Exec>
-      <Command>wscript.exe</Command>
-      <Arguments>//B //NoLogo "$vbs" "$usbScript"</Arguments>
+      <Command>powershell.exe</Command>
+      <Arguments>-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$usbScript"</Arguments>
     </Exec>
   </Actions>
 </Task>
