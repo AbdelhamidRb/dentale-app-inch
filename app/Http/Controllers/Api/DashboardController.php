@@ -66,7 +66,9 @@ class DashboardController extends Controller
             FROM patients p
             LEFT JOIN (
                 SELECT patient_id, SUM(total_price) AS total
-                FROM consultations GROUP BY patient_id
+                FROM consultations
+                WHERE status NOT IN ('BROUILLON')
+                GROUP BY patient_id
             ) pc ON pc.patient_id = p.id
             LEFT JOIN (
                 SELECT patient_id, SUM(amount) AS total
