@@ -30,7 +30,6 @@ $HTTPD = if ($apacheDir) { Join-Path $apacheDir.FullName "bin\httpd.exe" } else 
 
 $COMPOSER   = "C:\laragon\bin\composer\composer.phar"
 $GIT        = "C:\laragon\bin\git\bin\git.exe"
-$MYSQL_DATA = "C:\laragon\data\mysql-8.4"
 
 # Ajouter Git au PATH pour que Composer puisse l'utiliser
 $env:Path = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:Path"
@@ -181,6 +180,7 @@ if ($LASTEXITCODE -ne 0) {
     ERR "composer install a echoue. Voir erreur ci-dessus."
 }
 & $PHP "$APP_DIR\artisan" key:generate --force 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { ERR "key:generate a echoue. Verifiez que le .env est bien cree." }
 OK "Dependances PHP installees + cle generee"
 
 # ── 7. Base de donnees ─────────────────────────────────────────
@@ -248,8 +248,14 @@ Start-Sleep -Seconds 2
 
 # Taches planifiees (backup + scheduler)
 if ($isAdmin) {
-    powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\schedule-tasks.ps1" | Out-Null
-    OK "Taches automatiques planifiees"
+    powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\schedule-tasks.ps1"
+    if ($LASTEXITCODE -eq 0) {
+        OK "Taches automatiques planifiees"
+    } else {
+        WARN "Les taches automatiques n'ont pas pu etre configurees. Relancez schedule-tasks.ps1 en admin."
+    }
+} else {
+    WARN "Taches automatiques non configurees (droits admin requis). Relancez INSTALLER.bat en administrateur."
 }
 
 # Renommer le PC
