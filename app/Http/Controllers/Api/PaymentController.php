@@ -166,6 +166,8 @@ class PaymentController extends Controller
             'notes'      => $request->notes,
         ]);
 
+        cache()->forget('dashboard_stats');
+
         $patient->load([
             'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
             'paymentTransactions' => fn($q) => $q->orderBy('date', 'desc'),
@@ -187,6 +189,8 @@ class PaymentController extends Controller
         $patientId   = $transaction->patient_id;
 
         $transaction->delete();
+
+        cache()->forget('dashboard_stats');
 
         $patient = Patient::with([
             'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
