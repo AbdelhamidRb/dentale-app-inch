@@ -34,6 +34,8 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
     // IMPORTANT : archive-preview doit être AVANT {patient} pour éviter le conflit de route
     Route::get('/patients/archive-preview', [PatientController::class, 'archivePreview'])
         ->middleware('dentist');
+    Route::get('/patients/check-name', [PatientController::class, 'checkName'])
+        ->middleware('assistant');
 
     Route::middleware('assistant')->group(function () {
         Route::get('/patients',              [PatientController::class, 'index']);

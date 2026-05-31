@@ -20,6 +20,27 @@ class PatientController extends Controller
     // PATIENTS CRUD
     // ═══════════════════════════════════════════════════════════════
 
+    // ─── GET /api/patients/check-name ────────────────────────────
+    public function checkName(Request $request)
+    {
+        $first = trim($request->query('first_name', ''));
+        $last  = trim($request->query('last_name', ''));
+
+        if (!$first || !$last) {
+            return response()->json(['matches' => []]);
+        }
+
+        $matches = Patient::where('is_archived', false)
+            ->whereRaw('LOWER(first_name) = ?', [mb_strtolower($first)])
+            ->whereRaw('LOWER(last_name) = ?',  [mb_strtolower($last)])
+            ->when($request->query('exclude_id'), fn($q, $id) => $q->where('id', '!=', $id))
+            ->select('id', 'first_name', 'last_name', 'numero_dossier', 'birth_date', 'phone')
+            ->limit(5)
+            ->get();
+
+        return response()->json(['matches' => $matches]);
+    }
+
     // ─── GET /api/patients ────────────────────────────────────────
     // Liste paginée avec recherche et filtres
     public function index(Request $request)
