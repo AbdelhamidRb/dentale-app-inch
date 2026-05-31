@@ -59,7 +59,6 @@ $backupXml = @"
   <Principals>
     <Principal id="Author">
       <UserId>S-1-5-18</UserId>
-      <LogonType>ServiceAccount</LogonType>
       <RunLevel>HighestAvailable</RunLevel>
     </Principal>
   </Principals>
@@ -149,19 +148,18 @@ $schedulerXml = @"
     <Description>Laravel scheduler - archivage automatique patients a 01h00</Description>
   </RegistrationInfo>
   <Triggers>
-    <CalendarTrigger>
+    <TimeTrigger>
+      <StartBoundary>2024-01-01T00:00:00</StartBoundary>
       <Repetition>
         <Interval>PT1M</Interval>
         <StopAtDurationEnd>false</StopAtDurationEnd>
       </Repetition>
-      <StartBoundary>2024-01-01T00:00:00</StartBoundary>
       <Enabled>true</Enabled>
-    </CalendarTrigger>
+    </TimeTrigger>
   </Triggers>
   <Principals>
     <Principal id="Author">
       <UserId>S-1-5-18</UserId>
-      <LogonType>ServiceAccount</LogonType>
       <RunLevel>HighestAvailable</RunLevel>
     </Principal>
   </Principals>
