@@ -459,7 +459,8 @@
             :model-value="!!deleteActTarget"
             @update:model-value="v => { if (!v) deleteActTarget = null }"
             title="Supprimer l'acte"
-            :message="`L'acte <strong>${deleteActTarget?.name}</strong> sera définitivement supprimé.`"
+            :subtitle="deleteActTarget?.name"
+            message="Cet acte sera <strong>définitivement supprimé</strong>."
             confirm-label="Supprimer"
             @confirm="doDeleteAct" />
 
@@ -561,8 +562,9 @@ async function doRestore() {
         await api('/api/backup/restore', 'POST', { name: restoreTarget.value.name });
         restoreTarget.value = null;
         backupOk.value  = true;
-        backupMsg.value = 'Restauration terminée avec succès. Rechargez la page pour appliquer les changements.';
+        backupMsg.value = 'Restauration terminée — rechargement dans 3 secondes…';
         activeTab.value = 'backup';
+        setTimeout(() => { window.location.reload(); }, 3000);
     } catch (e) {
         restoreTarget.value = null;
         backupOk.value  = false;
@@ -710,9 +712,10 @@ function confirmDeleteAct(act) { deleteActTarget.value = act; }
 
 async function doDeleteAct() {
     if (!deleteActTarget.value) return;
+    const actId = deleteActTarget.value.id;
     try {
-        await api(`/api/catalog-acts/${deleteActTarget.value.id}`, 'DELETE');
-        acts.value = acts.value.filter(a => a.id !== deleteActTarget.value.id);
+        await api(`/api/catalog-acts/${actId}`, 'DELETE');
+        acts.value = acts.value.filter(a => a.id !== actId);
     } catch (e) {
         actSaveError.value = e.message ?? 'Impossible de supprimer cet acte.';
     } finally {

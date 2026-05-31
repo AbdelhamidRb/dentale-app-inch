@@ -128,7 +128,7 @@ class ConsultationController extends Controller
             'acts.catalogAct:id,code,name',
         ]);
 
-        cache()->forget('dashboard_stats_v2');
+        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
 
         return response()->json([
             'message'      => 'Consultation créée avec succès.',
@@ -179,21 +179,23 @@ class ConsultationController extends Controller
 
         // ─── Sync des actes (remplace tout — batch insert) ───────
         if ($request->has('acts')) {
-            $consultation->acts()->delete();
+            DB::transaction(function () use ($request, $consultation) {
+                $consultation->acts()->delete();
 
-            if (!empty($request->acts)) {
-                $now  = now();
-                $rows = array_map(fn($act) => [
-                    'consultation_id' => $consultation->id,
-                    'catalog_act_id'  => $act['catalog_act_id'],
-                    'teeth'           => json_encode($act['teeth'] ?? []),
-                    'price'           => round((float) $act['price']),
-                    'notes'           => $act['notes'] ?? null,
-                    'created_at'      => $now,
-                    'updated_at'      => $now,
-                ], $request->acts);
-                ConsultationAct::insert($rows);
-            }
+                if (!empty($request->acts)) {
+                    $now  = now();
+                    $rows = array_map(fn($act) => [
+                        'consultation_id' => $consultation->id,
+                        'catalog_act_id'  => $act['catalog_act_id'],
+                        'teeth'           => json_encode($act['teeth'] ?? []),
+                        'price'           => round((float) $act['price']),
+                        'notes'           => $act['notes'] ?? null,
+                        'created_at'      => $now,
+                        'updated_at'      => $now,
+                    ], $request->acts);
+                    ConsultationAct::insert($rows);
+                }
+            });
         }
 
         $consultation->recalculateTotal();
@@ -254,7 +256,7 @@ class ConsultationController extends Controller
             'acts.catalogAct:id,code,name',
         ]);
 
-        cache()->forget('dashboard_stats_v2');
+        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
 
         return response()->json([
             'message'      => 'Consultation clôturée.',
@@ -271,7 +273,7 @@ class ConsultationController extends Controller
         $consultation->acts()->delete();
         $consultation->delete();
 
-        cache()->forget('dashboard_stats_v2');
+        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
 
         return response()->json(['message' => 'Consultation supprimée.']);
     }

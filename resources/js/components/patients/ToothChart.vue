@@ -12,12 +12,6 @@
                 <p class="text-xs text-slate-500">
                     <span class="font-semibold text-slate-700">{{ treatedCount }}</span>
                     dent{{ treatedCount !== 1 ? 's' : '' }} traitée{{ treatedCount !== 1 ? 's' : '' }}
-                    <span v-if="grandTotal > 0">
-                        · Total :
-                        <span class="font-semibold text-slate-700">
-                            {{ grandTotal.toLocaleString('fr-FR') }} MAD
-                        </span>
-                    </span>
                 </p>
             </div>
 
@@ -89,7 +83,6 @@
                                     <h3 class="text-sm font-semibold text-slate-800">Schéma dentaire</h3>
                                     <p class="text-xs text-slate-400 mt-0.5">
                                         {{ treatedCount }} dent{{ treatedCount !== 1 ? 's' : '' }} traitée{{ treatedCount !== 1 ? 's' : '' }}
-                                        <span v-if="grandTotal > 0"> · {{ grandTotal.toLocaleString('fr-FR') }} MAD</span>
                                     </p>
                                 </div>
                                 <button @click="showFullscreen = false"
@@ -170,7 +163,6 @@
                                                     <h4 class="text-sm font-semibold text-slate-800">Dent {{ activeTooth }}</h4>
                                                     <p class="text-xs text-slate-400">
                                                         {{ currentActs.length }} acte{{ currentActs.length !== 1 ? 's' : '' }}
-                                                        <span v-if="toothTotal > 0"> · {{ toothTotal.toLocaleString('fr-FR') }} MAD</span>
                                                     </p>
                                                 </div>
                                                 <button @click="activeTooth = null"
@@ -196,13 +188,10 @@
 
                                             <div v-else v-for="(act, i) in currentActs" :key="i"
                                                  class="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
-                                                <div class="flex items-start justify-between gap-2 mb-1">
+                                                <div class="mb-1">
                                                     <p class="text-xs font-semibold text-slate-700 leading-tight">
                                                         {{ act.catalog_act?.name }}
                                                     </p>
-                                                    <span class="text-xs font-bold text-blue-600 shrink-0">
-                                                        {{ Number(act.price || 0).toLocaleString('fr-FR') }} MAD
-                                                    </span>
                                                 </div>
                                                 <p class="text-[11px] text-slate-400">{{ act.date }}</p>
                                                 <p v-if="act.notes"
@@ -212,16 +201,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Pied : total -->
-                                        <div v-if="currentActs.length > 1"
-                                             class="px-4 py-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xs text-slate-500">Total dent {{ activeTooth }}</span>
-                                                <span class="text-sm font-bold text-slate-700">
-                                                    {{ toothTotal.toLocaleString('fr-FR') }} MAD
-                                                </span>
-                                            </div>
-                                        </div>
                                     </template>
                                 </div>
                             </div>

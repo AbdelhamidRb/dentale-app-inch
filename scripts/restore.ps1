@@ -133,8 +133,9 @@ if (Test-Path $sqlFile) {
     if ($proc.ExitCode -eq 0) {
         Write-Host "  OK  Base de donnees restauree" -ForegroundColor Green
     } else {
-        Write-Host "  [ERREUR] Echec restauration MySQL" -ForegroundColor Red
+        Write-Host "  [ERREUR] Echec restauration MySQL — images NON modifiees." -ForegroundColor Red
         if ($errors) { Write-Host "  $errors" -ForegroundColor Red }
+        exit 1
     }
 } else {
     Write-Host "  INFO  Pas de fichier SQL dans ce backup (ignore)"
@@ -144,11 +145,11 @@ if (Test-Path $sqlFile) {
 $zipFile = Join-Path $selected.Path "images.zip"
 if (Test-Path $zipFile) {
     Write-Host "[2/2] Restauration des images patients..."
-    $imagesPath   = Join-Path $APP_ROOT "storage\app\public\patients"
-    $imagesParent = Split-Path $imagesPath -Parent
+    $imagesPath = Join-Path $APP_ROOT "storage\app\public\patients"
 
     if (Test-Path $imagesPath) { Remove-Item $imagesPath -Recurse -Force }
-    Expand-Archive -Path $zipFile -DestinationPath $imagesParent -Force
+    New-Item -ItemType Directory -Force -Path $imagesPath | Out-Null
+    Expand-Archive -Path $zipFile -DestinationPath $imagesPath -Force
     Write-Host "  OK  Images restaurees" -ForegroundColor Green
 } else {
     Write-Host "  INFO  Pas d'images dans ce backup (ignore)"

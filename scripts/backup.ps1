@@ -86,7 +86,10 @@ $imagesPath = Join-Path $APP_ROOT "storage\app\public\patients"
 $zipFile    = Join-Path $dest "images.zip"
 
 if (Test-Path $imagesPath) {
-    Compress-Archive -Path $imagesPath -DestinationPath $zipFile -Force
+    # ZipFile::CreateFromDirectory cree des entrees relatives a $imagesPath (sans "patients\")
+    # Compatible avec la restauration PHP (extractTo) et PowerShell (Expand-Archive)
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($imagesPath, $zipFile)
     $sizeIMG = [math]::Round((Get-Item $zipFile).Length / 1MB, 2)
     Write-Host "  OK  images.zip  ($sizeIMG MB)" -ForegroundColor Green
 } else {

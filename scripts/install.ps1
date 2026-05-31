@@ -100,8 +100,8 @@ if (Test-Path $phpIni) {
     $ini = $ini -replace ';opcache.enable_cli=\d',      'opcache.enable_cli=1'
     $ini = $ini -replace ';opcache.memory_consumption=\d+', 'opcache.memory_consumption=128'
     $ini = $ini -replace ';opcache.max_accelerated_files=\d+', 'opcache.max_accelerated_files=10000'
-    $ini = $ini -replace ';opcache.revalidate_freq=\d+', 'opcache.revalidate_freq=0'
-    $ini = $ini -replace ';opcache.validate_timestamps=\d', 'opcache.validate_timestamps=0'
+    $ini = $ini -replace ';opcache.revalidate_freq=\d+',    'opcache.revalidate_freq=2'
+    $ini = $ini -replace ';opcache.validate_timestamps=\d', 'opcache.validate_timestamps=1'
     $ini = $ini -replace ';opcache.interned_strings_buffer=\d+', 'opcache.interned_strings_buffer=16'
 
     Set-Content $phpIni $ini -Encoding UTF8
@@ -145,12 +145,12 @@ DB_USERNAME=$DB_USER
 DB_PASSWORD=$DB_PASS
 
 DENTIST_NAME="$DENTIST_NAME"
-DENTIST_EMAIL=$DENTIST_EMAIL
-DENTIST_PASSWORD=$DENTIST_PASS
+DENTIST_EMAIL="$DENTIST_EMAIL"
+DENTIST_PASSWORD="$DENTIST_PASS"
 
 ASSISTANT_NAME="$ASSISTANT_NAME"
-ASSISTANT_EMAIL=$ASSISTANT_EMAIL
-ASSISTANT_PASSWORD=$ASSISTANT_PASS
+ASSISTANT_EMAIL="$ASSISTANT_EMAIL"
+ASSISTANT_PASSWORD="$ASSISTANT_PASS"
 
 FILESYSTEM_DISK=local
 SESSION_DRIVER=cookie

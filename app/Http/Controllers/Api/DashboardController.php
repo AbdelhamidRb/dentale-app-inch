@@ -10,8 +10,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $key = 'dashboard_stats_v3_' . now()->format('Y-m');
         return response()->json(
-            cache()->remember('dashboard_stats_v2', 300, fn() => $this->compute())
+            cache()->remember($key, 300, fn() => $this->compute())
         );
     }
 
@@ -21,8 +22,11 @@ class DashboardController extends Controller
         $today      = $now->toDateString();
         $monthStart = $now->copy()->startOfMonth()->toDateString();
         $monthEnd   = $now->copy()->endOfMonth()->toDateString();
-        $prevStart  = $now->copy()->subMonth()->startOfMonth()->toDateString();
-        $prevEnd    = $now->copy()->subMonth()->endOfMonth()->toDateString();
+        // Utiliser arithmétique pure pour éviter overflow fin de mois (ex: 31 mai - 1 mois = 1 mai)
+        $pm         = (int)$now->format('n') - 1 ?: 12;
+        $py         = (int)$now->format('Y') - ((int)$now->format('n') === 1 ? 1 : 0);
+        $prevStart  = sprintf('%04d-%02d-01', $py, $pm);
+        $prevEnd    = sprintf('%04d-%02d-%02d', $py, $pm, cal_days_in_month(CAL_GREGORIAN, $pm, $py));
 
         // ── 1. Patients ce mois ──────────────────────────────────────
         $patientStats = DB::selectOne("

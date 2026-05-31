@@ -193,6 +193,14 @@ class BackupController extends Controller
         $zipFile = $path . '\\images.zip';
         if (file_exists($zipFile)) {
             $imgPath = storage_path('app/public/patients');
+
+            // Vérifier le ZIP avant de toucher aux images existantes
+            $zip = new ZipArchive();
+            if ($zip->open($zipFile) !== true) {
+                return response()->json(['error' => 'Fichier ZIP des images corrompu ou illisible.'], 500);
+            }
+
+            // Supprimer les images actuelles seulement si le ZIP est valide
             if (is_dir($imgPath)) {
                 $it = new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator($imgPath, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -204,8 +212,6 @@ class BackupController extends Controller
                 rmdir($imgPath);
             }
             mkdir($imgPath, 0755, true);
-            $zip = new ZipArchive();
-            $zip->open($zipFile);
             $zip->extractTo($imgPath);
             $zip->close();
         }

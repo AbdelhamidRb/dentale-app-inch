@@ -145,7 +145,99 @@
                 </div>
 
                 <template v-else>
-                    <!-- Consultations -->
+                    <!-- ── Formulaire nouveau versement ─────── -->
+                    <div class="px-5 py-4 border-b border-slate-100">
+                        <p class="text-xs font-medium text-slate-500 mb-3">
+                            {{ patient.balance_status === "PAYÉ" ? "Ajouter une avance" : "Ajouter un versement" }}
+                        </p>
+                        <div class="space-y-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[10px] font-medium text-blue-600 mb-1 block">Montant *</label>
+                                    <div class="relative">
+                                        <input
+                                            v-model.number="newTx.amount"
+                                            type="number" min="0.01" step="10" placeholder="0"
+                                            class="w-full border border-blue-200 rounded-lg px-3 py-2 pr-12 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                        />
+                                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">MAD</span>
+                                    </div>
+                                    <button
+                                        v-if="patient.balance < 0"
+                                        @click="newTx.amount = Math.abs(patient.balance)"
+                                        class="text-[10px] text-blue-500 hover:text-blue-700 mt-1 transition-colors"
+                                    >
+                                        Tout régler : {{ fmt(Math.abs(patient.balance)) }} MAD
+                                    </button>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-medium text-blue-600 mb-1 block">Date *</label>
+                                    <input
+                                        v-model="newTx.date" type="date" :max="today"
+                                        class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                    />
+                                </div>
+                            </div>
+                            <input
+                                v-model="newTx.notes" type="text" placeholder="Note (optionnel)"
+                                class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder:text-slate-300"
+                            />
+                            <p v-if="txError" class="text-xs text-red-500">{{ txError }}</p>
+                            <button
+                                @click="handleAddTransaction"
+                                :disabled="!newTx.amount || !newTx.date || adding"
+                                class="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            >
+                                <svg v-if="adding" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                </svg>
+                                + Enregistrer le versement
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── Versements reçus ─────── -->
+                    <div class="px-5 py-4 border-b border-slate-100">
+                        <p class="text-xs font-medium text-slate-500 mb-3">
+                            Versements reçus
+                            <span class="text-slate-300">({{ localTransactions.length }})</span>
+                        </p>
+                        <div v-if="localTransactions.length" class="space-y-2">
+                            <div
+                                v-for="t in localTransactions" :key="t.id"
+                                class="flex items-center justify-between p-3 bg-emerald-50 rounded-xl group"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <div class="w-7 h-7 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-700">{{ fmt(t.amount) }} MAD</p>
+                                        <p class="text-xs text-slate-400">{{ t.date }}</p>
+                                        <p v-if="t.notes" class="text-xs text-slate-400 italic">{{ t.notes }}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    v-if="isDentist"
+                                    @click="confirmDeleteTxId = t.id"
+                                    class="lg:opacity-0 lg:group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                >
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p v-else class="text-xs text-slate-400 italic text-center py-2">
+                            Aucun versement enregistré
+                        </p>
+                    </div>
+
+                    <!-- ── Consultations ─────────────────────────────── -->
                     <div class="px-5 py-4 border-b border-slate-100">
                         <p class="text-xs font-medium text-slate-500 mb-3">
                             Consultations
@@ -229,198 +321,7 @@
                         </p>
                     </div>
 
-                    <!-- Versements reçus -->
-                    <div class="px-5 py-4 border-b border-slate-100">
-                        <p class="text-xs font-medium text-slate-500 mb-3">
-                            Versements reçus
-                            <span class="text-slate-300">
-                                ({{ patient.transactions?.length ?? 0 }})
-                            </span>
-                        </p>
-
-                        <div v-if="localTransactions.length" class="space-y-2">
-                            <div
-                                v-for="t in localTransactions"
-                                :key="t.id"
-                                class="flex items-center justify-between p-3 bg-emerald-50 rounded-xl group"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-7 h-7 bg-emerald-100 rounded-full flex items-center justify-center shrink-0"
-                                    >
-                                        <svg
-                                            class="w-3.5 h-3.5 text-emerald-600"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p
-                                            class="text-sm font-semibold text-slate-700"
-                                        >
-                                            {{ fmt(t.amount) }} MAD
-                                        </p>
-                                        <p class="text-xs text-slate-400">
-                                            {{ t.date }}
-                                        </p>
-                                        <p
-                                            v-if="t.notes"
-                                            class="text-xs text-slate-400 italic"
-                                        >
-                                            {{ t.notes }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    v-if="isDentist"
-                                    @click="confirmDeleteTxId = t.id"
-                                    class="lg:opacity-0 lg:group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                >
-                                    <svg
-                                        class="w-3.5 h-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862
-                                             a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6
-                                             m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <p
-                            v-else
-                            class="text-xs text-slate-400 italic text-center py-2"
-                        >
-                            Aucun versement enregistré
-                        </p>
-                    </div>
-
-                    <!-- Formulaire nouveau versement -->
-                    <!-- Formulaire nouveau versement — toujours visible (avance possible) -->
-                    <div class="px-5 py-4">
-                        <p class="text-xs font-medium text-slate-500 mb-3">
-                            {{
-                                patient.balance_status === "PAYÉ"
-                                    ? "Ajouter une avance"
-                                    : "Ajouter un versement"
-                            }}
-                        </p>
-
-                        <div
-                            class="space-y-3 p-4 bg-blue-50 border border-blue-100 rounded-xl"
-                        >
-                            <div class="grid grid-cols-2 gap-3">
-                                <!-- Montant -->
-                                <div>
-                                    <label
-                                        class="text-[10px] font-medium text-blue-600 mb-1 block"
-                                    >
-                                        Montant *
-                                    </label>
-                                    <div class="relative">
-                                        <input
-                                            v-model.number="newTx.amount"
-                                            type="number"
-                                            min="0.01"
-                                            step="10"
-                                            placeholder="0"
-                                            class="w-full border border-blue-200 rounded-lg px-3 py-2 pr-12 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                        />
-                                        <span
-                                            class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"
-                                            >MAD</span
-                                        >
-                                    </div>
-                                    <!-- Raccourci solde restant -->
-                                    <button
-                                        v-if="patient.balance < 0"
-                                        @click="
-                                            newTx.amount = Math.abs(
-                                                patient.balance,
-                                            )
-                                        "
-                                        class="text-[10px] text-blue-500 hover:text-blue-700 mt-1 transition-colors"
-                                    >
-                                        Tout régler :
-                                        {{ fmt(Math.abs(patient.balance)) }} MAD
-                                    </button>
-                                </div>
-                                <!-- Date -->
-                                <div>
-                                    <label
-                                        class="text-[10px] font-medium text-blue-600 mb-1 block"
-                                    >
-                                        Date *
-                                    </label>
-                                    <input
-                                        v-model="newTx.date"
-                                        type="date"
-                                        :max="today"
-                                        class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                                    />
-                                </div>
-                            </div>
-
-                            <!-- Notes -->
-                            <input
-                                v-model="newTx.notes"
-                                type="text"
-                                placeholder="Note (optionnel)"
-                                class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder:text-slate-300"
-                            />
-
-                            <p v-if="txError" class="text-xs text-red-500">
-                                {{ txError }}
-                            </p>
-
-                            <button
-                                @click="handleAddTransaction"
-                                :disabled="
-                                    !newTx.amount || !newTx.date || adding
-                                "
-                                class="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                            >
-                                <svg
-                                    v-if="adding"
-                                    class="w-4 h-4 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    />
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                    />
-                                </svg>
-                                + Enregistrer le versement
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Message compte soldé (mais formulaire reste visible) -->
+                    <!-- Message compte soldé -->
                     <div
                         v-if="patient.balance_status === 'PAYÉ'"
                         class="mx-5 mt-4 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center"
@@ -522,9 +423,15 @@ async function handleAddTransaction() {
             date:   newTx.value.date,
             notes:  newTx.value.notes || null,
         })
-        // Ajout immédiat local
         if (res.transaction) {
             localTransactions.value = [res.transaction, ...localTransactions.value]
+        }
+        if (res.patient) {
+            emit('patch-patient', {
+                total_paid:     res.patient.total_paid,
+                balance:        res.patient.balance,
+                balance_status: res.patient.balance_status,
+            })
         }
         newTx.value = { amount: null, date: today, notes: '' }
         emit('updated')
