@@ -158,16 +158,6 @@ SESSION_LIFETIME=480
 CACHE_STORE=file
 QUEUE_CONNECTION=database
 BCRYPT_ROUNDS=10
-
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=hamidovix1@gmail.com
-MAIL_PASSWORD="gkdc fcnu gbnm mwlb"
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=hamidovix1@gmail.com
-MAIL_FROM_NAME="DentalApp"
-DEV_EMAIL=hamidovix1@gmail.com
 "@
 Set-Content -Path "$APP_DIR\.env" -Value $envContent -Encoding utf8
 OK ".env cree"
