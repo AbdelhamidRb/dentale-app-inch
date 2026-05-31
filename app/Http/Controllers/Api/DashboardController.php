@@ -11,7 +11,7 @@ class DashboardController extends Controller
     public function index()
     {
         return response()->json(
-            cache()->remember('dashboard_stats', 300, fn() => $this->compute())
+            cache()->remember('dashboard_stats_v2', 300, fn() => $this->compute())
         );
     }
 
@@ -91,7 +91,13 @@ class DashboardController extends Controller
             : 0;
 
         // ── 6. Graphique revenus 6 derniers mois ─────────────────────
-        $sixMonthsAgo = $now->copy()->subMonths(5)->startOfMonth()->toDateString();
+        $moisFr  = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        $curYear = (int) $now->format('Y');
+        $curMon  = (int) $now->format('n');
+
+        $sm = $curMon - 5; $sy = $curYear;
+        while ($sm <= 0) { $sm += 12; $sy--; }
+        $sixMonthsAgo = sprintf('%04d-%02d-01', $sy, $sm);
 
         $revenueByMonth = DB::select("
             SELECT DATE_FORMAT(pt.date, '%Y-%m') AS m, SUM(pt.amount) AS revenue
@@ -102,14 +108,14 @@ class DashboardController extends Controller
         ", [$sixMonthsAgo]);
         $revenueMap = collect($revenueByMonth)->pluck('revenue', 'm');
 
-        $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-
         $monthlyChart = [];
         for ($i = 5; $i >= 0; $i--) {
-            $d   = $now->copy()->subMonths($i);
-            $key = $d->format('Y-m');
+            $m = $curMon - $i;
+            $y = $curYear;
+            while ($m <= 0) { $m += 12; $y--; }
+            $key = sprintf('%04d-%02d', $y, $m);
             $monthlyChart[] = [
-                'month'   => $moisFr[(int)$d->format('n') - 1] . ' ' . $d->format('y'),
+                'month'   => $moisFr[$m - 1] . ' ' . substr($y, 2),
                 'revenue' => (float) ($revenueMap[$key] ?? 0),
             ];
         }

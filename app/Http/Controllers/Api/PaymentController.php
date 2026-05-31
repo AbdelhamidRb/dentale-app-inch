@@ -166,7 +166,7 @@ class PaymentController extends Controller
             'notes'      => $request->notes,
         ]);
 
-        cache()->forget('dashboard_stats');
+        cache()->forget('dashboard_stats_v2');
 
         $patient->load([
             'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
@@ -190,7 +190,7 @@ class PaymentController extends Controller
 
         $transaction->delete();
 
-        cache()->forget('dashboard_stats');
+        cache()->forget('dashboard_stats_v2');
 
         $patient = Patient::with([
             'consultations'       => fn($q) => $q->whereNotIn('status', ['BROUILLON'])->select('id', 'patient_id', 'total_price', 'status', 'created_at'),
