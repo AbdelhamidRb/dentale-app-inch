@@ -34,7 +34,7 @@
         </div>
         <p class="text-xs text-amber-600 mt-1 leading-relaxed">
           S'il s'agit d'un <strong>patient différent</strong>, modifiez légèrement le prénom pour les distinguer.
-          <br>Exemple : <strong>Mohammed A.</strong> ou <strong>Mohammed (père)</strong>
+          <br>Exemple : <strong>Mohammed A.</strong> ou <strong>Mohammed B.</strong>
         </p>
       </div>
 
@@ -201,7 +201,8 @@ function checkName() {
 
 function formatDate(d) {
   if (!d) return ''
-  const [y, m, day] = d.split('-')
+  const date = d.split('T')[0]
+  const [y, m, day] = date.split('-')
   return `${day}/${m}/${y}`
 }
 
