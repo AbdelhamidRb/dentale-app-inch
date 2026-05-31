@@ -120,24 +120,39 @@
                     <h3 class="text-sm font-semibold text-slate-700 mb-0.5">Revenus — 6 derniers mois</h3>
                     <p class="text-xs text-slate-400 mb-4">Encaissements par mois (MAD)</p>
 
-                    <div class="flex items-end gap-1 sm:gap-2" style="height:100px">
+                    <div class="flex items-end gap-1.5 sm:gap-2.5" style="height:120px">
                         <div v-for="m in data.monthly_chart" :key="m.month"
-                             class="flex-1 flex flex-col items-center gap-0.5 group cursor-default">
-                            <span class="text-[9px] text-slate-400 leading-none">{{ fmtK(m.revenue) }}</span>
-                            <div class="w-full flex items-end justify-center" style="height:72px">
-                                <div class="w-full rounded-t-md transition-all duration-500"
-                                     :class="m.isCurrent ? 'bg-blue-500' : 'bg-blue-200 group-hover:bg-blue-300'"
-                                     :style="`height:${barH(m.revenue)}px; min-height:${m.revenue > 0 ? 3 : 0}px`"/>
+                             class="relative flex-1 flex flex-col items-center gap-1 group cursor-default">
+                            <!-- Tooltip -->
+                            <div class="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex
+                                        bg-slate-800 text-white text-[10px] font-medium px-2 py-1 rounded-lg
+                                        whitespace-nowrap z-10 shadow-lg pointer-events-none">
+                                {{ m.revenue > 0 ? fmt(m.revenue) + ' MAD' : 'Aucun encaissement' }}
                             </div>
-                            <span class="text-[9px] text-slate-400 capitalize leading-none truncate w-full text-center">{{ m.month }}</span>
+                            <!-- Valeur au-dessus -->
+                            <span class="text-[10px] font-medium leading-none"
+                                  :class="m.revenue > 0 ? (m.isCurrent ? 'text-blue-600' : 'text-slate-400') : 'text-slate-200'">
+                                {{ m.revenue > 0 ? fmtK(m.revenue) : '–' }}
+                            </span>
+                            <!-- Barre -->
+                            <div class="w-full flex items-end justify-center" style="height:80px">
+                                <div class="w-full rounded-t-lg transition-all duration-500"
+                                     :class="m.isCurrent ? 'bg-blue-500' : 'bg-blue-200 group-hover:bg-blue-300'"
+                                     :style="`height:${barH(m.revenue)}px; min-height:${m.revenue > 0 ? 4 : 0}px`"/>
+                            </div>
+                            <!-- Label mois -->
+                            <span class="text-[10px] font-medium leading-none w-full text-center"
+                                  :class="m.isCurrent ? 'text-blue-600' : 'text-slate-400'">
+                                {{ m.month }}
+                            </span>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-4 mt-3 pt-3 border-t border-slate-50">
-                        <span class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <span class="flex items-center gap-1.5 text-xs text-slate-500">
                             <span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"/>Mois courant
                         </span>
-                        <span class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <span class="flex items-center gap-1.5 text-xs text-slate-500">
                             <span class="w-2.5 h-2.5 rounded-sm bg-blue-200 inline-block"/>Mois précédents
                         </span>
                     </div>
@@ -330,7 +345,7 @@ function pct(val, total) {
 function barH(val) {
     if (!data.value) return 0;
     const max = Math.max(...data.value.monthly_chart.map(m => m.revenue), 1);
-    return Math.round((val / max) * 72);
+    return Math.round((val / max) * 80);
 }
 
 onMounted(() => fetchDashboard());

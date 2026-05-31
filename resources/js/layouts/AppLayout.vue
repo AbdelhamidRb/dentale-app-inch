@@ -28,10 +28,7 @@
                         <component :is="item.icon" class="w-5 h-5 transition-colors"
                             :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'" />
                         <span>{{ item.label }}</span>
-                        <!-- Badge mise à jour sur Paramètres -->
-                        <span v-if="item.route === 'parametres' && updateAvailable"
-                              class="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        <span v-else-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                        <span v-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
                     </RouterLink>
                 </template>
             </nav>
@@ -118,8 +115,6 @@
                 >
                     <component :is="item.icon" class="w-[18px] h-[18px]" />
                     <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
-                    <span v-if="item.route === 'parametres' && updateAvailable"
-                          class="absolute top-1 right-1/4 w-1.5 h-1.5 bg-red-500 rounded-full" />
                 </RouterLink>
             </div>
         </nav>
@@ -135,10 +130,7 @@ import {
     CreditCard, LogOut, Activity, UserCircle, Settings,
 } from "lucide-vue-next";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
-import { useUpdate } from "../composables/useUpdate";
-
 const user = computed(() => authStore.user);
-const { updateAvailable, checkLock, checkVersion } = useUpdate();
 
 const userInitials = computed(() => {
     if (!user.value?.name) return "?";
@@ -207,12 +199,7 @@ async function handleLogout() {
     await authStore.logout();
 }
 
-onMounted(async () => {
-    if (user.value?.role === 'DENTIST') {
-        await checkLock();
-        checkVersion(); // non-bloquant
-    }
-});
+onMounted(async () => {});
 </script>
 
 <style scoped>

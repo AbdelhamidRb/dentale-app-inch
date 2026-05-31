@@ -1,1 +1,0 @@
-import{c as e}from"./app-CAB3XXAZ.js";const a=e("plus",[["path",{d:"M5 12h14",key:"1ays0h"}],["path",{d:"M12 5v14",key:"s699le"}]]);const s=e("x",[["path",{d:"M18 6 6 18",key:"1bl5f8"}],["path",{d:"m6 6 12 12",key:"d8bk6v"}]]);export{a as P,s as X};

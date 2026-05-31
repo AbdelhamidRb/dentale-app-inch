@@ -102,12 +102,14 @@ class DashboardController extends Controller
         ", [$sixMonthsAgo]);
         $revenueMap = collect($revenueByMonth)->pluck('revenue', 'm');
 
+        $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+
         $monthlyChart = [];
         for ($i = 5; $i >= 0; $i--) {
             $d   = $now->copy()->subMonths($i);
             $key = $d->format('Y-m');
             $monthlyChart[] = [
-                'month'   => $d->locale('fr')->isoFormat('MMM YY'),
+                'month'   => $moisFr[(int)$d->format('n') - 1] . ' ' . $d->format('y'),
                 'revenue' => (float) ($revenueMap[$key] ?? 0),
             ];
         }
