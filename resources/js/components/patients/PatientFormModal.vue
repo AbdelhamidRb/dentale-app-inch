@@ -190,7 +190,7 @@ function checkName() {
     try {
       const params = new URLSearchParams({ first_name: first, last_name: last })
       if (props.patient?.id) params.append('exclude_id', props.patient.id)
-      const res  = await fetch(`/api/patients/check-name?${params}`, {
+      const res  = await fetch(`/api/patients?${params}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' }
       })
       const data = await res.json()
