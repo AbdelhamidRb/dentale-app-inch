@@ -18,38 +18,68 @@ if (-not $isAdmin) {
     exit 1
 }
 
+# Detecter PHP
+$phpObj = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+          Where-Object { $_.Name -match '^php-8\.' } |
+          Sort-Object Name -Descending | Select-Object -First 1
+$PHP    = if ($phpObj) { Join-Path $phpObj.FullName "php.exe" } else { "php" }
+$artisan = "$APP_DIR\artisan"
+
 # ═══════════════════════════════════════════════════════════════
-#  TÂCHE 1 : Backup automatique  (Lun-Ven 18h, Sam 12h30)
+#  TÂCHE 1 : Backup automatique (Lun-Ven 18h, Sam 12h30)
+#  Tourne en tant que SYSTEM — aucune fenetre possible
 # ═══════════════════════════════════════════════════════════════
 $taskBackup = "DentalApp-Backup"
 Unregister-ScheduledTask -TaskName $taskBackup -Confirm:$false -ErrorAction SilentlyContinue
 
-$triggerWeek = New-ScheduledTaskTrigger -Weekly `
-    -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday `
-    -At "18:00"
+$backupXml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Sauvegarde automatique Dental App (BDD + images)</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2024-01-01T18:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <WeeksInterval>1</WeeksInterval>
+        <DaysOfWeek><Monday/><Tuesday/><Wednesday/><Thursday/><Friday/></DaysOfWeek>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+    <CalendarTrigger>
+      <StartBoundary>2024-01-06T12:30:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByWeek>
+        <WeeksInterval>1</WeeksInterval>
+        <DaysOfWeek><Saturday/></DaysOfWeek>
+      </ScheduleByWeek>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <LogonType>ServiceAccount</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <Hidden>true</Hidden>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <ExecutionTimeLimit>PT30M</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$backupScript"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
 
-$triggerSat = New-ScheduledTaskTrigger -Weekly `
-    -DaysOfWeek Saturday `
-    -At "12:30"
-
-$vbs = "$SCRIPTS_DIR\run-hidden.vbs"
-$actionBackup = New-ScheduledTaskAction `
-    -Execute "wscript.exe" `
-    -Argument "//B //NoLogo `"$vbs`" `"$backupScript`""
-
-$settings = New-ScheduledTaskSettingsSet `
-    -StartWhenAvailable `
-    -RunOnlyIfNetworkAvailable:$false `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
-
-Register-ScheduledTask `
-    -TaskName $taskBackup `
-    -Action $actionBackup `
-    -Trigger $triggerWeek, $triggerSat `
-    -Settings $settings `
-    -RunLevel Highest `
-    -Description "Sauvegarde automatique Dental App (BDD + images)" `
-    -Force | Out-Null
+Register-ScheduledTask -TaskName $taskBackup -Xml $backupXml -Force | Out-Null
 
 Write-Host "  OK  $taskBackup" -ForegroundColor Green
 Write-Host "      Lundi au Vendredi  18h00"
@@ -57,25 +87,14 @@ Write-Host "      Samedi             12h30"
 Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-#  TÂCHE 2 : Sync USB automatique (déclenché par branchement USB)
+#  TÂCHE 2 : Sync USB automatique (branchement USB)
+#  Tourne en mode interactif (besoin de MessageBox)
+#  Hidden=true garantit aucun flash de terminal
 # ═══════════════════════════════════════════════════════════════
 $taskUSB = "DentalApp-USBSync"
 Unregister-ScheduledTask -TaskName $taskUSB -Confirm:$false -ErrorAction SilentlyContinue
 
-# Trigger basé sur l'événement Windows "périphérique USB connecté"
-# Event Log: Microsoft-Windows-DriverFrameworks-UserMode/Operational, ID 2003
-$usbTriggerXml = @'
-<QueryList>
-  <Query Id="0" Path="Microsoft-Windows-DriverFrameworks-UserMode/Operational">
-    <Select Path="Microsoft-Windows-DriverFrameworks-UserMode/Operational">
-      *[System[Provider[@Name='Microsoft-Windows-DriverFrameworks-UserMode'] and EventID=2003]]
-    </Select>
-  </Query>
-</QueryList>
-'@
-
-# Créer la tâche via XML pour supporter le trigger événement USB
-$taskXml = @"
+$usbXml = @"
 <?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
@@ -95,10 +114,9 @@ $taskXml = @"
   </Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
     <Hidden>true</Hidden>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <ExecutionTimeLimit>PT10M</ExecutionTimeLimit>
     <Enabled>true</Enabled>
   </Settings>
   <Actions>
@@ -110,43 +128,61 @@ $taskXml = @"
 </Task>
 "@
 
-Register-ScheduledTask -TaskName $taskUSB -Xml $taskXml -Force | Out-Null
+Register-ScheduledTask -TaskName $taskUSB -Xml $usbXml -Force | Out-Null
 
 Write-Host "  OK  $taskUSB" -ForegroundColor Green
 Write-Host "      Declenche automatiquement a chaque branchement USB"
 Write-Host "      Synchronise les backups manquants vers la cle DENTAL-BKP"
 Write-Host ""
 
-# ===============================================================
-#  TACHE 3 : Laravel Scheduler (toutes les minutes)
-#  Necessaire pour l'archivage automatique des patients
-# ===============================================================
+# ═══════════════════════════════════════════════════════════════
+#  TÂCHE 3 : Laravel Scheduler (toutes les minutes)
+#  Tourne en tant que SYSTEM — aucune fenetre possible
+# ═══════════════════════════════════════════════════════════════
 $taskScheduler = "DentalApp-Scheduler"
 Unregister-ScheduledTask -TaskName $taskScheduler -Confirm:$false -ErrorAction SilentlyContinue
 
-$phpObj  = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
-           Where-Object { $_.Name -match '^php-8\.' } |
-           Sort-Object Name -Descending | Select-Object -First 1
-$PHP     = if ($phpObj) { Join-Path $phpObj.FullName "php.exe" } else { "php" }
-$artisan = "$APP_DIR\artisan"
+$schedulerXml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Laravel scheduler - archivage automatique patients a 01h00</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <Repetition>
+        <Interval>PT1M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2024-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+      <LogonType>ServiceAccount</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <Hidden>true</Hidden>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <ExecutionTimeLimit>PT2M</ExecutionTimeLimit>
+    <Enabled>true</Enabled>
+  </Settings>
+  <Actions>
+    <Exec>
+      <Command>$PHP</Command>
+      <Arguments>"$artisan" schedule:run</Arguments>
+      <WorkingDirectory>$APP_DIR</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>
+"@
 
-$triggerScheduler = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -Once -At "00:00"
-$actionScheduler  = New-ScheduledTaskAction `
-    -Execute $PHP `
-    -Argument "`"$artisan`" schedule:run"
-
-$settingsScheduler = New-ScheduledTaskSettingsSet `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
-
-Register-ScheduledTask `
-    -TaskName $taskScheduler `
-    -Action $actionScheduler `
-    -Trigger $triggerScheduler `
-    -Settings $settingsScheduler `
-    -RunLevel Highest `
-    -Description "Laravel scheduler - archivage automatique patients a 01h00" `
-    -Force | Out-Null
+Register-ScheduledTask -TaskName $taskScheduler -Xml $schedulerXml -Force | Out-Null
 
 Write-Host "  OK  $taskScheduler" -ForegroundColor Green
 Write-Host "      Chaque minute - archivage automatique a 01h00"
