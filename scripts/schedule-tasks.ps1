@@ -3,7 +3,8 @@
 #  A executer UNE SEULE FOIS en tant qu'Administrateur
 # ═══════════════════════════════════════════════════════════════
 
-$SCRIPTS_DIR  = "C:\laragon\www\dental-app-inch\scripts"
+$APP_DIR      = "C:\laragon\www\dental-app-inch"
+$SCRIPTS_DIR  = "$APP_DIR\scripts"
 $backupScript = "$SCRIPTS_DIR\backup.ps1"
 $usbScript    = "$SCRIPTS_DIR\sync-usb.ps1"
 
