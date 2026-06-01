@@ -1,10 +1,13 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  schedule-tasks.ps1  —  Planification des tâches automatiques
 #  A executer UNE SEULE FOIS en tant qu'Administrateur
 # ═══════════════════════════════════════════════════════════════
 
-$APP_DIR      = "C:\laragon\www\dental-app-inch"
-$SCRIPTS_DIR  = "$APP_DIR\scripts"
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
+$SCRIPTS_DIR  = "$APP_ROOT\scripts"
 $backupScript = "$SCRIPTS_DIR\backup.ps1"
 $usbScript    = "$SCRIPTS_DIR\sync-usb.ps1"
 
@@ -19,11 +22,11 @@ if (-not $isAdmin) {
 }
 
 # Detecter PHP
-$phpObj = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+$phpObj = Get-ChildItem "$LARAGON_ROOT\bin\php" -Directory -ErrorAction SilentlyContinue |
           Where-Object { $_.Name -match '^php-8\.' } |
           Sort-Object Name -Descending | Select-Object -First 1
 $PHP    = if ($phpObj) { Join-Path $phpObj.FullName "php.exe" } else { "php" }
-$artisan = "$APP_DIR\artisan"
+$artisan = "$APP_ROOT\artisan"
 
 $sysPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
 

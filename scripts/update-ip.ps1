@@ -1,10 +1,10 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  update-ip.ps1  —  Mettre à jour l'IP réseau dans Apache
 #  À lancer si l'adresse IP du PC a changé (nouveau réseau WiFi)
 # ═══════════════════════════════════════════════════════════════
 
-$CONF_FILE = "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf"
-$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$CONF_FILE = "$LARAGON_ROOT\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf"
+$apacheDir = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
 $HTTPD     = Join-Path $apacheDir.FullName "bin\httpd.exe"
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -34,9 +34,9 @@ if (Test-Path $CONF_FILE) {
 
 # Accès réseau local (assistante, téléphones)
 <VirtualHost ${localIP}:80>
-    DocumentRoot "C:/laragon/www/dental-app-inch/public"
+    DocumentRoot "$LARAGON_ROOT/www/dental-app-inch/public"
     ServerName $localIP
-    <Directory "C:/laragon/www/dental-app-inch/public">
+    <Directory "$LARAGON_ROOT/www/dental-app-inch/public">
         AllowOverride All
         Require all granted
     </Directory>

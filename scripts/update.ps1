@@ -1,4 +1,4 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  update.ps1  -  Mise a jour de l'application  |  Dental App
 #  1. Backup automatique
 #  2. git pull depuis GitHub
@@ -9,28 +9,31 @@
 #  7. Redemarrage Apache
 # ═══════════════════════════════════════════════════════════════
 
-$APP_ROOT = "C:\laragon\www\dental-app-inch"
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $BRANCH   = "main"
 
 # Trouver PHP
-$phpDir = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+$phpDir = Get-ChildItem "$LARAGON_ROOT\bin\php" -Directory -ErrorAction SilentlyContinue |
           Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
 if (-not $phpDir) { Write-Host "[ERREUR] PHP 8.x introuvable" -ForegroundColor Red; exit 1 }
 $PHP = Join-Path $phpDir.FullName "php.exe"
 
 # Trouver Composer
-$COMPOSER = "C:\laragon\bin\composer\composer.phar"
+$COMPOSER = "$LARAGON_ROOT\bin\composer\composer.phar"
 
 # Trouver Node/npm
 $npm = Get-Command npm -ErrorAction SilentlyContinue
 if (-not $npm) {
-    $npmPath = Get-ChildItem "C:\laragon\bin\nodejs" -Filter "npm.cmd" -Recurse -ErrorAction SilentlyContinue |
+    $npmPath = Get-ChildItem "$LARAGON_ROOT\bin\nodejs" -Filter "npm.cmd" -Recurse -ErrorAction SilentlyContinue |
                Select-Object -First 1 -ExpandProperty FullName
     if ($npmPath) { $env:PATH = "$([System.IO.Path]::GetDirectoryName($npmPath));$env:PATH" }
 }
 
 # Ajouter Git au PATH
-$env:PATH = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:PATH"
+$env:PATH = "$LARAGON_ROOT\bin\git\bin;$LARAGON_ROOT\bin\git\usr\bin;$env:PATH"
 
 function Step($n, $t, $msg) {
     Write-Host ""
@@ -124,7 +127,7 @@ OK "Caches Laravel vides et reconstruits"
 
 # ── 7. Redemarrage Apache ─────────────────────────────────────
 Step 7 7 "Redemarrage Apache..."
-$httpdPath = Get-ChildItem "C:\laragon\bin\apache" -Recurse -Filter "httpd.exe" -ErrorAction SilentlyContinue |
+$httpdPath = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Recurse -Filter "httpd.exe" -ErrorAction SilentlyContinue |
              Select-Object -First 1 -ExpandProperty FullName
 if ($httpdPath) {
     $env:PATH = "$($phpDir.FullName);$env:PATH"

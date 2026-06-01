@@ -1,8 +1,8 @@
-Add-Type -AssemblyName System.Windows.Forms
+﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$START = "C:\laragon\www\dental-app-inch\scripts\start-app.ps1"
-$STOP  = "C:\laragon\www\dental-app-inch\scripts\stop-app.ps1"
+$START = "$LARAGON_ROOT\www\dental-app-inch\scripts\start-app.ps1"
+$STOP  = "$LARAGON_ROOT\www\dental-app-inch\scripts\stop-app.ps1"
 
 $form = New-Object Windows.Forms.Form
 $form.Text            = "Dental App"

@@ -1,8 +1,8 @@
-Add-Type -AssemblyName System.Windows.Forms
+﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # Icone personnalisee dental.ico (fournie dans le dossier scripts)
-$icoPath = "C:\laragon\www\dental-app-inch\scripts\dental.ico"
+$icoPath = "$LARAGON_ROOT\www\dental-app-inch\scripts\dental.ico"
 if (-not (Test-Path $icoPath)) {
     Write-Host "ERREUR : dental.ico introuvable dans scripts/" -ForegroundColor Red
     exit 1
@@ -77,7 +77,7 @@ public class DentalApp : Form
 
     private void RunScript(string script)
     {
-        string vbs = @"C:\laragon\www\dental-app-inch\scripts\run-hidden.vbs";
+        string vbs = @"$LARAGON_ROOT\www\dental-app-inch\scripts\run-hidden.vbs";
         ProcessStartInfo psi = new ProcessStartInfo();
         psi.FileName        = "wscript.exe";
         psi.Arguments       = "//B //NoLogo \"" + vbs + "\" \"" + script + "\"";
@@ -87,10 +87,10 @@ public class DentalApp : Form
     }
 
     private void BtnStart_Click(object sender, EventArgs e) {
-        RunScript(@"C:\laragon\www\dental-app-inch\scripts\start-app.ps1");
+        RunScript(@"$LARAGON_ROOT\www\dental-app-inch\scripts\start-app.ps1");
     }
     private void BtnStop_Click(object sender, EventArgs e) {
-        RunScript(@"C:\laragon\www\dental-app-inch\scripts\stop-app.ps1");
+        RunScript(@"$LARAGON_ROOT\www\dental-app-inch\scripts\stop-app.ps1");
     }
 
     [STAThread]
@@ -112,7 +112,7 @@ public class DentalApp : Form
 }
 "@
 
-$output   = "C:\laragon\www\dental-app-inch\scripts\DentalApp.exe"
+$output   = "$LARAGON_ROOT\www\dental-app-inch\scripts\DentalApp.exe"
 $provider = New-Object Microsoft.CSharp.CSharpCodeProvider
 $params   = New-Object System.CodeDom.Compiler.CompilerParameters
 $params.OutputAssembly = $output
@@ -139,7 +139,7 @@ $shell = New-Object -ComObject WScript.Shell
 
 # Raccourci BACKUP
 $lnk = $shell.CreateShortcut("$desktop\Backup.lnk")
-$lnk.TargetPath       = "C:\laragon\www\dental-app-inch\scripts\BACKUP.bat"
+$lnk.TargetPath       = "$LARAGON_ROOT\www\dental-app-inch\scripts\BACKUP.bat"
 $lnk.IconLocation     = "C:\Windows\System32\imageres.dll,174"   # icône disque/sauvegarde
 $lnk.WindowStyle      = 7   # minimisé (pas de fenêtre noire)
 $lnk.Description      = "Sauvegarde Dental App"
@@ -147,7 +147,7 @@ $lnk.Save()
 
 # Raccourci RESTAURER
 $lnk2 = $shell.CreateShortcut("$desktop\Restaurer.lnk")
-$lnk2.TargetPath      = "C:\laragon\www\dental-app-inch\scripts\RESTAURER.bat"
+$lnk2.TargetPath      = "$LARAGON_ROOT\www\dental-app-inch\scripts\RESTAURER.bat"
 $lnk2.IconLocation    = "C:\Windows\System32\imageres.dll,176"   # icône restauration
 $lnk2.WindowStyle     = 7
 $lnk2.Description     = "Restauration Dental App"

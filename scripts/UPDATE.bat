@@ -1,18 +1,18 @@
-@echo off
+﻿@echo off
 :: Mise a jour Dental App
 :: Double-cliquer pour mettre a jour l'application
 
 setlocal
 
-set APP=C:\laragon\www\dental-app-inch
-set GIT=C:\laragon\bin\git\bin\git.exe
-set PATH=C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;%PATH%
+set APP=%LARAGON_ROOT%\www\dental-app-inch
+set GIT=%LARAGON_ROOT%\bin\git\bin\git.exe
+set PATH=%LARAGON_ROOT%\bin\git\bin;%LARAGON_ROOT%\bin\git\usr\bin;%PATH%
 
 :: Detecter PHP
-for /d %%d in (C:\laragon\bin\php\php-8.*) do set PHP=%%d\php.exe
+for /d %%d in (%LARAGON_ROOT%\bin\php\php-8.*) do set PHP=%%d\php.exe
 
 :: Detecter Node/npm (cherche npm.cmd dans tous les sous-dossiers)
-for /r "C:\laragon\bin\nodejs" %%f in (npm.cmd) do set NPM=%%f
+for /r "%LARAGON_ROOT%\bin\nodejs" %%f in (npm.cmd) do set NPM=%%f
 
 echo.
 echo ==================================================
@@ -55,7 +55,7 @@ echo.
 echo [5/5] Redemarrage Apache...
 taskkill /f /im httpd.exe >nul 2>&1
 timeout /t 2 /nobreak >nul
-for /d %%d in (C:\laragon\bin\apache\*) do (
+for /d %%d in (%LARAGON_ROOT%\bin\apache\*) do (
     if exist "%%d\bin\httpd.exe" start "" /b "%%d\bin\httpd.exe"
 )
 timeout /t 2 /nobreak >nul

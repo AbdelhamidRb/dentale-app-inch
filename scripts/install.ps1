@@ -1,38 +1,41 @@
-# Installation automatique Dental App
+﻿# Installation automatique Dental App
 # Prerequis : Laragon installe dans C:\laragon
 # Usage : clic droit INSTALLER.bat -> Executer en tant qu'administrateur
 
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $GITHUB_REPO = "AbdelhamidRb/dentale-app-inch"
 $BRANCH      = "main"
-$APP_DIR     = "C:\laragon\www\dental-app-inch"
 $DB_NAME     = "dental_db_inch"
 $DB_USER     = "root"
 $DB_PASS     = ""
 $APP_URL     = "http://dental-app-inch.test"
 
 # ── Détection automatique des chemins Laragon ─────────────────
-$phpDir = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+$phpDir = Get-ChildItem "$LARAGON_ROOT\bin\php" -Directory -ErrorAction SilentlyContinue |
           Where-Object { $_.Name -match '^php-8\.' } |
           Sort-Object Name -Descending | Select-Object -First 1
-if (-not $phpDir) { Write-Host "[ERREUR] PHP 8.x introuvable dans C:\laragon\bin\php" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
+if (-not $phpDir) { Write-Host "[ERREUR] PHP 8.x introuvable dans $LARAGON_ROOT\bin\php" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
 $PHP = Join-Path $phpDir.FullName "php.exe"
 
-$mysqlDir = Get-ChildItem "C:\laragon\bin\mysql" -Directory -ErrorAction SilentlyContinue |
+$mysqlDir = Get-ChildItem "$LARAGON_ROOT\bin\mysql" -Directory -ErrorAction SilentlyContinue |
             Sort-Object Name -Descending | Select-Object -First 1
-if (-not $mysqlDir) { Write-Host "[ERREUR] MySQL introuvable dans C:\laragon\bin\mysql" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
+if (-not $mysqlDir) { Write-Host "[ERREUR] MySQL introuvable dans $LARAGON_ROOT\bin\mysql" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
 $MYSQL      = Join-Path $mysqlDir.FullName "bin\mysql.exe"
 $MYSQLD     = Join-Path $mysqlDir.FullName "bin\mysqld.exe"
 $MYSQLADMIN = Join-Path $mysqlDir.FullName "bin\mysqladmin.exe"
 
-$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory -ErrorAction SilentlyContinue |
+$apacheDir = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Directory -ErrorAction SilentlyContinue |
              Sort-Object Name -Descending | Select-Object -First 1
-$HTTPD = if ($apacheDir) { Join-Path $apacheDir.FullName "bin\httpd.exe" } else { "C:\laragon\bin\apache\httpd.exe" }
+$HTTPD = if ($apacheDir) { Join-Path $apacheDir.FullName "bin\httpd.exe" } else { "$LARAGON_ROOT\bin\apache\httpd.exe" }
 
-$COMPOSER   = "C:\laragon\bin\composer\composer.phar"
-$GIT        = "C:\laragon\bin\git\bin\git.exe"
+$COMPOSER   = "$LARAGON_ROOT\bin\composer\composer.phar"
+$GIT        = "$LARAGON_ROOT\bin\git\bin\git.exe"
 
 # Ajouter Git au PATH pour que Composer puisse l'utiliser
-$env:Path = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:Path"
+$env:Path = "$LARAGON_ROOT\bin\git\bin;$LARAGON_ROOT\bin\git\usr\bin;$env:Path"
 
 function Step($n, $t, $msg) { Write-Host ""; Write-Host "[$n/$t] $msg" -ForegroundColor Cyan }
 function OK($msg)   { Write-Host "  OK  $msg" -ForegroundColor Green }
@@ -110,16 +113,16 @@ if (Test-Path $phpIni) {
 
 # ── 4. Cloner le projet ────────────────────────────────────────
 Step 4 8 "Telechargement de l'application..."
-if (Test-Path $APP_DIR) {
-    WARN "Le dossier $APP_DIR existe deja."
+if (Test-Path $APP_ROOT) {
+    WARN "Le dossier $APP_ROOT existe deja."
     $overwrite = Read-Host "  Ecraser et reinstaller ? (oui/non)"
     if ($overwrite -ne 'oui') { Write-Host "Installation annulee."; exit 0 }
-    Remove-Item $APP_DIR -Recurse -Force
+    Remove-Item $APP_ROOT -Recurse -Force
 }
-& $GIT clone "https://github.com/$GITHUB_REPO.git" $APP_DIR --branch $BRANCH --depth 1 2>&1 | Out-Null
-if (-not (Test-Path "$APP_DIR\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
-& $GIT config --global --add safe.directory ($APP_DIR -replace '\\', '/')
-Copy-Item $licFile "$APP_DIR\dental-app.lic" -Force
+& $GIT clone "https://github.com/$GITHUB_REPO.git" $APP_ROOT --branch $BRANCH --depth 1 2>&1 | Out-Null
+if (-not (Test-Path "$APP_ROOT\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
+& $GIT config --global --add safe.directory ($APP_ROOT -replace '\\', '/')
+Copy-Item $licFile "$APP_ROOT\dental-app.lic" -Force
 OK "Application telechargee"
 
 # ── 5. Fichier .env ────────────────────────────────────────────
@@ -159,17 +162,17 @@ CACHE_STORE=file
 QUEUE_CONNECTION=database
 BCRYPT_ROUNDS=10
 "@
-Set-Content -Path "$APP_DIR\.env" -Value $envContent -Encoding utf8
+Set-Content -Path "$APP_ROOT\.env" -Value $envContent -Encoding utf8
 OK ".env cree"
 
 # ── 6. Composer + cle Laravel ──────────────────────────────────
 Step 6 8 "Installation des dependances PHP..."
-$composerOut = cmd /c "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_DIR`"" 2>&1
+$composerOut = cmd /c "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_ROOT`"" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host ($composerOut -join "`n") -ForegroundColor Red
     ERR "composer install a echoue. Voir erreur ci-dessus."
 }
-& $PHP "$APP_DIR\artisan" key:generate --force 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" key:generate --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "key:generate a echoue. Verifiez que le .env est bien cree." }
 OK "Dependances PHP installees + cle generee"
 
@@ -197,26 +200,26 @@ $proc.StandardInput.Close()
 $proc.WaitForExit()
 if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base de donnees." }
 
-& $PHP "$APP_DIR\artisan" migrate --force 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" migrate --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
-& $PHP "$APP_DIR\artisan" db:seed --class=ProductionSeeder --force 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" db:seed --class=ProductionSeeder --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Seeder echoue." }
-& $PHP "$APP_DIR\artisan" storage:link --force 2>&1 | Out-Null
-& $PHP "$APP_DIR\artisan" optimize 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" storage:link --force 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" optimize 2>&1 | Out-Null
 OK "Base de donnees initialisee"
 
 # ── 8. Apache + Firewall + Taches ─────────────────────────────
 Step 8 8 "Configuration reseau et demarrage..."
 
 # VirtualHost initial (l'IP sera ajoutee dynamiquement par start-app.ps1 a chaque demarrage)
-$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"C:/laragon/www/dental-app-inch/public`"`n    <Directory `"C:/laragon/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
-Set-Content "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh -Encoding utf8
+$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"$LARAGON_ROOT/www/dental-app-inch/public`"`n    <Directory `"$LARAGON_ROOT/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+Set-Content "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh -Encoding utf8
 
 # Supprimer les anciens fichiers si existants
-Remove-Item "C:\laragon\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Force -ErrorAction SilentlyContinue
-Remove-Item "C:\laragon\etc\apache2\sites-enabled\dental-app-local.conf"          -Force -ErrorAction SilentlyContinue
-Remove-Item "C:\laragon\etc\apache2\sites-enabled\dental-app-ip.conf"             -Force -ErrorAction SilentlyContinue
-Remove-Item "C:\laragon\etc\apache2\sites-enabled\00-dental-default.conf"         -Force -ErrorAction SilentlyContinue
+Remove-Item "$LARAGON_ROOT\etc\apache2\sites-enabled\auto.dental-app-inch.test.conf" -Force -ErrorAction SilentlyContinue
+Remove-Item "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-local.conf"          -Force -ErrorAction SilentlyContinue
+Remove-Item "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-ip.conf"             -Force -ErrorAction SilentlyContinue
+Remove-Item "$LARAGON_ROOT\etc\apache2\sites-enabled\00-dental-default.conf"         -Force -ErrorAction SilentlyContinue
 
 $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|Local Area' -and $_.IPAddress -notmatch '^127\.' } |
@@ -238,7 +241,7 @@ Start-Sleep -Seconds 2
 
 # Taches planifiees (backup + scheduler)
 if ($isAdmin) {
-    powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\schedule-tasks.ps1"
+    powershell -ExecutionPolicy Bypass -File "$APP_ROOT\scripts\schedule-tasks.ps1"
     if ($LASTEXITCODE -eq 0) {
         OK "Taches automatiques planifiees"
     } else {
@@ -256,7 +259,7 @@ if ($isAdmin -and $env:COMPUTERNAME -ne "dental") {
 }
 
 # DentalApp.exe + raccourcis
-powershell -ExecutionPolicy Bypass -File "$APP_DIR\scripts\build-exe.ps1" | Out-Null
+powershell -ExecutionPolicy Bypass -File "$APP_ROOT\scripts\build-exe.ps1" | Out-Null
 OK "DentalApp.exe cree sur le Bureau"
 
 OK "Apache demarre (dental-app-inch.test + http://$localIP)"

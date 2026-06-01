@@ -1,9 +1,12 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  verify-install.ps1  -  Vérification complète de l'installation
 #  Dental App  |  Clic droit -> Exécuter en tant qu'administrateur
 # ═══════════════════════════════════════════════════════════════
 
-$APP_DIR  = "C:\laragon\www\dental-app-inch"
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $OK       = 0
 $WARN     = 0
 $FAIL     = 0
@@ -23,25 +26,25 @@ Write-Host "=================================================="
 # ── 1. DOSSIER APPLICATION ─────────────────────────────────────
 Title "1. Dossier application"
 
-if (Test-Path "$APP_DIR\artisan")         { Pass "Dossier app present : $APP_DIR" }
-else                                       { Fail "Dossier app INTROUVABLE : $APP_DIR" }
+if (Test-Path "$APP_ROOT\artisan")         { Pass "Dossier app present : $APP_ROOT" }
+else                                       { Fail "Dossier app INTROUVABLE : $APP_ROOT" }
 
-if (Test-Path "$APP_DIR\.env")            { Pass ".env present" }
+if (Test-Path "$APP_ROOT\.env")            { Pass ".env present" }
 else                                       { Fail ".env MANQUANT - app non configuree" }
 
-if (Test-Path "$APP_DIR\dental-app.lic")  { Pass "Licence dental-app.lic presente" }
+if (Test-Path "$APP_ROOT\dental-app.lic")  { Pass "Licence dental-app.lic presente" }
 else                                       { Fail "Licence MANQUANTE - app bloquee" }
 
-if (Test-Path "$APP_DIR\storage\app\license.pub") { Pass "license.pub present" }
+if (Test-Path "$APP_ROOT\storage\app\license.pub") { Pass "license.pub present" }
 else                                       { Fail "license.pub MANQUANT - API bloquee" }
 
-if (Test-Path "$APP_DIR\public\storage")  { Pass "Lien storage/public present" }
+if (Test-Path "$APP_ROOT\public\storage")  { Pass "Lien storage/public present" }
 else                                       { Warn "Lien storage manquant - images patients invisibles (lancer: php artisan storage:link)" }
 
-if (Test-Path "$APP_DIR\vendor\autoload.php") { Pass "Vendor (Composer) present" }
+if (Test-Path "$APP_ROOT\vendor\autoload.php") { Pass "Vendor (Composer) present" }
 else                                       { Fail "Vendor MANQUANT - lancer: composer install" }
 
-if (Test-Path "$APP_DIR\public\build\manifest.json") { Pass "Build Vite present" }
+if (Test-Path "$APP_ROOT\public\build\manifest.json") { Pass "Build Vite present" }
 else                                       { Fail "Build manquant - lancer: npm run build" }
 
 
@@ -60,7 +63,7 @@ else           { Fail "MySQL ARRETE - lancer Laragon et cliquer Start All" }
 # ── 3. PHP & OPCACHE ──────────────────────────────────────────
 Title "3. PHP et OPcache"
 
-$phpDir = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+$phpDir = Get-ChildItem "$LARAGON_ROOT\bin\php" -Directory -ErrorAction SilentlyContinue |
           Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
 
 if ($phpDir) {
@@ -79,13 +82,13 @@ if ($phpDir) {
     if ($zip -eq "ok") { Pass "Extension PHP zip activee" }
     else                { Fail "Extension PHP zip MANQUANTE - backup images impossible" }
 
-} else { Fail "PHP 8.x introuvable dans C:\laragon\bin\php" }
+} else { Fail "PHP 8.x introuvable dans $LARAGON_ROOT\bin\php" }
 
 
 # ── 4. BASE DE DONNÉES ─────────────────────────────────────────
 Title "4. Base de donnees"
 
-$mysqlDir = Get-ChildItem "C:\laragon\bin\mysql" -Directory -ErrorAction SilentlyContinue |
+$mysqlDir = Get-ChildItem "$LARAGON_ROOT\bin\mysql" -Directory -ErrorAction SilentlyContinue |
             Sort-Object Name -Descending | Select-Object -First 1
 
 if ($mysqlDir) {
@@ -95,8 +98,8 @@ if ($mysqlDir) {
     else {
         # Essayer avec mot de passe depuis .env
         $envPass = ""
-        if (Test-Path "$APP_DIR\.env") {
-            $line = Get-Content "$APP_DIR\.env" | Where-Object { $_ -match "^DB_PASSWORD=" } | Select-Object -First 1
+        if (Test-Path "$APP_ROOT\.env") {
+            $line = Get-Content "$APP_ROOT\.env" | Where-Object { $_ -match "^DB_PASSWORD=" } | Select-Object -First 1
             if ($line) { $envPass = ($line -split '=', 2)[1].Trim('"').Trim("'") }
         }
         if ($envPass) {
@@ -116,14 +119,14 @@ if ($mysqlDir) {
     }
     if ($dbCheck -match "dental_db_inch") { Pass "Base de donnees 'dental_db_inch' presente" }
     else                                   { Fail "Base de donnees 'dental_db_inch' MANQUANTE" }
-} else { Fail "MySQL introuvable dans C:\laragon\bin\mysql" }
+} else { Fail "MySQL introuvable dans $LARAGON_ROOT\bin\mysql" }
 
 
 # ── 5. MIGRATIONS LARAVEL ──────────────────────────────────────
 Title "5. Migrations Laravel"
 
 if ($phpDir) {
-    $migrate = & $PHP "$APP_DIR\artisan" migrate:status --no-ansi 2>$null | Out-String
+    $migrate = & $PHP "$APP_ROOT\artisan" migrate:status --no-ansi 2>$null | Out-String
     $pending = ($migrate -split "`n" | Where-Object { $_ -match "Pending" }).Count
     $ran     = ($migrate -split "`n" | Where-Object { $_ -match "Ran" }).Count
 
@@ -165,7 +168,7 @@ foreach ($name in $tasksRequired) {
 # Vérifier le dernier backup
 Title "7. Dernier backup"
 
-$backupDir = "C:\backups\dental-app"
+$backupDir = "$BACKUP_DIR"
 if (Test-Path $backupDir) {
     $lastBackup = Get-ChildItem $backupDir -Directory | Sort-Object Name -Descending | Select-Object -First 1
     if ($lastBackup) {
@@ -185,7 +188,7 @@ if (Test-Path $backupDir) {
         else                     { Warn "images.zip absent (normal si aucune image patient)" }
 
     } else { Warn "Dossier backup vide - aucun backup effectue" }
-} else { Warn "Dossier C:\backups\dental-app inexistant - premier backup pas encore fait" }
+} else { Warn "Dossier $BACKUP_DIR inexistant - premier backup pas encore fait" }
 
 
 # ── 8. APPLICATION WEB ─────────────────────────────────────────
@@ -214,7 +217,7 @@ else           { Warn "IP locale non detectee - assistants ne pourront pas se co
 # ── 9. LOGS ERREURS ────────────────────────────────────────────
 Title "9. Logs d'erreurs recents"
 
-$logFile = "$APP_DIR\storage\logs\laravel.log"
+$logFile = "$APP_ROOT\storage\logs\laravel.log"
 if (Test-Path $logFile) {
     $errors = Get-Content $logFile -Tail 100 | Where-Object { $_ -match "\[ERROR\]|\[CRITICAL\]" }
     if ($errors.Count -eq 0) { Pass "Aucune erreur critique dans les logs" }

@@ -1,10 +1,12 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  backup.ps1  —  Sauvegarde automatique  |  Dental App
 #  Destinations : local (adaptatif) + OneDrive (dynamique) + USB (sync auto)
 # ═══════════════════════════════════════════════════════════════
 
-$APP_ROOT   = "C:\laragon\www\dental-app-inch"
-$BACKUP_DIR = "C:\backups\dental-app"
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $USB_LABEL  = "DENTAL-BKP"
 
 # Lire DB depuis .env
@@ -21,7 +23,7 @@ if (-not $DB_NAME) { $DB_NAME = "dental_db_inch" }
 if (-not $DB_USER) { $DB_USER = "root" }
 
 # Auto-détecter MySQL
-$mysqlDir  = Get-ChildItem "C:\laragon\bin\mysql" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$mysqlDir  = Get-ChildItem "$LARAGON_ROOT\bin\mysql" -Directory | Sort-Object Name -Descending | Select-Object -First 1
 $mysqldump = Join-Path $mysqlDir.FullName "bin\mysqldump.exe"
 
 # ─── Nombre de backups à conserver selon la taille ────────────
@@ -35,7 +37,7 @@ function Get-MaxBackups([long]$sizeBytes) {
 
 # ─── Vérifier mysqldump ────────────────────────────────────────
 if (-not $mysqlDir -or -not (Test-Path $mysqldump)) {
-    Write-Host "[ERREUR] mysqldump.exe introuvable dans C:\laragon\bin\mysql" -ForegroundColor Red
+    Write-Host "[ERREUR] mysqldump.exe introuvable dans $LARAGON_ROOT\bin\mysql" -ForegroundColor Red
     exit 1
 }
 

@@ -12,33 +12,52 @@ use RecursiveDirectoryIterator;
 
 class BackupController extends Controller
 {
-    private string $backupDir  = 'C:\\backups\\dental-app';
-    private string $mysqldump  = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe';
-    private string $mysql      = 'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysql.exe';
-
     private function dbName(): string { return config('database.connections.mysql.database', 'dental_db_inch'); }
     private function dbUser(): string { return config('database.connections.mysql.username', 'root'); }
     private function dbPass(): string { return config('database.connections.mysql.password', ''); }
+
+    // Detecte le dossier Laragon depuis base_path() — fonctionne sur C:\, D:\, etc.
+    private function laragonRoot(): string {
+        // base_path() = X:\laragon\www\dental-app-inch  →  X:\laragon
+        return dirname(dirname(dirname(base_path())));
+    }
+
+    private function backupDir(): string {
+        $drive = substr(base_path(), 0, 2); // "C:" ou "D:"
+        return $drive . '\\backups\\dental-app';
+    }
+
+    private function mysqldump(): string {
+        $dirs = glob($this->laragonRoot() . '\\bin\\mysql\\*', GLOB_ONLYDIR);
+        rsort($dirs);
+        return ($dirs[0] ?? '') . '\\bin\\mysqldump.exe';
+    }
+
+    private function mysql(): string {
+        $dirs = glob($this->laragonRoot() . '\\bin\\mysql\\*', GLOB_ONLYDIR);
+        rsort($dirs);
+        return ($dirs[0] ?? '') . '\\bin\\mysql.exe';
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // GET /api/backup/list
     // ═══════════════════════════════════════════════════════════════
     public function list()
     {
-        if (!is_dir($this->backupDir)) {
+        if (!is_dir($this->backupDir())) {
             return response()->json(['backups' => [], 'last_backup' => null]);
         }
 
-        $entries = array_filter(scandir($this->backupDir), function ($d) {
+        $entries = array_filter(scandir($this->backupDir()), function ($d) {
             return $d !== '.' && $d !== '..'
-                && is_dir($this->backupDir . '\\' . $d)
+                && is_dir($this->backupDir() . '\\' . $d)
                 && preg_match('/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}$/', $d);
         });
 
         rsort($entries);
 
         $backups = array_map(function ($d) {
-            $path    = $this->backupDir . '\\' . $d;
+            $path    = $this->backupDir() . '\\' . $d;
             $sqlFile = $path . '\\database.sql';
             $zipFile = $path . '\\images.zip';
             return [
@@ -66,7 +85,7 @@ class BackupController extends Controller
         }
 
         $timestamp = now()->format('Y-m-d_H-i');
-        $dest      = $this->backupDir . '\\' . $timestamp;
+        $dest      = $this->backupDir() . '\\' . $timestamp;
 
         if (!mkdir($dest, 0755, true) && !is_dir($dest)) {
             return response()->json(['error' => 'Impossible de créer le dossier de backup.'], 500);
@@ -76,7 +95,7 @@ class BackupController extends Controller
         $sqlFile     = $dest . '\\database.sql';
         $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
         $pass = $this->dbPass();
-        $cmd = '"' . $this->mysqldump . '" -u ' . $this->dbUser()
+        $cmd = '"' . $this->mysqldump() . '" -u ' . $this->dbUser()
              . ($pass !== '' ? ' -p' . $pass : '')
              . ' --single-transaction --default-character-set=utf8mb4 --routines '
              . $this->dbName();
@@ -124,8 +143,8 @@ class BackupController extends Controller
         $backupSizeBytes = $this->dirSize($dest);
         $this->pruneBackups($backupSizeBytes);
 
-        $backupCount = count(array_filter(scandir($this->backupDir), fn($d) =>
-            $d !== '.' && $d !== '..' && is_dir($this->backupDir . '\\' . $d)
+        $backupCount = count(array_filter(scandir($this->backupDir()), fn($d) =>
+            $d !== '.' && $d !== '..' && is_dir($this->backupDir() . '\\' . $d)
         ));
 
         return response()->json([
@@ -151,7 +170,7 @@ class BackupController extends Controller
             'name' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}$/'],
         ]);
 
-        $path = $this->backupDir . '\\' . $request->name;
+        $path = $this->backupDir() . '\\' . $request->name;
         if (!is_dir($path)) {
             return response()->json(['error' => 'Backup introuvable.'], 404);
         }
@@ -165,7 +184,7 @@ class BackupController extends Controller
         if (file_exists($sqlFile)) {
             $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
             $pass = $this->dbPass();
-            $cmd  = '"' . $this->mysql . '" -u ' . $this->dbUser()
+            $cmd  = '"' . $this->mysql() . '" -u ' . $this->dbUser()
                   . ($pass !== '' ? ' -p' . $pass : '')
                   . ' --default-character-set=utf8mb4 ' . $this->dbName();
             $proc = proc_open($cmd, $descriptors, $pipes);
@@ -235,18 +254,18 @@ class BackupController extends Controller
     // ─── Rotation : supprime les plus anciens selon palier ────────
     private function pruneBackups(int $backupSizeBytes): void
     {
-        if (!is_dir($this->backupDir)) return;
+        if (!is_dir($this->backupDir())) return;
 
         $keep = $this->maxBackups($backupSizeBytes);
 
-        $dirs = array_values(array_filter(scandir($this->backupDir), fn($d) =>
-            $d !== '.' && $d !== '..' && is_dir($this->backupDir . '\\' . $d)
+        $dirs = array_values(array_filter(scandir($this->backupDir()), fn($d) =>
+            $d !== '.' && $d !== '..' && is_dir($this->backupDir() . '\\' . $d)
         ));
         sort($dirs); // du plus ancien au plus récent
 
         $toDelete = array_slice($dirs, 0, max(0, count($dirs) - $keep));
         foreach ($toDelete as $d) {
-            $this->deleteDir($this->backupDir . '\\' . $d);
+            $this->deleteDir($this->backupDir() . '\\' . $d);
         }
     }
 

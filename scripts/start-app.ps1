@@ -1,15 +1,19 @@
-# start-app.ps1 - Demarrer Dental App
+﻿# start-app.ps1 - Demarrer Dental App
 
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 # Detection automatique des chemins Laragon
-$phpDir    = Get-ChildItem "C:\laragon\bin\php"    -Directory | Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
-$mysqlDir  = Get-ChildItem "C:\laragon\bin\mysql"  -Directory | Sort-Object Name -Descending | Select-Object -First 1
-$apacheDir = Get-ChildItem "C:\laragon\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$phpDir    = Get-ChildItem "$LARAGON_ROOT\bin\php"    -Directory | Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
+$mysqlDir  = Get-ChildItem "$LARAGON_ROOT\bin\mysql"  -Directory | Sort-Object Name -Descending | Select-Object -First 1
+$apacheDir = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
 
 $HTTPD      = Join-Path $apacheDir.FullName "bin\httpd.exe"
 $MYSQLD     = Join-Path $mysqlDir.FullName  "bin\mysqld.exe"
 $MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
 $MYSQL_INI  = Join-Path $mysqlDir.FullName  "my.ini"
-$VHOST_FILE = "C:\laragon\etc\apache2\sites-enabled\dental-app-inch.conf"
+$VHOST_FILE = "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-inch.conf"
 $APP_URL    = "http://dental-app-inch.test"
 $PROFILE    = "C:\dental-app-browser"
 
@@ -30,8 +34,8 @@ if (-not $localIP) { $localIP = "127.0.0.1" }
 <VirtualHost *:80>
     ServerName dental-app-inch.test
     ServerAlias dental.local dental $localIP
-    DocumentRoot "C:/laragon/www/dental-app-inch/public"
-    <Directory "C:/laragon/www/dental-app-inch/public">
+    DocumentRoot "$LARAGON_ROOT/www/dental-app-inch/public"
+    <Directory "$LARAGON_ROOT/www/dental-app-inch/public">
         AllowOverride All
         Require all granted
     </Directory>

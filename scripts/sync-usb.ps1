@@ -1,9 +1,12 @@
-# ═══════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════
 #  sync-usb.ps1  —  Sync automatique vers la clé USB DENTAL-BKP
 #  Lancé automatiquement à chaque branchement USB
 # ═══════════════════════════════════════════════════════════════
 
-$BACKUP_DIR = "C:\backups\dental-app"
+# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
+$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
+$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $USB_LABEL  = "DENTAL-BKP"
 
 # ─── Paliers : nombre de backups selon taille ─────────────────
