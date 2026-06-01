@@ -1,68 +1,150 @@
 # ═══════════════════════════════════════════════════════════════
-#  update.ps1  —  Mise à jour de l'application  |  Dental App
+#  update.ps1  -  Mise a jour de l'application  |  Dental App
 #  1. Backup automatique
-#  2. git pull depuis GitHub (branche main)
-#  3. php artisan migrate --force
+#  2. git pull depuis GitHub
+#  3. composer install (si besoin)
+#  4. php artisan migrate
+#  5. npm run build (si fichiers Vue/JS modifies)
+#  6. php artisan optimize
+#  7. Redemarrage Apache
 # ═══════════════════════════════════════════════════════════════
 
-# ─── Configuration ─────────────────────────────────────────────
 $APP_ROOT = "C:\laragon\www\dental-app-inch"
+$BRANCH   = "main"
 
-# ─── Trouver PHP ───────────────────────────────────────────────
-$php = Get-ChildItem "C:\laragon\bin\php" -Filter "php.exe" -Recurse `
-    -ErrorAction SilentlyContinue | Sort-Object FullName -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
-if (-not $php) {
-    Write-Host "[ERREUR] php.exe introuvable dans C:\laragon\bin\php" -ForegroundColor Red
-    exit 1
+# Trouver PHP
+$phpDir = Get-ChildItem "C:\laragon\bin\php" -Directory -ErrorAction SilentlyContinue |
+          Where-Object { $_.Name -match '^php-8\.' } | Sort-Object Name -Descending | Select-Object -First 1
+if (-not $phpDir) { Write-Host "[ERREUR] PHP 8.x introuvable" -ForegroundColor Red; exit 1 }
+$PHP = Join-Path $phpDir.FullName "php.exe"
+
+# Trouver Composer
+$COMPOSER = "C:\laragon\bin\composer\composer.phar"
+
+# Trouver Node/npm
+$npm = Get-Command npm -ErrorAction SilentlyContinue
+if (-not $npm) {
+    $npmPath = Get-ChildItem "C:\laragon\bin\nodejs" -Filter "npm.cmd" -Recurse -ErrorAction SilentlyContinue |
+               Select-Object -First 1 -ExpandProperty FullName
+    if ($npmPath) { $env:PATH = "$([System.IO.Path]::GetDirectoryName($npmPath));$env:PATH" }
 }
 
-# ─── Vérifier git ──────────────────────────────────────────────
-$gitCmd = Get-Command git -ErrorAction SilentlyContinue
-if (-not $gitCmd) {
-    Write-Host "[ERREUR] Git n'est pas installe ou pas dans le PATH." -ForegroundColor Red
-    Write-Host "  Telechargez Git : https://git-scm.com/download/win"
-    exit 1
+# Ajouter Git au PATH
+$env:PATH = "C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;$env:PATH"
+
+function Step($n, $t, $msg) {
+    Write-Host ""
+    Write-Host "[$n/$t] $msg" -ForegroundColor Cyan
 }
+function OK($msg)  { Write-Host "  OK   $msg" -ForegroundColor Green }
+function ERR($msg) { Write-Host "  FAIL $msg" -ForegroundColor Red; Read-Host "Entree pour quitter"; exit 1 }
 
+Clear-Host
 Write-Host ""
-Write-Host "══════════════════════════════════════════════════"
-Write-Host "  MISE A JOUR — Dental App"
-Write-Host "══════════════════════════════════════════════════"
-Write-Host ""
+Write-Host "=================================================="
+Write-Host "   MISE A JOUR - Dental App"
+Write-Host "   $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+Write-Host "=================================================="
 
-# ─── Étape 1 : Backup préalable ────────────────────────────────
-Write-Host "[1/3] Sauvegarde avant mise a jour..."
+# ── 1. Backup avant mise a jour ────────────────────────────────
+Step 1 7 "Sauvegarde avant mise a jour..."
 & "$APP_ROOT\scripts\backup.ps1"
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERREUR] Backup échoué. Mise à jour annulée." -ForegroundColor Red
-    exit 1
-}
+if ($LASTEXITCODE -ne 0) { ERR "Backup echoue - mise a jour annulee pour proteger vos donnees." }
 
-# ─── Étape 2 : git pull ────────────────────────────────────────
-Write-Host ""
-Write-Host "[2/3] Telechargement de la mise a jour (git pull)..."
+# ── 2. Git pull ────────────────────────────────────────────────
+Step 2 7 "Telechargement de la mise a jour..."
 Set-Location $APP_ROOT
-git pull origin main
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERREUR] git pull a echoue." -ForegroundColor Red
-    Write-Host "  Verifiez votre connexion internet et vos droits GitHub."
-    exit 1
-}
-Write-Host "  OK  Code mis a jour" -ForegroundColor Green
 
-# ─── Étape 3 : Migrations ──────────────────────────────────────
-Write-Host ""
-Write-Host "[3/3] Mise a jour de la base de donnees..."
-& $php "$APP_ROOT\artisan" migrate --force
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERREUR] Migrations echouees." -ForegroundColor Red
-    exit 1
+# Verifier s'il y a des mises a jour disponibles
+git fetch origin $BRANCH 2>&1 | Out-Null
+$behind = git rev-list HEAD..origin/$BRANCH --count 2>$null
+if ($behind -eq "0") {
+    Write-Host "  INFO Application deja a jour - aucune mise a jour disponible." -ForegroundColor Yellow
+    Read-Host "Entree pour fermer"
+    exit 0
 }
-Write-Host "  OK  Base de donnees a jour" -ForegroundColor Green
 
-# ─── Résumé ────────────────────────────────────────────────────
+Write-Host "  $behind nouveau(x) commit(s) disponible(s)..." -ForegroundColor Gray
+git pull origin $BRANCH 2>&1
+if ($LASTEXITCODE -ne 0) { ERR "git pull echoue - verifiez votre connexion internet." }
+OK "Code mis a jour depuis GitHub ($BRANCH)"
+
+# Detecter ce qui a change
+$changedFiles = git diff HEAD~1 HEAD --name-only 2>$null
+$composerChanged = $changedFiles -match "composer\.(json|lock)"
+$npmChanged      = $changedFiles -match "(package\.json|package-lock\.json|resources/js|vite\.config)"
+$migrationChanged = $changedFiles -match "database/migrations"
+
+# ── 3. Composer (si besoin) ───────────────────────────────────
+Step 3 7 "Dependances PHP..."
+if ($composerChanged) {
+    Write-Host "  composer.json modifie - mise a jour des packages..." -ForegroundColor Gray
+    & cmd /c "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_ROOT`""
+    if ($LASTEXITCODE -ne 0) { ERR "composer install echoue." }
+    OK "Packages PHP mis a jour"
+} else {
+    OK "Packages PHP inchanges (ignore)"
+}
+
+# ── 4. Migrations ─────────────────────────────────────────────
+Step 4 7 "Base de donnees..."
+if ($migrationChanged) {
+    & $PHP "$APP_ROOT\artisan" migrate --force
+    if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
+    OK "Migrations executees"
+} else {
+    OK "Aucune nouvelle migration (ignore)"
+}
+
+# ── 5. Build frontend (si besoin) ─────────────────────────────
+Step 5 7 "Interface utilisateur (Vue.js)..."
+if ($npmChanged) {
+    Write-Host "  Fichiers JS/Vue modifies - reconstruction en cours..." -ForegroundColor Gray
+
+    # Verifier si node_modules existe
+    if (-not (Test-Path "$APP_ROOT\node_modules")) {
+        Write-Host "  Installation des packages npm..." -ForegroundColor Gray
+        Set-Location $APP_ROOT
+        npm install --silent
+    }
+
+    Set-Location $APP_ROOT
+    npm run build 2>&1 | Where-Object { $_ -match "built in|error|Error" }
+    if ($LASTEXITCODE -ne 0) { ERR "npm run build echoue." }
+    OK "Interface reconstruite"
+} else {
+    OK "Interface inchangee (ignore)"
+}
+
+# ── 6. Optimisation Laravel ───────────────────────────────────
+Step 6 7 "Optimisation Laravel..."
+& $PHP "$APP_ROOT\artisan" optimize 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" cache:clear 2>&1 | Out-Null
+OK "Caches Laravel vides et reconstruits"
+
+# ── 7. Redemarrage Apache ─────────────────────────────────────
+Step 7 7 "Redemarrage Apache..."
+$httpdPath = Get-ChildItem "C:\laragon\bin\apache" -Recurse -Filter "httpd.exe" -ErrorAction SilentlyContinue |
+             Select-Object -First 1 -ExpandProperty FullName
+if ($httpdPath) {
+    $env:PATH = "$($phpDir.FullName);$env:PATH"
+    Stop-Process -Name "httpd" -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+    Start-Process -FilePath $httpdPath -WindowStyle Hidden
+    Start-Sleep -Seconds 2
+    $running = Get-Process httpd -ErrorAction SilentlyContinue
+    if ($running) { OK "Apache redemarre (OPcache rechargee)" }
+    else           { Write-Host "  WARN Apache n'a pas redemarre - ouvrez Laragon et cliquez Start All" -ForegroundColor Yellow }
+} else {
+    Write-Host "  WARN httpd.exe introuvable - redemarrez Apache manuellement" -ForegroundColor Yellow
+}
+
+# ── Resume ────────────────────────────────────────────────────
 Write-Host ""
-Write-Host "  MISE A JOUR TERMINEE" -ForegroundColor Cyan
-Write-Host "  Rechargez la page dans le navigateur."
+Write-Host "=================================================="
+Write-Host "   MISE A JOUR TERMINEE !" -ForegroundColor Green
+Write-Host "=================================================="
 Write-Host ""
+Write-Host "  Rechargez la page dans le navigateur (Ctrl+Shift+R)"
+Write-Host ""
+Read-Host "Entree pour fermer"
