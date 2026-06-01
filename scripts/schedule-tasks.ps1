@@ -28,13 +28,15 @@ $phpObj = Get-ChildItem "$LARAGON_ROOT\bin\php" -Directory -ErrorAction Silently
 $PHP    = if ($phpObj) { Join-Path $phpObj.FullName "php.exe" } else { "php" }
 $artisan = "$APP_ROOT\artisan"
 
-$sysPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
+$sysPrincipal  = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
+$userPrincipal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 
 # ═══════════════════════════════════════════════════════════════
 #  TÂCHE 1 : Backup automatique (Lun-Ven 18h, Sam 12h30)
-#  SYSTEM — aucune fenetre possible
+#  Utilisateur connecte via wscript.exe — aucun flash, acces OneDrive
 # ═══════════════════════════════════════════════════════════════
-$taskBackup = "DentalApp-Backup"
+$taskBackup  = "DentalApp-Backup"
+$vbsLauncher = "$SCRIPTS_DIR\run-hidden.vbs"
 Unregister-ScheduledTask -TaskName $taskBackup -Confirm:$false -ErrorAction SilentlyContinue
 
 $trigWeek = New-ScheduledTaskTrigger -Weekly `
@@ -42,8 +44,8 @@ $trigWeek = New-ScheduledTaskTrigger -Weekly `
 $trigSat  = New-ScheduledTaskTrigger -Weekly `
     -DaysOfWeek Saturday -At "12:30"
 $actBackup = New-ScheduledTaskAction `
-    -Execute "powershell.exe" `
-    -Argument "-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$backupScript`""
+    -Execute "wscript.exe" `
+    -Argument "//B //NoLogo `"$vbsLauncher`" `"$backupScript`""
 $setsBackup = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 30) `
@@ -54,7 +56,7 @@ Register-ScheduledTask `
     -Action $actBackup `
     -Trigger $trigWeek,$trigSat `
     -Settings $setsBackup `
-    -Principal $sysPrincipal `
+    -Principal $userPrincipal `
     -Force | Out-Null
 
 Write-Host "  OK  $taskBackup" -ForegroundColor Green
