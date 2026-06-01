@@ -4,9 +4,8 @@
 #  2. git pull depuis GitHub
 #  3. composer install (si besoin)
 #  4. php artisan migrate
-#  5. npm run build (si fichiers Vue/JS modifies)
-#  6. php artisan optimize
-#  7. Redemarrage Apache
+#  5. php artisan optimize
+#  6. Redemarrage Apache
 # ═══════════════════════════════════════════════════════════════
 
 # Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
@@ -23,14 +22,6 @@ $PHP = Join-Path $phpDir.FullName "php.exe"
 
 # Trouver Composer
 $COMPOSER = "$LARAGON_ROOT\bin\composer\composer.phar"
-
-# Trouver Node/npm
-$npm = Get-Command npm -ErrorAction SilentlyContinue
-if (-not $npm) {
-    $npmPath = Get-ChildItem "$LARAGON_ROOT\bin\nodejs" -Filter "npm.cmd" -Recurse -ErrorAction SilentlyContinue |
-               Select-Object -First 1 -ExpandProperty FullName
-    if ($npmPath) { $env:PATH = "$([System.IO.Path]::GetDirectoryName($npmPath));$env:PATH" }
-}
 
 # Ajouter Git au PATH
 $env:PATH = "$LARAGON_ROOT\bin\git\bin;$LARAGON_ROOT\bin\git\usr\bin;$env:PATH"
@@ -50,12 +41,12 @@ Write-Host "   $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
 Write-Host "=================================================="
 
 # ── 1. Backup avant mise a jour ────────────────────────────────
-Step 1 7 "Sauvegarde avant mise a jour..."
+Step 1 6 "Sauvegarde avant mise a jour..."
 & "$APP_ROOT\scripts\backup.ps1"
 if ($LASTEXITCODE -ne 0) { ERR "Backup echoue - mise a jour annulee pour proteger vos donnees." }
 
 # ── 2. Git pull ────────────────────────────────────────────────
-Step 2 7 "Telechargement de la mise a jour..."
+Step 2 6 "Telechargement de la mise a jour..."
 Set-Location $APP_ROOT
 
 # Verifier s'il y a des mises a jour disponibles
@@ -74,12 +65,11 @@ OK "Code mis a jour depuis GitHub ($BRANCH)"
 
 # Detecter ce qui a change
 $changedFiles = git diff HEAD~1 HEAD --name-only 2>$null
-$composerChanged = $changedFiles -match "composer\.(json|lock)"
-$npmChanged      = $changedFiles -match "(package\.json|package-lock\.json|resources/js|vite\.config)"
+$composerChanged  = $changedFiles -match "composer\.(json|lock)"
 $migrationChanged = $changedFiles -match "database/migrations"
 
 # ── 3. Composer (si besoin) ───────────────────────────────────
-Step 3 7 "Dependances PHP..."
+Step 3 6 "Dependances PHP..."
 if ($composerChanged) {
     Write-Host "  composer.json modifie - mise a jour des packages..." -ForegroundColor Gray
     & cmd /c "`"$PHP`" `"$COMPOSER`" install --no-dev --optimize-autoloader --no-interaction --working-dir=`"$APP_ROOT`""
@@ -90,7 +80,7 @@ if ($composerChanged) {
 }
 
 # ── 4. Migrations ─────────────────────────────────────────────
-Step 4 7 "Base de donnees..."
+Step 4 6 "Base de donnees..."
 if ($migrationChanged) {
     & $PHP "$APP_ROOT\artisan" migrate --force
     if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
@@ -99,34 +89,14 @@ if ($migrationChanged) {
     OK "Aucune nouvelle migration (ignore)"
 }
 
-# ── 5. Build frontend (si besoin) ─────────────────────────────
-Step 5 7 "Interface utilisateur (Vue.js)..."
-if ($npmChanged) {
-    Write-Host "  Fichiers JS/Vue modifies - reconstruction en cours..." -ForegroundColor Gray
-
-    # Verifier si node_modules existe
-    if (-not (Test-Path "$APP_ROOT\node_modules")) {
-        Write-Host "  Installation des packages npm..." -ForegroundColor Gray
-        Set-Location $APP_ROOT
-        npm install --silent
-    }
-
-    Set-Location $APP_ROOT
-    npm run build 2>&1 | Where-Object { $_ -match "built in|error|Error" }
-    if ($LASTEXITCODE -ne 0) { ERR "npm run build echoue." }
-    OK "Interface reconstruite"
-} else {
-    OK "Interface inchangee (ignore)"
-}
-
-# ── 6. Optimisation Laravel ───────────────────────────────────
-Step 6 7 "Optimisation Laravel..."
+# ── 5. Optimisation Laravel ───────────────────────────────────
+Step 5 6 "Optimisation Laravel..."
 & $PHP "$APP_ROOT\artisan" optimize 2>&1 | Out-Null
 & $PHP "$APP_ROOT\artisan" cache:clear 2>&1 | Out-Null
 OK "Caches Laravel vides et reconstruits"
 
-# ── 7. Redemarrage Apache ─────────────────────────────────────
-Step 7 7 "Redemarrage Apache..."
+# ── 6. Redemarrage Apache ─────────────────────────────────────
+Step 6 6 "Redemarrage Apache..."
 $httpdPath = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Recurse -Filter "httpd.exe" -ErrorAction SilentlyContinue |
              Select-Object -First 1 -ExpandProperty FullName
 if ($httpdPath) {

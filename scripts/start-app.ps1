@@ -15,7 +15,7 @@ $MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
 $MYSQL_INI  = Join-Path $mysqlDir.FullName  "my.ini"
 $VHOST_FILE = "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-inch.conf"
 $APP_URL    = "http://dental-app-inch.test"
-$PROFILE    = "C:\dental-app-browser"
+$PROFILE    = "$(Split-Path $LARAGON_ROOT -Qualifier)\dental-app-browser"
 
 # PATH necessaire pour que Apache charge le module PHP
 $env:PATH = "$($phpDir.FullName);" +
