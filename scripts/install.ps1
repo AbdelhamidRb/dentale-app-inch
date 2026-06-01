@@ -198,18 +198,19 @@ if ($ping -notmatch "alive") {
 Write-Host "  MySQL pret." -ForegroundColor Gray
 
 # Creer la base de donnees
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName              = $MYSQL
-$psi.Arguments             = "-u $DB_USER"
-$psi.RedirectStandardInput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute       = $false
-$psi.CreateNoWindow        = $true
-$proc = [System.Diagnostics.Process]::Start($psi)
-$proc.StandardInput.WriteLine("CREATE DATABASE IF NOT EXISTS ``$DB_NAME`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
-$proc.StandardInput.Close()
-$proc.WaitForExit()
-if ($proc.ExitCode -ne 0) { ERR "Impossible de creer la base de donnees." }
+$createDbSql = "CREATE DATABASE IF NOT EXISTS ``$DB_NAME`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+$mysqlArgs   = "-u $DB_USER --execute=`"$createDbSql`""
+
+$result = & cmd /c "`"$MYSQL`" $mysqlArgs" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Tentative avec mot de passe vide..." -ForegroundColor Gray
+    $result2 = & cmd /c "`"$MYSQL`" -u $DB_USER -p`"`" --execute=`"$createDbSql`"" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Erreur MySQL : $result" -ForegroundColor Red
+        ERR "Impossible de creer la base de donnees. Verifiez que MySQL est demarre dans Laragon."
+    }
+}
+Write-Host "  Base de donnees OK." -ForegroundColor Gray
 
 & $PHP "$APP_ROOT\artisan" migrate --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
