@@ -8,16 +8,16 @@ $BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $mysqlDir  = Get-ChildItem "$LARAGON_ROOT\bin\mysql"  -Directory | Sort-Object Name -Descending | Select-Object -First 1
 $apacheDir = Get-ChildItem "$LARAGON_ROOT\bin\apache" -Directory | Sort-Object Name -Descending | Select-Object -First 1
 
-$MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
-$HTTPD      = Join-Path $apacheDir.FullName "bin\httpd.exe"
-$PROFILE    = "C:\dental-app-browser"
+$MYSQLADMIN      = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
+$HTTPD           = Join-Path $apacheDir.FullName "bin\httpd.exe"
+$BROWSER_PROFILE = "$(Split-Path $LARAGON_ROOT -Qualifier)\dental-app-browser"
 
 # Fermer le navigateur (uniquement le profil dental-app)
 foreach ($name in @("msedge", "chrome")) {
     Get-Process -Name $name -ErrorAction SilentlyContinue | ForEach-Object {
         try {
             $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)" -ErrorAction SilentlyContinue).CommandLine
-            if ($cmdLine -like "*dental-app-browser*") {
+            if ($cmdLine -like "*$([System.IO.Path]::GetFileName($BROWSER_PROFILE))*") {
                 $_.CloseMainWindow() | Out-Null
                 Start-Sleep -Milliseconds 500
                 if (-not $_.HasExited) { $_.Kill() }

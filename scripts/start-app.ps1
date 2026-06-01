@@ -15,7 +15,7 @@ $MYSQLADMIN = Join-Path $mysqlDir.FullName  "bin\mysqladmin.exe"
 $MYSQL_INI  = Join-Path $mysqlDir.FullName  "my.ini"
 $VHOST_FILE = "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-inch.conf"
 $APP_URL    = "http://dental-app-inch.test"
-$PROFILE    = "$(Split-Path $LARAGON_ROOT -Qualifier)\dental-app-browser"
+$BROWSER_PROFILE = "$(Split-Path $LARAGON_ROOT -Qualifier)\dental-app-browser"
 
 # PATH necessaire pour que Apache charge le module PHP
 $env:PATH = "$($phpDir.FullName);" +
@@ -72,9 +72,11 @@ Add-Type -AssemblyName System.Windows.Forms
 ) | Out-Null
 
 # Ouvrir le navigateur
-$edge    = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-$chrome  = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-$appArgs = "--app=$APP_URL --user-data-dir=`"$PROFILE`""
-if (Test-Path $edge)       { Start-Process $edge   $appArgs }
+$edge64  = "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe"
+$edge86  = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+$chrome  = "$env:ProgramFiles\Google\Chrome\Application\chrome.exe"
+$appArgs = "--app=$APP_URL --user-data-dir=`"$BROWSER_PROFILE`""
+$edge    = if (Test-Path $edge64) { $edge64 } elseif (Test-Path $edge86) { $edge86 } else { $null }
+if ($edge)                 { Start-Process $edge   $appArgs }
 elseif (Test-Path $chrome) { Start-Process $chrome $appArgs }
 else                       { Start-Process $APP_URL }
