@@ -11,11 +11,8 @@ set PATH=C:\laragon\bin\git\bin;C:\laragon\bin\git\usr\bin;%PATH%
 :: Detecter PHP
 for /d %%d in (C:\laragon\bin\php\php-8.*) do set PHP=%%d\php.exe
 
-:: Detecter Node/npm
-for /d %%d in (C:\laragon\bin\nodejs\node-*) do set NPM=%%d\npm.cmd
-if not defined NPM (
-    for /d %%d in (C:\laragon\bin\nodejs\*) do set NPM=%%d\npm.cmd
-)
+:: Detecter Node/npm (cherche npm.cmd dans tous les sous-dossiers)
+for /r "C:\laragon\bin\nodejs" %%f in (npm.cmd) do set NPM=%%f
 
 echo.
 echo ==================================================
