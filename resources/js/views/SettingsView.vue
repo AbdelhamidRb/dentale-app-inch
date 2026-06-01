@@ -30,7 +30,7 @@
                     <div>
                         <p class="font-semibold text-slate-800">Sauvegarde manuelle</p>
                         <p class="text-xs text-slate-400 mt-0.5">
-                            BDD + images patients → <code class="bg-slate-100 px-1 rounded">C:\backups\dental-app\</code>
+                            BDD + images patients → <code class="bg-slate-100 px-1 rounded">{{ backupDir || 'X:\\backups\\dental-app\\' }}</code>
                         </p>
                     </div>
                     <button
@@ -519,6 +519,7 @@ const tabs = [
 
 // ── Backup ──────────────────────────────────────────────────────
 const backups     = ref([]);
+const backupDir   = ref('');
 const loadingList = ref(false);
 const backing     = ref(false);
 const backupMsg   = ref('');
@@ -528,7 +529,8 @@ async function loadBackups() {
     loadingList.value = true;
     try {
         const res = await api('/api/backup/list');
-        backups.value = res.backups ?? [];
+        backups.value  = res.backups ?? [];
+        backupDir.value = res.backup_dir ?? '';
     } finally {
         loadingList.value = false;
     }

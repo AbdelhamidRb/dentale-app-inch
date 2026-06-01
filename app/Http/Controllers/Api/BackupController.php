@@ -18,8 +18,10 @@ class BackupController extends Controller
 
     // Detecte le dossier Laragon depuis base_path() — fonctionne sur C:\, D:\, etc.
     private function laragonRoot(): string {
-        // base_path() = X:\laragon\www\dental-app-inch  →  X:\laragon
-        return dirname(dirname(dirname(base_path())));
+        // base_path() = X:\laragon\www\dental-app-inch
+        // dirname x1  = X:\laragon\www
+        // dirname x2  = X:\laragon  ← correct
+        return dirname(dirname(base_path()));
     }
 
     private function backupDir(): string {
@@ -45,7 +47,7 @@ class BackupController extends Controller
     public function list()
     {
         if (!is_dir($this->backupDir())) {
-            return response()->json(['backups' => [], 'last_backup' => null]);
+            return response()->json(['backups' => [], 'last_backup' => null, 'backup_dir' => $this->backupDir()]);
         }
 
         $entries = array_filter(scandir($this->backupDir()), function ($d) {
@@ -72,6 +74,7 @@ class BackupController extends Controller
         return response()->json([
             'backups'     => $backups,
             'last_backup' => count($backups) > 0 ? $backups[0]['name'] : null,
+            'backup_dir'  => $this->backupDir(),
         ]);
     }
 
