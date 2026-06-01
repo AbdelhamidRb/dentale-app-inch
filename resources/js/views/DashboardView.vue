@@ -24,6 +24,7 @@
                 <div class="lg:col-span-2 h-52 bg-white rounded-2xl animate-pulse border border-slate-100"/>
                 <div class="h-52 bg-white rounded-2xl animate-pulse border border-slate-100"/>
             </div>
+            <div class="h-44 bg-white rounded-2xl animate-pulse border border-slate-100"/>
             <div class="h-48 bg-white rounded-2xl animate-pulse border border-slate-100"/>
         </template>
 
@@ -208,7 +209,40 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 BLOC 3 — Répartition patients
+                 BLOC 3 — Top 5 actes par revenu
+            ═══════════════════════════════════════════════════════ -->
+            <div class="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 mb-4">
+                <h3 class="text-sm font-semibold text-slate-700 mb-0.5">Top 5 actes — Revenus</h3>
+                <p class="text-xs text-slate-400 mb-4">Consultations en cours et terminées</p>
+
+                <div v-if="!data.top_acts.length" class="text-xs text-slate-400 text-center py-6">
+                    Aucun acte enregistré
+                </div>
+                <div v-else class="space-y-3.5">
+                    <div v-for="(act, i) in data.top_acts" :key="act.code" class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-300 w-4 shrink-0 text-right">#{{ i + 1 }}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline mb-1.5">
+                                <span class="text-xs font-medium text-slate-700 truncate pr-2">{{ act.name }}</span>
+                                <span class="text-xs shrink-0 tabular-nums">
+                                    <span class="font-semibold text-slate-800">{{ fmt(act.revenue) }}</span>
+                                    <span class="text-slate-400"> MAD</span>
+                                    <span class="text-slate-300 mx-1">·</span>
+                                    <span class="text-slate-400">{{ act.count }}x</span>
+                                </span>
+                            </div>
+                            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                     :class="i === 0 ? 'bg-blue-500' : 'bg-blue-300'"
+                                     :style="`width:${topActPct(act.revenue)}%`"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════
+                 BLOC 4 — Répartition patients
             ═══════════════════════════════════════════════════════ -->
             <div class="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5">
                 <h3 class="text-sm font-semibold text-slate-700 mb-0.5">Répartition patients</h3>
@@ -340,6 +374,12 @@ function fmtK(val) {
 function pct(val, total) {
     if (!total) return 0;
     return Math.round((val / total) * 100);
+}
+
+function topActPct(val) {
+    if (!data.value?.top_acts?.length) return 0;
+    const max = data.value.top_acts[0].revenue || 1;
+    return Math.round((val / max) * 100);
 }
 
 function barH(val) {
