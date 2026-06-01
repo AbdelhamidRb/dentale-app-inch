@@ -219,6 +219,21 @@ if ($LASTEXITCODE -ne 0) { ERR "Seeder echoue." }
 & $PHP "$APP_ROOT\artisan" optimize 2>&1 | Out-Null
 OK "Base de donnees initialisee"
 
+# ── 7b. Build interface (npm) ──────────────────────────────────
+Step "7b" 8 "Construction interface utilisateur..."
+$npmCmd = Get-ChildItem "$LARAGON_ROOT\bin\nodejs" -Recurse -Filter "npm.cmd" -ErrorAction SilentlyContinue |
+          Select-Object -First 1 -ExpandProperty FullName
+if ($npmCmd) {
+    Write-Host "  npm install..." -ForegroundColor Gray
+    & cmd /c "`"$npmCmd`" --prefix `"$APP_ROOT`" install --silent" 2>&1 | Out-Null
+    Write-Host "  npm run build..." -ForegroundColor Gray
+    & cmd /c "`"$npmCmd`" --prefix `"$APP_ROOT`" run build" 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) { OK "Interface construite (Vue.js)" }
+    else { WARN "npm build a echoue — l'app affichera une erreur 500. Relancez npm run build manuellement." }
+} else {
+    WARN "Node.js introuvable dans $LARAGON_ROOT\bin\nodejs — npm run build requis manuellement."
+}
+
 # ── 8. Apache + Firewall + Taches ─────────────────────────────
 Step 8 8 "Configuration reseau et demarrage..."
 
