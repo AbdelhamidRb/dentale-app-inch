@@ -2,10 +2,21 @@
 # Prerequis : Laragon installe dans C:\laragon
 # Usage : clic droit INSTALLER.bat -> Executer en tant qu'administrateur
 
-# Chemins derives automatiquement — fonctionne sur C:\, D:\, etc.
-$APP_ROOT     = Split-Path $PSScriptRoot                      # X:\laragon\www\dental-app-inch
-$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
-$BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
+# Detecter Laragon automatiquement sur tous les lecteurs (C:\, D:\, etc.)
+$LARAGON_ROOT = $null
+foreach ($drive in (Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Root)) {
+    $candidate = Join-Path $drive.TrimEnd('\') "laragon"
+    if (Test-Path "$candidate\bin\php") { $LARAGON_ROOT = $candidate; break }
+}
+if (-not $LARAGON_ROOT) {
+    Write-Host "[ERREUR] Laragon introuvable sur les lecteurs disponibles." -ForegroundColor Red
+    Write-Host "  Installez Laragon depuis laragon.org puis relancez." -ForegroundColor Yellow
+    Read-Host "Entree pour quitter"; exit 1
+}
+Write-Host "  Laragon detecte : $LARAGON_ROOT" -ForegroundColor Gray
+$APP_DIR    = "$LARAGON_ROOT\www\dental-app-inch"
+$APP_ROOT   = $APP_DIR
+$BACKUP_DIR = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $GITHUB_REPO = "AbdelhamidRb/dentale-app-inch"
 $BRANCH      = "main"
 $DB_NAME     = "dental_db_inch"
