@@ -9,6 +9,7 @@ $LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)             # X:\laragon
 $BACKUP_DIR   = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $USB_LABEL  = "DENTAL-BKP"
 
+
 # Lire DB depuis .env
 function Get-EnvVal($key) {
     $line = Get-Content "$APP_ROOT\.env" -ErrorAction SilentlyContinue |
@@ -60,7 +61,7 @@ $sqlFile = Join-Path $dest "database.sql"
 
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName               = $mysqldump
-$psi.Arguments              = "-u $DB_USER -p$DB_PASS --single-transaction --default-character-set=utf8mb4 --routines $DB_NAME"
+$psi.Arguments              = "-u $DB_USER --password=$DB_PASS --single-transaction --default-character-set=utf8mb4 --routines $DB_NAME"
 $psi.RedirectStandardOutput = $true
 $psi.RedirectStandardError  = $true
 $psi.UseShellExecute        = $false
