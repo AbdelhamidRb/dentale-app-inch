@@ -229,9 +229,9 @@ if ($npmCmd) {
     Write-Host "  npm run build..." -ForegroundColor Gray
     & cmd /c "`"$npmCmd`" --prefix `"$APP_ROOT`" run build" 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { OK "Interface construite (Vue.js)" }
-    else { WARN "npm build a echoue — l'app affichera une erreur 500. Relancez npm run build manuellement." }
+    else { ERR "npm run build a echoue. L'app afficherait une erreur 500. Verifiez Node.js dans Laragon." }
 } else {
-    WARN "Node.js introuvable dans $LARAGON_ROOT\bin\nodejs — npm run build requis manuellement."
+    ERR "Node.js introuvable dans $LARAGON_ROOT\bin\nodejs. Installez Node.js dans Laragon et relancez."
 }
 
 # ── 8. Apache + Firewall + Taches ─────────────────────────────

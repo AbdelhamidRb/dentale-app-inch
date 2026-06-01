@@ -1,8 +1,9 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$START = "$LARAGON_ROOT\www\dental-app-inch\scripts\start-app.ps1"
-$STOP  = "$LARAGON_ROOT\www\dental-app-inch\scripts\stop-app.ps1"
+# Chemins derives depuis PSScriptRoot — fonctionne sur C:\, D:\, etc.
+$START = "$PSScriptRoot\start-app.ps1"
+$STOP  = "$PSScriptRoot\stop-app.ps1"
 
 $form = New-Object Windows.Forms.Form
 $form.Text            = "Dental App"

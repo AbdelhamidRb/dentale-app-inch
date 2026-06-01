@@ -134,8 +134,10 @@
 
 <script language="VBScript">
 
-Dim shell
+Dim shell, scriptDir
 Set shell = CreateObject("WScript.Shell")
+' Detecter le dossier de ce fichier HTA automatiquement
+scriptDir = CreateObject("Scripting.FileSystemObject").GetFile(window.location.pathname).ParentFolder.Path
 
 ' ─── Vérifier si les services tournent ───────────────────────────
 Function IsRunning(processName)
@@ -175,7 +177,7 @@ Sub DemarrerApp()
     btnStart.disabled = True
     dot.className     = "dot"
     statusText.innerText = "Démarrage en cours..."
-    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File ""C:\laragon\www\dental-app-inch\scripts\start-app.ps1""", 0, False
+    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & scriptDir & "\start-app.ps1""", 0, False
     window.setTimeout "UpdateStatus()", 8000
 End Sub
 
@@ -184,7 +186,7 @@ Sub FermerApp()
     btnStop.disabled  = True
     dot.className     = "dot"
     statusText.innerText = "Fermeture en cours..."
-    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File ""C:\laragon\www\dental-app-inch\scripts\stop-app.ps1""", 0, False
+    shell.Run "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & scriptDir & "\stop-app.ps1""", 0, False
     window.setTimeout "UpdateStatus()", 3000
 End Sub
 
