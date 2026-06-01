@@ -1,10 +1,14 @@
 ﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
+# Chemins derives depuis PSScriptRoot (scripts\ -> app\ -> www\ -> laragon\)
+$APP_ROOT     = Split-Path $PSScriptRoot
+$LARAGON_ROOT = Split-Path (Split-Path $APP_ROOT)
+
 # Icone personnalisee dental.ico (fournie dans le dossier scripts)
-$icoPath = "$LARAGON_ROOT\www\dental-app-inch\scripts\dental.ico"
+$icoPath = "$APP_ROOT\scripts\dental.ico"
 if (-not (Test-Path $icoPath)) {
-    Write-Host "ERREUR : dental.ico introuvable dans scripts/" -ForegroundColor Red
+    Write-Host "ERREUR : dental.ico introuvable dans $APP_ROOT\scripts\" -ForegroundColor Red
     exit 1
 }
 Write-Host "OK  dental.ico charge"
