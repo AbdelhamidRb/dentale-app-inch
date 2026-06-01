@@ -120,7 +120,7 @@ if (Test-Path $sqlFile) {
 
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName               = $mysql
-    $psi.Arguments              = "-u $DB_USER -p$DB_PASS $DB_NAME"
+    $psi.Arguments              = "-u $DB_USER --password=$DB_PASS $DB_NAME"
     $psi.RedirectStandardInput  = $true
     $psi.RedirectStandardError  = $true
     $psi.UseShellExecute        = $false
