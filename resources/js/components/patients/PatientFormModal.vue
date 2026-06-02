@@ -4,7 +4,7 @@
     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
     @click.self="$emit('close')"
   >
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div ref="modalEl" class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
       <!-- ── En-tête modal ───────────────────────────────────────── -->
       <div class="flex items-center justify-between p-5 border-b border-slate-100">
@@ -143,6 +143,11 @@ const emit = defineEmits(['close', 'saved'])
 const isEdit  = computed(() => !!props.patient)
 const loading = ref(false)
 const error   = ref(null)
+const modalEl = ref(null)
+
+watch(() => props.formError, (val) => {
+  if (val) modalEl.value?.scrollTo({ top: 0, behavior: 'smooth' })
+})
 
 const form = reactive({
   first_name: '',
