@@ -97,8 +97,8 @@ $usbXml = @"
   </Settings>
   <Actions>
     <Exec>
-      <Command>powershell.exe</Command>
-      <Arguments>-NonInteractive -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "$usbScript"</Arguments>
+      <Command>wscript.exe</Command>
+      <Arguments>//B //NoLogo "$vbsLauncher" "$usbScript"</Arguments>
     </Exec>
   </Actions>
 </Task>
