@@ -41,12 +41,10 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::put('/patients/{patient}',    [PatientController::class, 'update']);
 
         // Alertes médicales
-        Route::post('/patients/{patient}/alerts',           [PatientController::class, 'storeAlert']);
-        Route::delete('/patients/{patient}/alerts/{alert}', [PatientController::class, 'destroyAlert']);
+        Route::post('/patients/{patient}/alerts', [PatientController::class, 'storeAlert']);
 
         // Documents
-        Route::post('/patients/{patient}/documents',              [PatientController::class, 'uploadDocument']);
-        Route::delete('/patients/{patient}/documents/{document}', [PatientController::class, 'destroyDocument']);
+        Route::post('/patients/{patient}/documents', [PatientController::class, 'uploadDocument']);
 
         // Odontogramme
         Route::get('/patients/{patient}/teeth', [PatientController::class, 'teeth']);
@@ -62,24 +60,6 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         // Changer le statut uniquement
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
 
-        // Annuler
-        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
-
-        // ─── Consultations ─────────────────────────────────────────────
-
-        // Liste + création
-        Route::get('/consultations',  [ConsultationController::class, 'index']);
-        Route::post('/consultations', [ConsultationController::class, 'store']);
-
-        // Fiche + modification
-        Route::get('/consultations/{consultation}',    [ConsultationController::class, 'show']);
-        Route::put('/consultations/{consultation}',    [ConsultationController::class, 'update']);
-
-        // Ajouter une séance à une consultation EN_COURS
-        Route::post('/consultations/{consultation}/session', [ConsultationController::class, 'addSession']);
-
-        // Clôturer
-        Route::patch('/consultations/{consultation}/close', [ConsultationController::class, 'close']);
 
         // ─── Paiements ─────────────────────────────────────────────────
         Route::get('/payments',                           [PaymentController::class, 'index']);
@@ -113,11 +93,27 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::delete('/catalog-acts/{catalogAct}',[CatalogActController::class, 'destroy']);
     });
 
-    // ─── Archivage (Dentiste uniquement) ─────────────────────────────
+    // ─── Actions Dentiste uniquement ─────────────────────────────────
     Route::middleware('dentist')->group(function () {
+        // Patients
         Route::delete('/patients/{patient}',         [PatientController::class, 'destroy']);
         Route::post('/patients/{patient}/restore',   [PatientController::class, 'restore']);
-        Route::delete('/consultations/{consultation}', [ConsultationController::class, 'destroy']);
+        Route::delete('/patients/{patient}/alerts/{alert}',       [PatientController::class, 'destroyAlert']);
+        Route::delete('/patients/{patient}/documents/{document}', [PatientController::class, 'destroyDocument']);
+
+        // RDV
+        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+
+        // Consultations
+        Route::get('/consultations',                              [ConsultationController::class, 'index']);
+        Route::post('/consultations',                             [ConsultationController::class, 'store']);
+        Route::get('/consultations/{consultation}',               [ConsultationController::class, 'show']);
+        Route::put('/consultations/{consultation}',               [ConsultationController::class, 'update']);
+        Route::post('/consultations/{consultation}/session',      [ConsultationController::class, 'addSession']);
+        Route::patch('/consultations/{consultation}/close',       [ConsultationController::class, 'close']);
+        Route::delete('/consultations/{consultation}',            [ConsultationController::class, 'destroy']);
+
+        // Paiements
         Route::delete('/payments/transactions/{transactionId}', [PaymentController::class, 'deleteTransaction']);
     });
 });
