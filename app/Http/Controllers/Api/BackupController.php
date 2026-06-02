@@ -90,7 +90,7 @@ class BackupController extends Controller
         $timestamp = now()->format('Y-m-d_H-i');
         $dest      = $this->backupDir() . '\\' . $timestamp;
 
-        if (!mkdir($dest, 0755, true) && !is_dir($dest)) {
+        if (!@mkdir($dest, 0755, true) && !is_dir($dest)) {
             return response()->json(['error' => 'Impossible de créer le dossier de backup.'], 500);
         }
 
