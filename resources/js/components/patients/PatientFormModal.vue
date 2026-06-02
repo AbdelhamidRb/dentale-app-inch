@@ -17,25 +17,13 @@
         </button>
       </div>
 
-      <!-- ── Alerte doublons de nom ─────────────────────────────── -->
-      <div v-if="sameNamePatients.length" class="mx-5 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1.5">
-        <p class="text-sm font-semibold text-amber-800 flex items-center gap-1.5">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          </svg>
-          {{ sameNamePatients.length > 1 ? 'Patients avec le même nom' : 'Patient avec le même nom' }}
-        </p>
-        <div v-for="p in sameNamePatients" :key="p.id"
-          class="text-xs text-amber-700 bg-amber-100/60 rounded px-2 py-1">
-          {{ p.first_name }} {{ p.last_name }} — N° {{ p.numero_dossier }}
-          <span v-if="p.birth_date"> — né(e) le {{ formatDate(p.birth_date) }}</span>
-          <span v-if="p.phone"> — {{ p.phone }}</span>
-        </div>
-        <p class="text-xs text-amber-600 mt-1 leading-relaxed">
-          S'il s'agit d'un <strong>patient différent</strong>, modifiez légèrement le prénom pour les distinguer.
-          <br>Exemple : <strong>Mohammed A.</strong> ou <strong>Mohammed B.</strong>
-        </p>
+      <!-- ── Patient archivé (bloquant) ──────────────────────────── -->
+      <div v-if="formError" class="mx-5 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+        <svg class="w-4 h-4 shrink-0 mt-0.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <p class="text-sm text-amber-800">{{ formError }}</p>
       </div>
 
       <!-- ── Formulaire ──────────────────────────────────────────── -->
@@ -48,14 +36,14 @@
               Prénom <span class="text-red-400">*</span>
             </label>
             <input v-model="form.first_name" required
-              class="input" placeholder="Mohammed" @blur="checkName" />
+              class="input" placeholder="Mohammed" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1.5">
               Nom <span class="text-red-400">*</span>
             </label>
             <input v-model="form.last_name" required
-              class="input" placeholder="Alami" @blur="checkName" />
+              class="input" placeholder="Alami" />
           </div>
         </div>
 
@@ -112,16 +100,6 @@
           </textarea>
         </div>
 
-        <!-- Patient archivé (bloquant) -->
-        <div v-if="formError"
-          class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
-          <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          </svg>
-          {{ formError }}
-        </div>
-
         <!-- Message erreur -->
         <div v-if="error"
           class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -162,12 +140,9 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'saved'])
 
-const isEdit          = computed(() => !!props.patient)
-const loading         = ref(false)
-const error           = ref(null)
-const sameNamePatients = ref([])
-
-let checkTimer = null
+const isEdit  = computed(() => !!props.patient)
+const loading = ref(false)
+const error   = ref(null)
 
 const form = reactive({
   first_name: '',
@@ -190,32 +165,6 @@ watch(() => props.patient, (p) => {
     notes:      p.notes || '',
   })
 }, { immediate: true })
-
-function checkName() {
-  clearTimeout(checkTimer)
-  const first = form.first_name.trim()
-  const last  = form.last_name.trim()
-  if (!first || !last) { sameNamePatients.value = []; return }
-
-  checkTimer = setTimeout(async () => {
-    try {
-      const params = new URLSearchParams({ first_name: first, last_name: last })
-      if (props.patient?.id) params.append('exclude_id', props.patient.id)
-      const res  = await fetch(`/api/patients?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' }
-      })
-      const data = await res.json()
-      sameNamePatients.value = data.matches ?? []
-    } catch { sameNamePatients.value = [] }
-  }, 400)
-}
-
-function formatDate(d) {
-  if (!d) return ''
-  const date = d.split('T')[0]
-  const [y, m, day] = date.split('-')
-  return `${day}/${m}/${y}`
-}
 
 async function handleSubmit() {
   loading.value = true
