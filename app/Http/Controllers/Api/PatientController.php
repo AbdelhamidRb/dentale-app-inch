@@ -85,18 +85,16 @@ class PatientController extends Controller
             'notes'      => 'nullable|string',
         ]);
 
-        // ── Vérifier si un patient ARCHIVÉ identique existe (bloquer) ──
-        $archivedQuery = Patient::where('first_name', $request->first_name)
+        // ── Vérifier si un patient ARCHIVÉ avec le même nom existe (bloquer) ──
+        $archived = Patient::where('first_name', $request->first_name)
             ->where('last_name', $request->last_name)
-            ->where('is_archived', true);
-
-        $archived = $request->filled('birth_date')
-            ? (clone $archivedQuery)->where('birth_date', $request->birth_date)->first()
-            : $archivedQuery->where('phone', $request->phone)->first();
+            ->where('is_archived', true)
+            ->first();
 
         if ($archived) {
+            $suggested = $archived->first_name . ' ' . $archived->last_name . ' 2';
             return response()->json([
-                'message' => "Ce patient ({$archived->numero_dossier} — {$archived->full_name}) est déjà dans le système mais archivé. Le dentiste peut le réactiver.",
+                'message' => "Un patient archivé \"{$archived->full_name}\" ({$archived->numero_dossier}) existe déjà. Le dentiste peut le réactiver. S'il s'agit d'une autre personne, modifiez le nom pour le distinguer (ex: \"{$suggested}\").",
             ], 409);
         }
 
