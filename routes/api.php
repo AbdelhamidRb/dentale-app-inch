@@ -97,6 +97,22 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::patch('/appointments/{appointment}/whatsapp-notified', [AppointmentController::class, 'markWhatsappNotified']);
     });
 
+    // ─── Réseau local (Dentiste uniquement) ──────────────────────────
+    Route::middleware('dentist')->get('/network', function () {
+        $ips = @gethostbynamel(gethostname()) ?: [];
+        $localIp = null;
+        foreach ($ips as $ip) {
+            if (preg_match('/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/', $ip)) {
+                $localIp = $ip;
+                break;
+            }
+        }
+        return response()->json([
+            'ip'  => $localIp,
+            'url' => $localIp ? "http://{$localIp}" : null,
+        ]);
+    });
+
     // ─── Backup / Restauration (Dentiste uniquement) ─────────────────
     Route::middleware('dentist')->group(function () {
         Route::get('/backup/list',    [BackupController::class, 'list']);
