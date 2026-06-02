@@ -135,6 +135,8 @@ class AppointmentController extends Controller
             'creator:id,name,role',
         ]);
 
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
+
         return response()->json([
             'message'     => 'Rendez-vous créé avec succès.',
             'appointment' => $this->formatAppointment($appointment),
@@ -214,6 +216,8 @@ class AppointmentController extends Controller
 
         $appointment->update(['status' => $request->status]);
 
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
+
         return response()->json([
             'message'     => 'Statut mis à jour.',
             'appointment' => $this->formatAppointment($appointment),
@@ -226,6 +230,8 @@ class AppointmentController extends Controller
     public function destroy(Appointment $appointment)
     {
         $appointment->delete();
+
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
 
         return response()->json(['message' => 'Rendez-vous supprimé.'], 200);
     }

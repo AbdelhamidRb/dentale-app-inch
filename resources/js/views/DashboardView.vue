@@ -227,8 +227,6 @@
                                 <span class="text-xs shrink-0 tabular-nums">
                                     <span class="font-semibold text-slate-800">{{ fmt(act.revenue) }}</span>
                                     <span class="text-slate-400"> MAD</span>
-                                    <span class="text-slate-300 mx-1">·</span>
-                                    <span class="text-slate-400">{{ act.count }}x</span>
                                 </span>
                             </div>
                             <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
