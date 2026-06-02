@@ -25,7 +25,20 @@ class BackupController extends Controller
     }
 
     private function backupDir(): string {
-        $drive = substr(base_path(), 0, 2); // "C:" ou "D:"
+        // Priorité 1 : variable OneDrive définie par Windows
+        foreach (['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial'] as $env) {
+            $od = getenv($env);
+            if ($od && is_dir($od)) {
+                return rtrim($od, '\\/') . '\\backups\\dental-app';
+            }
+        }
+        // Priorité 2 : USERPROFILE\OneDrive
+        $profile = getenv('USERPROFILE');
+        if ($profile && is_dir($profile . '\\OneDrive')) {
+            return $profile . '\\OneDrive\\backups\\dental-app';
+        }
+        // Fallback : C:\backups\dental-app
+        $drive = substr(base_path(), 0, 2);
         return $drive . '\\backups\\dental-app';
     }
 
