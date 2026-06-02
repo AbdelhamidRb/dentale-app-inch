@@ -69,7 +69,7 @@ router.beforeEach((to) => {
         try {
             const user = JSON.parse(localStorage.getItem("user") || "{}");
             if (user.role === "ASSISTANT") {
-                const forbidden = ["dashboard", "consultations", "stock", "parametres"];
+                const forbidden = ["dashboard", "consultations", "stock"];
                 if (forbidden.includes(to.name)) return { name: "agenda" };
             }
         } catch {}
