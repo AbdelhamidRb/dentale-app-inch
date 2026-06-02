@@ -239,7 +239,8 @@
         <PatientFormModal
             v-if="showForm"
             :patient="editingPatient"
-            @close="showForm = false"
+            :form-error="patientFormError"
+            @close="showForm = false; patientFormError = null"
             @saved="handleSaved"
         />
 
@@ -298,14 +299,16 @@ const {
     deleteDocument,
 } = usePatients();
 
-const showForm      = ref(false);
-const editingPatient = ref(null);
+const showForm        = ref(false);
+const editingPatient  = ref(null);
+const patientFormError = ref(null);
 
 onMounted(() => fetchPatients());
 
 function openForm(patient) {
-    editingPatient.value = patient;
-    showForm.value       = true;
+    editingPatient.value  = patient;
+    patientFormError.value = null;
+    showForm.value        = true;
 }
 
 async function handleSaved(data, isEdit) {
@@ -315,9 +318,10 @@ async function handleSaved(data, isEdit) {
         } else {
             await createPatient(data);
         }
+        patientFormError.value = null;
         showForm.value = false;
     } catch (e) {
-        error.value = e.message;
+        patientFormError.value = e.message;
     }
 }
 
