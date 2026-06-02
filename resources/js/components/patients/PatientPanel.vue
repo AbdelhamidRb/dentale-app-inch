@@ -97,6 +97,7 @@
                 Fiche patient
             </button>
             <button
+                v-if="isDentist"
                 @click="activeTab = 'schema'"
                 :class="['flex-1 py-2.5 text-xs font-medium transition-colors flex items-center justify-center gap-1.5',
                          activeTab === 'schema'
@@ -282,6 +283,7 @@
                             </p>
                         </div>
                         <button
+                            v-if="isDentist"
                             @click="handleDeleteAlert(alert.id)"
                             class="text-slate-300 hover:text-red-400 transition-colors shrink-0"
                             title="Supprimer cette alerte"
@@ -407,6 +409,7 @@
                                 </p>
                             </div>
                             <button
+                                v-if="isDentist"
                                 @click="handleDeleteDocument(doc.id)"
                                 class="text-slate-300 hover:text-red-400 transition-colors shrink-0 ml-1"
                                 title="Supprimer ce document"
@@ -526,6 +529,11 @@ import ToothChart from "./ToothChart.vue";
 import ConfirmModal from "../ui/ConfirmModal.vue";
 
 const router = useRouter();
+
+const isDentist = computed(() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}').role === 'DENTIST'; }
+    catch { return false; }
+});
 
 // ─── Props ────────────────────────────────────────────────────────
 const props = defineProps({
