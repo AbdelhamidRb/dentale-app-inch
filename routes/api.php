@@ -98,48 +98,7 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
     });
 
     // ─── Réseau local (Dentiste uniquement) ──────────────────────────
-    Route::middleware('dentist')->get('/network', function () {
-        $localIp = null;
-        $privatePattern = '/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/';
-
-        // 1. VirtualHost Apache — mis a jour par start-app.ps1 a chaque demarrage
-        $vhost = dirname(dirname(base_path()))
-               . DIRECTORY_SEPARATOR . 'etc'
-               . DIRECTORY_SEPARATOR . 'apache2'
-               . DIRECTORY_SEPARATOR . 'sites-enabled'
-               . DIRECTORY_SEPARATOR . 'dental-app-inch.conf';
-
-        if (file_exists($vhost)) {
-            $content = @file_get_contents($vhost);
-            if ($content && preg_match('/ServerAlias[^\n]+?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/', $content, $m)) {
-                $localIp = $m[1];
-            }
-        }
-
-        // 2. Fallback : gethostbynamel
-        if (!$localIp) {
-            foreach (@gethostbynamel(gethostname()) ?: [] as $ip) {
-                if (preg_match($privatePattern, $ip)) { $localIp = $ip; break; }
-            }
-        }
-
-        // 3. Fallback : ipconfig (Windows)
-        if (!$localIp) {
-            $out = [];
-            @exec('ipconfig', $out);
-            foreach ($out as $line) {
-                if (preg_match('/(?:Adresse IPv4|IPv4 Address)[^:]*:\s*([\d.]+)/', $line, $m)) {
-                    $ip = trim($m[1]);
-                    if (preg_match($privatePattern, $ip)) { $localIp = $ip; break; }
-                }
-            }
-        }
-
-        return response()->json([
-            'ip'  => $localIp,
-            'url' => $localIp ? "http://{$localIp}" : null,
-        ]);
-    });
+    Route::middleware('dentist')->get('/network', [SettingsController::class, 'network']);
 
     // ─── Backup / Restauration (Dentiste uniquement) ─────────────────
     Route::middleware('dentist')->group(function () {

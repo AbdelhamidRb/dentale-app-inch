@@ -44,7 +44,9 @@ echo   OK
 
 echo.
 echo [3/4] Optimisation Laravel...
-"%PHP%" "%APP%\artisan" optimize
+"%PHP%" "%APP%\artisan" route:clear
+"%PHP%" "%APP%\artisan" config:cache
+"%PHP%" "%APP%\artisan" view:cache
 "%PHP%" "%APP%\artisan" cache:clear
 echo   OK
 
