@@ -71,6 +71,11 @@ class CheckLicense
             return ['valid' => false, 'reason' => 'Cette licence appartient à un autre PC.'];
         }
 
+        // Vérifier l'expiration
+        if (!empty($data['expires_at']) && now()->gt($data['expires_at'])) {
+            return ['valid' => false, 'reason' => 'Licence expirée le ' . $data['expires_at'] . '. Contactez hamidrherib@gmail.com pour renouveler.'];
+        }
+
         return ['valid' => true, 'reason' => null];
     }
 
