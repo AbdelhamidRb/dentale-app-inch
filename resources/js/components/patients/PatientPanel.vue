@@ -66,8 +66,8 @@
                     title="Modifier">
                     <Pencil class="w-4 h-4" />
                 </button>
-                <!-- Bouton archiver -->
-                <button @click="$emit('archive', patient.id)"
+                <!-- Bouton archiver (dentiste uniquement) -->
+                <button v-if="isDentist" @click="$emit('archive', patient.id)"
                     class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                     title="Archiver">
                     <Archive class="w-4 h-4" />
