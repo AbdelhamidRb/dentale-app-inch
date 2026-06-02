@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $key = 'dashboard_stats_v3_' . now()->format('Y-m');
+        $key = 'dashboard_stats_v4_' . now()->format('Y-m');
         return response()->json(
             cache()->remember($key, 300, fn() => $this->compute())
         );
@@ -124,7 +124,23 @@ class DashboardController extends Controller
             ];
         }
 
-        // ── 7. Répartition patients ───────────────────────────────────
+        // ── 7. Top 5 actes par revenu ────────────────────────────────
+        $topActsRaw = DB::select("
+            SELECT
+                ca.name,
+                ca.code,
+                COUNT(*)         AS `count`,
+                SUM(coa.price)   AS revenue
+            FROM consultation_acts coa
+            JOIN catalog_acts ca  ON ca.id  = coa.catalog_act_id
+            JOIN consultations c  ON c.id   = coa.consultation_id
+            WHERE c.status IN ('EN_COURS', 'TERMINE')
+            GROUP BY ca.id, ca.name, ca.code
+            ORDER BY revenue DESC
+            LIMIT 5
+        ");
+
+        // ── 8. Répartition patients ───────────────────────────────────
         $demo = DB::selectOne("
             SELECT
                 COUNT(*)                                                          AS total,
@@ -159,6 +175,12 @@ class DashboardController extends Controller
                 'total'    => (int) ($absStats->total ?? 0),
             ],
             'monthly_chart' => $monthlyChart,
+            'top_acts'      => array_map(fn($a) => [
+                'name'    => $a->name,
+                'code'    => $a->code,
+                'count'   => (int)   $a->count,
+                'revenue' => (float) $a->revenue,
+            ], $topActsRaw),
             'demographics'  => [
                 'total'      => (int) ($demo->total ?? 0),
                 'gender'     => ['M' => (int) ($demo->male ?? 0), 'F' => (int) ($demo->female ?? 0)],

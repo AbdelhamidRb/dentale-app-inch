@@ -372,6 +372,41 @@
             </div>
         </div>
 
+        <!-- ══ Onglet Réseau ═════════════════════════════════════════ -->
+        <div v-if="activeTab === 'reseau'" class="space-y-4 max-w-2xl">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+                <p class="font-semibold text-slate-800 mb-1">Adresse de l'application</p>
+                <p class="text-xs text-slate-400 mb-5">
+                    Communiquez ce lien à votre assistante pour qu'elle accède à l'application depuis son appareil (même réseau Wi-Fi).
+                </p>
+
+                <div v-if="networkLoading" class="h-16 flex items-center justify-center">
+                    <div class="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"/>
+                </div>
+
+                <template v-else-if="networkUrl">
+                    <!-- Adresse affichée -->
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-3">
+                        <span class="flex-1 font-mono text-lg font-semibold text-slate-800 select-all">{{ networkUrl }}</span>
+                        <button @click="copyNetwork"
+                                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shrink-0"
+                                :class="copied ? 'bg-green-100 text-green-700' : 'bg-blue-600 text-white hover:bg-blue-700'">
+                            <CheckCircle v-if="copied" class="w-3.5 h-3.5"/>
+                            <span>{{ copied ? 'Copié !' : 'Copier' }}</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                        <Clock class="w-3.5 h-3.5 shrink-0"/>
+                        L'adresse peut changer si le réseau Wi-Fi change. Rechargez cette page pour obtenir l'adresse actuelle.
+                    </p>
+                </template>
+
+                <div v-else class="text-sm text-amber-600 bg-amber-50 px-4 py-3 rounded-xl">
+                    Aucune adresse réseau détectée. Vérifiez que le PC est bien connecté au Wi-Fi du cabinet.
+                </div>
+            </div>
+        </div>
+
         <!-- ── Modal formulaire acte ────────────────────────────────── -->
         <Teleport to="body">
         <Transition enter-active-class="transition duration-150" enter-from-class="opacity-0"
@@ -515,6 +550,7 @@ const tabs = [
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'acts',     label: 'Actes' },
     { id: 'archive',  label: 'Archivage' },
+    { id: 'reseau',   label: 'Réseau' },
 ];
 
 // ── Backup ──────────────────────────────────────────────────────
@@ -761,11 +797,40 @@ async function loadArchivePreview() {
     finally { loadingPreview.value = false; }
 }
 
+// ── Réseau ──────────────────────────────────────────────────────
+const networkUrl     = ref(null);
+const networkLoading = ref(false);
+const copied         = ref(false);
+
+async function loadNetwork() {
+    networkLoading.value = true;
+    try {
+        const res = await api('/api/network');
+        networkUrl.value = res.url;
+    } finally {
+        networkLoading.value = false;
+    }
+}
+
+function copyNetwork() {
+    if (!networkUrl.value) return;
+    const el = document.createElement('textarea');
+    el.value = networkUrl.value;
+    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    copied.value = true;
+    setTimeout(() => { copied.value = false; }, 2000);
+}
+
 onMounted(() => {
     loadBackups();
     loadTemplate();
     loadActs();
     loadArchiveConfig();
     loadArchivePreview();
+    loadNetwork();
 });
 </script>

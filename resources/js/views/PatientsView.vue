@@ -147,7 +147,7 @@
                         <!-- Alertes (toujours visible) -->
                         <div class="flex items-center justify-center w-5 shrink-0">
                             <AlertTriangle v-if="patient.has_critical_alerts" class="w-4 h-4 text-red-500" title="Alertes critiques"/>
-                            <Bell v-else-if="patient.alerts_count > 0" class="w-4 h-4 text-amber-400" :title="`${patient.alerts_count} alerte(s)`"/>
+                            <AlertTriangle v-else-if="patient.alerts_count > 0" class="w-4 h-4 text-amber-400" :title="`${patient.alerts_count} alerte(s)`"/>
                             <span v-else class="hidden lg:block text-slate-200 text-xs">—</span>
                         </div>
 
@@ -269,7 +269,6 @@ import {
     Plus,
     X,
     AlertTriangle,
-    Bell,
     RotateCcw,
     ChevronRight,
     UserX,
