@@ -812,9 +812,15 @@ async function loadNetwork() {
     }
 }
 
-async function copyNetwork() {
+function copyNetwork() {
     if (!networkUrl.value) return;
-    await navigator.clipboard.writeText(networkUrl.value);
+    const el = document.createElement('textarea');
+    el.value = networkUrl.value;
+    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
 }
