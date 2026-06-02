@@ -10,7 +10,7 @@
         <!-- Onglets -->
         <div class="flex gap-1 mb-6 bg-white border border-slate-200 rounded-xl p-1 w-fit flex-wrap">
             <button
-                v-for="tab in tabs" :key="tab.id"
+                v-for="tab in visibleTabs" :key="tab.id"
                 @click="activeTab = tab.id"
                 :class="['relative px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
                          activeTab === tab.id
@@ -544,7 +544,12 @@ import { ref, computed, onMounted } from 'vue';
 import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
          Plus, Pencil, Trash2, X, Stethoscope, Archive } from 'lucide-vue-next';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
-const activeTab = ref('backup');
+
+const isDentist = computed(() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}').role === 'DENTIST'; }
+    catch { return false; }
+});
+
 const tabs = [
     { id: 'backup',   label: 'Sauvegardes' },
     { id: 'whatsapp', label: 'WhatsApp' },
@@ -552,6 +557,12 @@ const tabs = [
     { id: 'archive',  label: 'Archivage' },
     { id: 'reseau',   label: 'Réseau' },
 ];
+
+const visibleTabs = computed(() =>
+    isDentist.value ? tabs : tabs.filter(t => t.id === 'whatsapp')
+);
+
+const activeTab = ref(isDentist.value ? 'backup' : 'whatsapp');
 
 // ── Backup ──────────────────────────────────────────────────────
 const backups     = ref([]);

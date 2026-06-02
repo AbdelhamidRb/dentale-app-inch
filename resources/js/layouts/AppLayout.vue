@@ -153,7 +153,7 @@ const navItems = [
     { divider: "Paiements",   roles: ["DENTIST", "ASSISTANT"] },
     { route: "paiements",     label: "Paiements",        icon: markRaw(CreditCard),     roles: ["DENTIST", "ASSISTANT"] },
     { divider: "Cabinet",     roles: ["DENTIST"] },
-    { route: "parametres",   label: "Paramètres",       icon: markRaw(Settings),       roles: ["DENTIST"] },
+    { route: "parametres",   label: "Paramètres",       icon: markRaw(Settings),       roles: ["DENTIST", "ASSISTANT"] },
     { divider: "Compte",      roles: ["DENTIST", "ASSISTANT"] },
     { route: "profil",        label: "Mon profil",       icon: markRaw(UserCircle),     roles: ["DENTIST", "ASSISTANT"] },
 ];
@@ -177,10 +177,11 @@ const mobileNavItems = computed(() => {
         ];
     }
     return [
-        { route: "agenda",    label: "Agenda",     icon: markRaw(CalendarDays) },
-        { route: "patients",  label: "Patients",   icon: markRaw(Users) },
-        { route: "paiements", label: "Paiements",  icon: markRaw(CreditCard) },
-        { route: "profil",    label: "Profil",     icon: markRaw(UserCircle) },
+        { route: "agenda",      label: "Agenda",     icon: markRaw(CalendarDays) },
+        { route: "patients",    label: "Patients",   icon: markRaw(Users) },
+        { route: "paiements",   label: "Paiements",  icon: markRaw(CreditCard) },
+        { route: "profil",      label: "Profil",     icon: markRaw(UserCircle) },
+        { route: "parametres",  label: "Réglages",   icon: markRaw(Settings) },
     ];
 });
 

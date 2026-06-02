@@ -19,8 +19,8 @@
                     <h1 class="text-base font-semibold text-slate-800">Paiements</h1>
                 </div>
 
-                <!-- Stats en grid 3 colonnes -->
-                <div class="grid grid-cols-3 gap-1 mb-3 bg-slate-50 rounded-xl p-2">
+                <!-- Stats en grid 3 colonnes (dentiste uniquement) -->
+                <div v-if="isDentist" class="grid grid-cols-3 gap-1 mb-3 bg-slate-50 rounded-xl p-2">
                     <div v-for="s in statCards" :key="s.label" class="text-center px-1">
                         <p :class="['text-sm font-bold leading-tight', s.color]">{{ fmt(s.value) }}</p>
                         <p class="text-[10px] text-slate-400 leading-tight mt-0.5">{{ s.label }}</p>
