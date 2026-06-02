@@ -175,7 +175,7 @@
                         class="w-full py-2.5 rounded-xl text-sm font-medium transition-colors
                                bg-green-600 text-white hover:bg-green-700
                                disabled:bg-green-200 flex items-center justify-center gap-2">
-                    <Check class="w-4 h-4" />
+                    <ClipboardCheck class="w-4 h-4" />
                     Clôturer
                 </button>
 
@@ -352,7 +352,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { ChevronLeft, X, Check, Trash2, Calendar, Maximize2, MousePointer } from 'lucide-vue-next';
+import { ChevronLeft, X, ClipboardCheck, Trash2, Calendar, Maximize2, MousePointer } from 'lucide-vue-next';
 import ConsultationStatusBadge from './ConsultationStatusBadge.vue';
 import ToothChart from './ToothChart.vue';
 import ConfirmModal from '../ui/ConfirmModal.vue';
