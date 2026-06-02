@@ -85,12 +85,28 @@ class PatientController extends Controller
             'notes'      => 'nullable|string',
         ]);
 
-        // Vérifie doublon potentiel
+        // ── Vérifier si un patient ARCHIVÉ identique existe (bloquer) ──
+        $archivedQuery = Patient::where('first_name', $request->first_name)
+            ->where('last_name', $request->last_name)
+            ->where('is_archived', true);
+
+        $archived = $request->filled('birth_date')
+            ? (clone $archivedQuery)->where('birth_date', $request->birth_date)->first()
+            : $archivedQuery->where('phone', $request->phone)->first();
+
+        if ($archived) {
+            return response()->json([
+                'message' => "Ce patient ({$archived->numero_dossier} — {$archived->full_name}) est déjà dans le système mais archivé. Le dentiste peut le réactiver.",
+            ], 409);
+        }
+
+        // ── Vérifier doublon actif (avertissement non-bloquant) ──────
         $doublon = null;
         if ($request->filled('birth_date')) {
             $doublon = Patient::where('first_name', $request->first_name)
                 ->where('last_name', $request->last_name)
                 ->where('birth_date', $request->birth_date)
+                ->where('is_archived', false)
                 ->first();
         }
 
