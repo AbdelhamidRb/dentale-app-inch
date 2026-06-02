@@ -2,6 +2,7 @@
 
 import { ref } from "vue";
 import { paymentsApi } from "../api/payments";
+import { invalidateDashboard } from "../stores/dashboard";
 
 export function usePayments() {
     const patients = ref([]);
@@ -87,6 +88,7 @@ export function usePayments() {
                 }
             }
             invalidateCache();
+            invalidateDashboard();
             return res;
         } catch (e) {
             error.value = e.message ?? "Erreur lors de l'ajout du paiement.";
@@ -112,6 +114,7 @@ export function usePayments() {
                 ).filter((t) => t.id !== transactionId);
             }
             invalidateCache();
+            invalidateDashboard();
             return res;
         } catch (e) {
             error.value = e.message ?? "Erreur lors de la suppression du paiement.";

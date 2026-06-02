@@ -305,8 +305,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { RefreshCw, UserPlus, Banknote, TrendingUp, AlertCircle } from 'lucide-vue-next';
+import { dashboardVersion } from '../stores/dashboard';
 
 const data    = ref(null);
 const loading = ref(false);
@@ -389,4 +390,5 @@ function barH(val) {
 }
 
 onMounted(() => fetchDashboard());
+watch(dashboardVersion, () => fetchDashboard());
 </script>
