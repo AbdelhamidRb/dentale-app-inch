@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { appointmentsApi } from "../api/appointments";
+import { invalidateDashboard } from "../stores/dashboard";
 
 // Retourne le lundi de la semaine contenant `date`
 function getWeekStart(date) {
@@ -111,6 +112,7 @@ export function useAppointments() {
             a.start_time.localeCompare(b.start_time),
         );
         stats.value.total++;
+        invalidateDashboard();
         return res;
         // Les erreurs remontent à l'appelant (AgendaView les catch)
     }
@@ -126,6 +128,7 @@ export function useAppointments() {
         const res = await appointmentsApi.updateStatus(id, status);
         const idx = appointments.value.findIndex((a) => a.id === id);
         if (idx !== -1) appointments.value[idx] = res.appointment;
+        invalidateDashboard();
         return res;
     }
 
@@ -133,6 +136,7 @@ export function useAppointments() {
         await appointmentsApi.cancel(id);
         appointments.value = appointments.value.filter((a) => a.id !== id);
         stats.value.total--;
+        invalidateDashboard();
     }
 
     // ─── Les 7 jours de la semaine courante ───────────────────────

@@ -128,7 +128,7 @@ class ConsultationController extends Controller
             'acts.catalogAct:id,code,name',
         ]);
 
-        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
 
         return response()->json([
             'message'      => 'Consultation créée avec succès.',
@@ -256,7 +256,7 @@ class ConsultationController extends Controller
             'acts.catalogAct:id,code,name',
         ]);
 
-        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
 
         return response()->json([
             'message'      => 'Consultation clôturée.',
@@ -273,7 +273,7 @@ class ConsultationController extends Controller
         $consultation->acts()->delete();
         $consultation->delete();
 
-        cache()->forget('dashboard_stats_v3_' . now()->format('Y-m'));
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
 
         return response()->json(['message' => 'Consultation supprimée.']);
     }

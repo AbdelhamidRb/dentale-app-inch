@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { consultationsApi } from "../api/consultations";
+import { invalidateDashboard } from "../stores/dashboard";
 // ─── État réactif ──────────────────────────────────────────────
 // ─── Filtres actifs ────────────────────────────────────────────
 const consultations = ref([]);
@@ -93,8 +94,8 @@ export function useConsultations() {
     // ═══════════════════════════════════════════════════════════════
     async function createConsultation(payload) {
         const res = await consultationsApi.create(payload);
-        // Insère en tête de liste sans rechargement complet
         consultations.value.unshift(res.consultation);
+        invalidateDashboard();
         return res.consultation;
     }
 
@@ -134,6 +135,7 @@ export function useConsultations() {
         if (consultation.value?.id === id) {
             consultation.value = res.consultation;
         }
+        invalidateDashboard();
         return res.consultation;
     }
 
@@ -144,6 +146,7 @@ export function useConsultations() {
         await consultationsApi.destroy(id);
         consultations.value = consultations.value.filter((c) => c.id !== id);
         if (consultation.value?.id === id) consultation.value = null;
+        invalidateDashboard();
     }
 
     // ═══════════════════════════════════════════════════════════════

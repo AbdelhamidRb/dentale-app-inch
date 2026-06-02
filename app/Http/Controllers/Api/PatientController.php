@@ -106,6 +106,8 @@ class PatientController extends Controller
             'notes'          => $request->notes,
         ]);
 
+        cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));
+
         return response()->json([
             'message' => 'Patient créé avec succès.',
             'patient' => $this->formatPatient($patient),

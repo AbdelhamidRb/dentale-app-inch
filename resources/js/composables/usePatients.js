@@ -1,5 +1,6 @@
 import { ref, reactive, computed, watch } from "vue";
 import { patientsApi } from "../api/patients";
+import { invalidateDashboard } from "../stores/dashboard";
 
 export function usePatients() {
     // ─── État principal ─────────────────────────────────────────────
@@ -84,6 +85,7 @@ export function usePatients() {
         const res = await patientsApi.create(data);
         patients.value.unshift(res.patient);
         meta.total++;
+        invalidateDashboard();
         return res;
     }
 
