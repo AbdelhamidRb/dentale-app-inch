@@ -30,8 +30,10 @@ if not exist "%GIT%" ( echo [ERREUR] Git introuvable : %GIT% & pause & exit 1 )
 if not exist "%PHP%" ( echo [ERREUR] PHP introuvable & pause & exit 1 )
 
 echo [1/4] Telechargement des mises a jour...
-"%GIT%" -C "%APP%" pull origin main
-if errorlevel 1 ( echo [ERREUR] git pull echoue - verifiez internet & pause & exit 1 )
+"%GIT%" -C "%APP%" fetch origin main
+if errorlevel 1 ( echo [ERREUR] fetch echoue - verifiez internet & pause & exit 1 )
+"%GIT%" -C "%APP%" reset --hard origin/main
+if errorlevel 1 ( echo [ERREUR] reset echoue & pause & exit 1 )
 echo   OK
 
 echo.
