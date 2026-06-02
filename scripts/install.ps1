@@ -217,7 +217,9 @@ if ($LASTEXITCODE -ne 0) { ERR "Migrations echouees." }
 & $PHP "$APP_ROOT\artisan" db:seed --class=ProductionSeeder --force 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { ERR "Seeder echoue." }
 & $PHP "$APP_ROOT\artisan" storage:link --force 2>&1 | Out-Null
-& $PHP "$APP_ROOT\artisan" optimize 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" route:clear 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" config:cache 2>&1 | Out-Null
+& $PHP "$APP_ROOT\artisan" view:cache 2>&1 | Out-Null
 OK "Base de donnees initialisee"
 
 # ── 8. Apache + Firewall + Taches ─────────────────────────────
