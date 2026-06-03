@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\BackupController;
 use App\Http\Controllers\Api\CatalogActController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\UpdateController;
 
 
 // Routes publiques
@@ -79,6 +80,12 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
 
     // ─── Réseau local (Dentiste uniquement) ──────────────────────────
     Route::middleware('dentist')->get('/network', [SettingsController::class, 'network']);
+
+    // ─── Mise à jour (Dentiste uniquement) ───────────────────────────
+    Route::middleware('dentist')->group(function () {
+        Route::get('/update/status', [UpdateController::class, 'status']);
+        Route::post('/update/run',   [UpdateController::class, 'runUpdate']);
+    });
 
     // ─── Backup / Restauration (Dentiste uniquement) ─────────────────
     Route::middleware('dentist')->group(function () {

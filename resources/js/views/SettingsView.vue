@@ -535,6 +535,78 @@
             </div>
         </Transition>
 
+        <!-- ══ Onglet Système ════════════════════════════════════════ -->
+        <div v-if="activeTab === 'system'" class="space-y-4 max-w-2xl">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+                <p class="font-semibold text-slate-800 mb-1">Mise à jour de l'application</p>
+                <p class="text-xs text-slate-400 mb-5">
+                    Télécharge et applique la dernière version depuis GitHub.<br>
+                    Une sauvegarde automatique est créée avant toute mise à jour.
+                </p>
+
+                <!-- Version actuelle -->
+                <div v-if="updateStatus && !updateStatus.error" class="mb-4 flex items-center gap-4 text-sm">
+                    <span class="text-slate-500">Version actuelle :
+                        <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ updateStatus.current }}</code>
+                    </span>
+                    <span v-if="!updateStatus.up_to_date" class="text-slate-500">→ Disponible :
+                        <code class="bg-blue-50 px-1.5 py-0.5 rounded text-blue-700">{{ updateStatus.latest }}</code>
+                    </span>
+                    <span v-else class="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                        <CheckCircle class="w-3.5 h-3.5" /> À jour
+                    </span>
+                </div>
+
+                <div v-if="updateStatus?.error" class="mb-4 text-sm text-red-500">
+                    {{ updateStatus.error }}
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex gap-3 flex-wrap">
+                    <button @click="checkUpdate" :disabled="checkingUpdate || updating"
+                        class="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50
+                               disabled:opacity-50 text-slate-600 text-sm font-medium rounded-xl transition-colors">
+                        <svg :class="['w-4 h-4', checkingUpdate ? 'animate-spin' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        {{ checkingUpdate ? 'Vérification…' : 'Vérifier les mises à jour' }}
+                    </button>
+
+                    <button @click="runUpdate" :disabled="updating || checkingUpdate"
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+                               disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                        <svg v-if="updating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        {{ updating ? 'Mise à jour en cours…' : 'Mettre à jour maintenant' }}
+                    </button>
+                </div>
+
+                <!-- Résultat -->
+                <div v-if="updateResult" class="mt-4">
+                    <div :class="['flex items-start gap-2 p-3 rounded-xl text-sm mb-3',
+                                  updateResult.success ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800']">
+                        <CheckCircle v-if="updateResult.success" class="w-4 h-4 shrink-0 mt-0.5" />
+                        <XCircle v-else class="w-4 h-4 shrink-0 mt-0.5" />
+                        {{ updateResult.message }}
+                    </div>
+                    <div v-if="updateResult.log?.length" class="bg-slate-900 rounded-xl p-3 text-xs font-mono text-slate-300 space-y-0.5">
+                        <p v-for="line in updateResult.log" :key="line">{{ line }}</p>
+                        <p v-for="line in updateResult.errors" :key="line" class="text-red-400">⚠ {{ line }}</p>
+                    </div>
+                    <p v-if="updateResult.success && !updateResult.already_up_to_date"
+                       class="text-xs text-slate-400 mt-2">
+                        Rechargez la page pour voir les changements (Ctrl+Shift+R).
+                    </p>
+                </div>
+            </div>
+        </div>
 
     </div>
 </template>
@@ -556,6 +628,7 @@ const tabs = [
     { id: 'acts',     label: 'Actes' },
     { id: 'archive',  label: 'Archivage' },
     { id: 'reseau',   label: 'Réseau' },
+    { id: 'system',   label: 'Système' },
 ];
 
 const visibleTabs = computed(() =>
@@ -834,6 +907,39 @@ function copyNetwork() {
     document.body.removeChild(el);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
+}
+
+// ── Système / Mise à jour ────────────────────────────────────────
+const updateStatus   = ref(null);   // { current, latest, up_to_date }
+const checkingUpdate = ref(false);
+const updating       = ref(false);
+const updateResult   = ref(null);   // { success, message, log, errors, already_up_to_date }
+
+async function checkUpdate() {
+    checkingUpdate.value = true;
+    updateResult.value   = null;
+    try {
+        updateStatus.value = await api('/api/update/status');
+    } catch (e) {
+        updateStatus.value = { error: e.message };
+    } finally {
+        checkingUpdate.value = false;
+    }
+}
+
+async function runUpdate() {
+    updating.value     = true;
+    updateResult.value = null;
+    try {
+        updateResult.value = await api('/api/update/run', 'POST');
+        if (updateResult.value.success) {
+            await checkUpdate();
+        }
+    } catch (e) {
+        updateResult.value = { success: false, message: e.message, log: [], errors: [] };
+    } finally {
+        updating.value = false;
+    }
 }
 
 onMounted(() => {
