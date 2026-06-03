@@ -54,6 +54,18 @@ git fetch origin $BRANCH 2>&1 | Out-Null
 $behind = git rev-list HEAD..origin/$BRANCH --count 2>$null
 if ($behind -eq "0") {
     Write-Host "  INFO Application deja a jour - aucune mise a jour disponible." -ForegroundColor Yellow
+
+    # Nettoyage quand meme — taches obsoletes a supprimer meme sans mise a jour
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (Get-ScheduledTask -TaskName "DentalApp-Scheduler" -ErrorAction SilentlyContinue) {
+        if ($isAdmin) {
+            Unregister-ScheduledTask -TaskName "DentalApp-Scheduler" -Confirm:$false -ErrorAction SilentlyContinue
+        } else {
+            Start-Process powershell -Verb RunAs -ArgumentList "-Command `"Unregister-ScheduledTask -TaskName 'DentalApp-Scheduler' -Confirm:`$false -ErrorAction SilentlyContinue`"" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
+        }
+        OK "Tache DentalApp-Scheduler supprimee"
+    }
+
     Read-Host "Entree pour fermer"
     exit 0
 }
