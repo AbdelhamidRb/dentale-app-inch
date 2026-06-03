@@ -322,6 +322,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onClickOutside))
 
 // ─── Formulaire ───────────────────────────────────────────────────
 const form = reactive({
+    scheduled_date: "",
     start_time: "",
     end_time: "",
     act_ids: [],
@@ -345,6 +346,7 @@ watch(
     () => props.appointment,
     (appt) => {
         if (appt) {
+            form.scheduled_date = appt.scheduled_date || "";
             form.start_time = appt.start_time?.slice(0, 5);
             form.end_time = appt.end_time?.slice(0, 5);
             form.act_ids = (appt.acts ?? []).map((a) => a.id);
@@ -406,7 +408,7 @@ async function handleSubmit() {
     try {
         const data = {
             patient_id: selectedPatient.value.id,
-            scheduled_date: props.selectedDate, // ← ajoute la date depuis les props
+            scheduled_date: form.scheduled_date || props.selectedDate,
             start_time: form.start_time,
             end_time: form.end_time,
             act_ids: form.act_ids,
