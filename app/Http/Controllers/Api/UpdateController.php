@@ -112,7 +112,11 @@ class UpdateController extends Controller
         $this->run($php . ' "' . $app . '\\artisan" cache:clear');
         $log[] = '✓ Caches vidés';
 
-        // ── 6. OPcache ───────────────────────────────────────────────
+        // ── 6. Nettoyer les tâches planifiées obsolètes ──────────────
+        $this->run('schtasks /Delete /TN "DentalApp-Backup" /F');
+        $log[] = '✓ Tâches système mises à jour';
+
+        // ── 7. OPcache ───────────────────────────────────────────────
         if (function_exists('opcache_reset')) {
             opcache_reset();
             $log[] = '✓ OPcache réinitialisé';
