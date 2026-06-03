@@ -27,3 +27,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Seeders dev uniquement — ne pas déployer chez le dentiste
+/database/seeders/DemoDataSeeder.php
+/database/seeders/TestDataSeeder.php
+/database/seeders/UserSeeder.php
