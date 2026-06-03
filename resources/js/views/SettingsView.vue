@@ -917,7 +917,6 @@ const updateResult   = ref(null);   // { success, message, log, errors, already_
 
 async function checkUpdate() {
     checkingUpdate.value = true;
-    updateResult.value   = null;
     try {
         updateStatus.value = await api('/api/update/status');
     } catch (e) {
@@ -934,7 +933,7 @@ async function runUpdate() {
         updateResult.value = await api('/api/update/run', 'POST');
         if (updateResult.value.success) {
             await checkUpdate();
-            if (!updateResult.value.already_up_to_date) {
+            if (!updateResult.value?.already_up_to_date) {
                 setTimeout(() => window.location.reload(), 3000);
             }
         }
