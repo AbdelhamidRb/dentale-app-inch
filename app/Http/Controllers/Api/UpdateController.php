@@ -23,6 +23,14 @@ class UpdateController extends Controller
         return '"' . ($dirs[0] ?? '') . '\\php.exe"';
     }
 
+    private function repoUrl(): string
+    {
+        $token = env('GITHUB_TOKEN');
+        return $token
+            ? "https://{$token}@github.com/AbdelhamidRb/dentale-app-inch.git"
+            : 'https://github.com/AbdelhamidRb/dentale-app-inch.git';
+    }
+
     private function run(string $cmd): array
     {
         $output = []; $code = 0;
@@ -41,7 +49,7 @@ class UpdateController extends Controller
         $current = trim(shell_exec($git . ' -C "' . $app . '" rev-parse --short HEAD 2>&1') ?? '');
 
         // Fetch silencieux pour vérifier si update dispo
-        shell_exec($git . ' -C "' . $app . '" fetch origin main --quiet 2>&1');
+        shell_exec($git . ' -C "' . $app . '" fetch "' . $this->repoUrl() . '" main:refs/remotes/origin/main --quiet 2>&1');
         $remote  = trim(shell_exec($git . ' -C "' . $app . '" rev-parse --short origin/main 2>&1') ?? '');
 
         return response()->json([
@@ -77,7 +85,7 @@ class UpdateController extends Controller
         $before = trim(shell_exec($git . ' -C "' . $app . '" rev-parse --short HEAD 2>&1') ?? '');
 
         // ── 3. Git fetch + reset ─────────────────────────────────────
-        $fetch = $this->run($git . ' -C "' . $app . '" fetch origin main --quiet');
+        $fetch = $this->run($git . ' -C "' . $app . '" fetch "' . $this->repoUrl() . '" main:refs/remotes/origin/main --quiet');
         if ($fetch['code'] !== 0) {
             return response()->json([
                 'success' => false,
