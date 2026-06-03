@@ -97,7 +97,7 @@ class BackupController extends Controller
     public function run()
     {
         if (!class_exists('ZipArchive')) {
-            return response()->json(['error' => 'Extension PHP "zip" non activée. Activez-la dans php.ini puis redémarrez Apache dans Laragon.'], 500);
+            return response()->json(['error' => 'La sauvegarde des images est temporairement indisponible. Contactez votre technicien.'], 500);
         }
 
         $timestamp = now()->format('Y-m-d_H-i');
@@ -127,7 +127,7 @@ class BackupController extends Controller
         if ($code !== 0 || strlen($sql) < 500) {
             rmdir($dest);
             return response()->json([
-                'error'   => 'Export MySQL échoué.',
+                'error'   => 'La sauvegarde de la base de données a échoué.',
                 'details' => $errors,
             ], 500);
         }
@@ -179,7 +179,7 @@ class BackupController extends Controller
     public function restore(Request $request)
     {
         if (!class_exists('ZipArchive')) {
-            return response()->json(['error' => 'Extension PHP "zip" non activée. Activez-la dans php.ini puis redémarrez Apache dans Laragon.'], 500);
+            return response()->json(['error' => 'La sauvegarde des images est temporairement indisponible. Contactez votre technicien.'], 500);
         }
 
         $request->validate([
@@ -212,7 +212,7 @@ class BackupController extends Controller
             $code = proc_close($proc);
 
             if ($code !== 0) {
-                return response()->json(['error' => 'Restauration MySQL échouée.', 'details' => $errors], 500);
+                return response()->json(['error' => 'La restauration des données a échoué.', 'details' => $errors], 500);
             }
         }
 
