@@ -142,7 +142,7 @@ if (Test-Path $APP_ROOT) {
     if ($overwrite -ne 'oui') { Write-Host "Installation annulee."; exit 0 }
     Remove-Item $APP_ROOT -Recurse -Force
 }
-& $GIT clone "$CLONE_URL" $APP_ROOT --branch $BRANCH --depth 1 2>&1 | Out-Null
+& $GIT -c credential.helper= -c core.askPass= clone "$CLONE_URL" $APP_ROOT --branch $BRANCH --depth 1 2>&1 | Out-Null
 if (-not (Test-Path "$APP_ROOT\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
 & $GIT config --global --add safe.directory ($APP_ROOT -replace '\\', '/')
 Copy-Item $licFile "$APP_ROOT\dental-app.lic" -Force

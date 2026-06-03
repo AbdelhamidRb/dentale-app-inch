@@ -31,6 +31,12 @@ class UpdateController extends Controller
             : 'https://github.com/AbdelhamidRb/dentale-app-inch.git';
     }
 
+    // Prefixe git qui desactive le credential helper GUI
+    private function gitNoPrompt(): string
+    {
+        return $this->git() . ' -c credential.helper= -c core.askPass=';
+    }
+
     private function run(string $cmd): array
     {
         $output = []; $code = 0;
@@ -46,6 +52,7 @@ class UpdateController extends Controller
         $app = base_path();
         $git = $this->git();
 
+        $git = $this->gitNoPrompt();
         $current = trim(shell_exec($git . ' -C "' . $app . '" rev-parse --short HEAD 2>&1') ?? '');
 
         // Fetch silencieux pour vérifier si update dispo
@@ -67,7 +74,7 @@ class UpdateController extends Controller
         set_time_limit(180);
 
         $app  = base_path();
-        $git  = $this->git();
+        $git  = $this->gitNoPrompt();
         $php  = $this->php();
         $log  = [];
         $errors = [];
