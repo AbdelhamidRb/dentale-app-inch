@@ -99,6 +99,20 @@ class AppointmentController extends Controller
             'act_ids'        => 'nullable|array',
             'act_ids.*'      => 'exists:catalog_acts,id',
             'status'         => 'nullable|in:PLANIFIE,CONFIRME',
+        ], [
+            'patient_id.required'          => 'Veuillez sélectionner un patient.',
+            'patient_id.exists'            => 'Le patient sélectionné est introuvable.',
+            'scheduled_date.required'      => 'La date du rendez-vous est obligatoire.',
+            'scheduled_date.date'          => 'La date du rendez-vous est invalide.',
+            'start_time.required'          => "L'heure de début est obligatoire.",
+            'start_time.date_format'       => "L'heure de début doit être au format HH:MM (ex: 09:30).",
+            'start_time.after_or_equal'    => "L'heure de début ne peut pas être avant 09h00.",
+            'start_time.before'            => "L'heure de début doit être avant 18h00.",
+            'end_time.required'            => "L'heure de fin est obligatoire.",
+            'end_time.date_format'         => "L'heure de fin doit être au format HH:MM (ex: 18:00).",
+            'end_time.after'               => "L'heure de fin doit être après l'heure de début.",
+            'end_time.before_or_equal'     => "L'heure de fin ne peut pas dépasser 18h00.",
+            'act_ids.*.exists'             => 'Un acte sélectionné est invalide.',
         ]);
 
         // ─── Vérification chevauchement ───────────────────────────
@@ -167,6 +181,19 @@ class AppointmentController extends Controller
             'notes'          => 'nullable|string',
             'act_ids'        => 'nullable|array',
             'act_ids.*'      => 'exists:catalog_acts,id',
+        ], [
+            'patient_id.exists'            => 'Le patient sélectionné est introuvable.',
+            'scheduled_date.required'      => 'La date du rendez-vous est obligatoire.',
+            'scheduled_date.date'          => 'La date du rendez-vous est invalide.',
+            'start_time.required'          => "L'heure de début est obligatoire.",
+            'start_time.date_format'       => "L'heure de début doit être au format HH:MM (ex: 09:30).",
+            'start_time.after_or_equal'    => "L'heure de début ne peut pas être avant 09h00.",
+            'start_time.before'            => "L'heure de début doit être avant 18h00.",
+            'end_time.required'            => "L'heure de fin est obligatoire.",
+            'end_time.date_format'         => "L'heure de fin doit être au format HH:MM (ex: 18:00).",
+            'end_time.after'               => "L'heure de fin doit être après l'heure de début.",
+            'end_time.before_or_equal'     => "L'heure de fin ne peut pas dépasser 18h00.",
+            'act_ids.*.exists'             => 'Un acte sélectionné est invalide.',
         ]);
 
         // ─── Vérification chevauchement (exclut le RDV actuel) ────

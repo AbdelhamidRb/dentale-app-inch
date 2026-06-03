@@ -35,6 +35,13 @@ class ProfileController extends Controller
             'name'  => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:20',
+        ], [
+            'name.required'  => 'Le nom est obligatoire.',
+            'name.max'       => 'Le nom ne peut pas dépasser 100 caractères.',
+            'email.required' => "L'adresse e-mail est obligatoire.",
+            'email.email'    => "L'adresse e-mail n'est pas valide.",
+            'email.unique'   => "Cette adresse e-mail est déjà utilisée par un autre compte.",
+            'phone.max'      => 'Le numéro de téléphone est trop long.',
         ]);
 
         $user->update([
@@ -62,6 +69,11 @@ class ProfileController extends Controller
         $request->validate([
             'current_password' => 'required',
             'new_password'     => 'required|min:8|confirmed',
+        ], [
+            'current_password.required' => 'Le mot de passe actuel est obligatoire.',
+            'new_password.required'     => 'Le nouveau mot de passe est obligatoire.',
+            'new_password.min'          => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+            'new_password.confirmed'    => 'La confirmation du mot de passe ne correspond pas.',
         ]);
 
         $user = $request->user();
@@ -84,7 +96,12 @@ class ProfileController extends Controller
     public function uploadAvatar(Request $request)
     {
         $request->validate([
-            'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048'
+            'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'avatar.required' => 'Veuillez sélectionner une photo.',
+            'avatar.image'    => 'Le fichier doit être une image.',
+            'avatar.mimes'    => 'La photo doit être au format JPG, PNG ou WEBP.',
+            'avatar.max'      => 'La photo ne peut pas dépasser 2 Mo.',
         ]);
 
         $user = $request->user();
