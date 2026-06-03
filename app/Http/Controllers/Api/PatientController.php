@@ -275,6 +275,55 @@ class PatientController extends Controller
         ]);
     }
 
+    // ─── POST /api/patients/auto-archive ─────────────────────────
+    // Archivage silencieux au démarrage de l'app — exécuté une fois par jour
+    public function autoArchive()
+    {
+        $today = now()->toDateString();
+
+        if (Setting::get('last_auto_archive_date') === $today) {
+            return response()->json(['archived' => 0, 'skipped' => true]);
+        }
+
+        $months = (int) Setting::get('archive_after_months', '18');
+
+        if ($months <= 0) {
+            Setting::set('last_auto_archive_date', $today);
+            return response()->json(['archived' => 0, 'skipped' => false]);
+        }
+
+        $cutoff = Carbon::now()->subMonths($months)->toDateString();
+
+        $patients = Patient::where('is_archived', false)
+            ->where('status', '!=', 'DECEDE')
+            ->where(function ($q) use ($cutoff) {
+                $q->where(function ($q1) use ($cutoff) {
+                    $q1->whereExists(fn($sub) => $sub->select(DB::raw(1))->from('appointments')
+                            ->whereColumn('appointments.patient_id', 'patients.id')
+                            ->where('appointments.status', 'TERMINE'))
+                        ->whereRaw('(SELECT MAX(scheduled_date) FROM appointments WHERE patient_id = patients.id AND status = ?) <= ?', ['TERMINE', $cutoff]);
+                })
+                ->orWhere(fn($q2) => $q2
+                    ->whereNotExists(fn($sub) => $sub->select(DB::raw(1))->from('appointments')
+                        ->whereColumn('appointments.patient_id', 'patients.id')
+                        ->where('appointments.status', 'TERMINE'))
+                    ->where('patients.created_at', '<=', $cutoff));
+            })
+            ->get();
+
+        $count = $patients->count();
+        if ($count > 0) {
+            $now = now();
+            foreach ($patients as $p) {
+                $p->update(['is_archived' => true, 'archived_at' => $now]);
+            }
+        }
+
+        Setting::set('last_auto_archive_date', $today);
+
+        return response()->json(['archived' => $count, 'skipped' => false]);
+    }
+
     // ─── POST /api/patients/{id}/restore ─────────────────────────
     // Réactiver un patient archivé
     public function restore(Patient $patient)

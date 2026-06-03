@@ -31,9 +31,9 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
 
 
     // ─── Patients (Dentiste + Assistant) ─────────────────────────────
-    // IMPORTANT : archive-preview doit être AVANT {patient} pour éviter le conflit de route
-    Route::get('/patients/archive-preview', [PatientController::class, 'archivePreview'])
-        ->middleware('dentist');
+    // IMPORTANT : ces routes doivent être AVANT {patient} pour éviter le conflit de route
+    Route::get('/patients/archive-preview', [PatientController::class, 'archivePreview'])->middleware('dentist');
+    Route::post('/patients/auto-archive',   [PatientController::class, 'autoArchive'])->middleware('dentist');
 
     Route::middleware('assistant')->group(function () {
         Route::get('/patients',              [PatientController::class, 'index']);

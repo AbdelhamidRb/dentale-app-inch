@@ -258,10 +258,20 @@ async function silentBackup() {
     } catch {}
 }
 
+async function silentAutoArchive() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('auto_archive_date') === today) return;
+    try {
+        await fetch('/api/patients/auto-archive', { method: 'POST', headers: authHeaders() });
+        localStorage.setItem('auto_archive_date', today);
+    } catch {}
+}
+
 onMounted(() => {
     if (!authStore.isDentist()) return;
     checkForUpdates();
     silentBackup();
+    silentAutoArchive();
 });
 </script>
 

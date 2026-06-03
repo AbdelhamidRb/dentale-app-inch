@@ -112,6 +112,9 @@ if ($httpdPath) {
     Write-Host "  WARN httpd.exe introuvable - redemarrez Apache manuellement" -ForegroundColor Yellow
 }
 
+# ── Nettoyage taches planifiees obsoletes ─────────────────────
+Unregister-ScheduledTask -TaskName "DentalApp-Scheduler" -Confirm:$false -ErrorAction SilentlyContinue
+
 # ── Resume ────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "=================================================="

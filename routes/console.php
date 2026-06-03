@@ -8,5 +8,4 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Archivage automatique des patients inactifs — chaque nuit à 01h00
-Schedule::command('patients:auto-archive')->dailyAt('01:00');
+// L'archivage automatique est géré au démarrage de l'app (AppLayout.vue → /api/patients/auto-archive)
