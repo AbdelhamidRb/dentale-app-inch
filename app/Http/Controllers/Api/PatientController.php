@@ -83,6 +83,17 @@ class PatientController extends Controller
             'gender'     => 'nullable|in:M,F',
             'couverture' => 'nullable|in:CNSS,CNOPS,RAMED,ASSURANCE,AUCUNE',
             'notes'      => 'nullable|string',
+        ], [
+            'first_name.required' => 'Le prénom est obligatoire.',
+            'first_name.max'      => 'Le prénom ne peut pas dépasser 100 caractères.',
+            'last_name.required'  => 'Le nom de famille est obligatoire.',
+            'last_name.max'       => 'Le nom de famille ne peut pas dépasser 100 caractères.',
+            'phone.required'      => 'Le numéro de téléphone est obligatoire.',
+            'phone.max'           => 'Le numéro de téléphone est trop long.',
+            'birth_date.date'     => 'La date de naissance est invalide.',
+            'birth_date.before'   => 'La date de naissance doit être dans le passé.',
+            'gender.in'           => 'Le sexe sélectionné est invalide.',
+            'couverture.in'       => 'La couverture médicale sélectionnée est invalide.',
         ]);
 
         // ── Vérifier si un patient ARCHIVÉ avec le même nom existe (bloquer) ──
@@ -179,6 +190,18 @@ class PatientController extends Controller
             'couverture' => 'nullable|in:CNSS,CNOPS,RAMED,ASSURANCE,AUCUNE',
             'notes'      => 'nullable|string',
             'status'     => 'nullable|in:ACTIF,INACTIF,DECEDE',
+        ], [
+            'first_name.required' => 'Le prénom est obligatoire.',
+            'first_name.max'      => 'Le prénom ne peut pas dépasser 100 caractères.',
+            'last_name.required'  => 'Le nom de famille est obligatoire.',
+            'last_name.max'       => 'Le nom de famille ne peut pas dépasser 100 caractères.',
+            'phone.required'      => 'Le numéro de téléphone est obligatoire.',
+            'phone.max'           => 'Le numéro de téléphone est trop long.',
+            'birth_date.date'     => 'La date de naissance est invalide.',
+            'birth_date.before'   => 'La date de naissance doit être dans le passé.',
+            'gender.in'           => 'Le sexe sélectionné est invalide.',
+            'couverture.in'       => 'La couverture médicale sélectionnée est invalide.',
+            'status.in'           => 'Le statut sélectionné est invalide.',
         ]);
 
         $patient->update($request->only([
@@ -277,6 +300,12 @@ class PatientController extends Controller
             'type'        => 'required|in:ALLERGIE,MALADIE,MEDICATION',
             'description' => 'required|string',
             'severity'    => 'required|in:ROUGE,ORANGE,JAUNE',
+        ], [
+            'type.required'        => "Le type d'alerte est obligatoire.",
+            'type.in'              => "Le type doit être Allergie, Maladie ou Médicament.",
+            'description.required' => 'La description est obligatoire.',
+            'severity.required'    => 'Le niveau de sévérité est obligatoire.',
+            'severity.in'          => 'Le niveau de sévérité sélectionné est invalide.',
         ]);
 
         $alert = $patient->medicalAlerts()->create([
@@ -315,6 +344,13 @@ class PatientController extends Controller
         $request->validate([
             'file' => 'required|file|mimes:jpg,jpeg,png,pdf,webp|max:10240',
             'type' => 'required|in:RADIO,PHOTO,PDF,CONSENTEMENT,AUTRE',
+        ], [
+            'file.required' => 'Veuillez sélectionner un fichier.',
+            'file.file'     => 'Le fichier envoyé est invalide.',
+            'file.mimes'    => 'Le fichier doit être une image (JPG, PNG, WEBP) ou un PDF.',
+            'file.max'      => 'Le fichier ne peut pas dépasser 10 Mo.',
+            'type.required' => 'Le type de document est obligatoire.',
+            'type.in'       => 'Le type de document sélectionné est invalide.',
         ]);
 
         $file          = $request->file('file');

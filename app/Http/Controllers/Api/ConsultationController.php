@@ -80,14 +80,25 @@ class ConsultationController extends Controller
             ],
             'status'            => 'nullable|in:EN_COURS,TERMINE',
             'notes'             => 'nullable|string',
-
-            // Tableau d'actes
             'acts'              => 'nullable|array',
             'acts.*.catalog_act_id' => 'required|exists:catalog_acts,id',
             'acts.*.teeth'      => 'nullable|array',
             'acts.*.teeth.*'    => 'integer|min:11|max:85',
             'acts.*.price'      => 'required|numeric|min:0|max:999999',
             'acts.*.notes'      => 'nullable|string',
+        ], [
+            'patient_id.required'            => 'Veuillez sélectionner un patient.',
+            'patient_id.exists'              => 'Le patient sélectionné est introuvable.',
+            'appointment_id.exists'          => 'Le rendez-vous sélectionné est introuvable.',
+            'acts.*.catalog_act_id.required' => 'Veuillez sélectionner un acte dentaire.',
+            'acts.*.catalog_act_id.exists'   => "L'acte dentaire sélectionné est invalide.",
+            'acts.*.price.required'          => "Le prix de l'acte est obligatoire.",
+            'acts.*.price.numeric'           => "Le prix de l'acte doit être un nombre.",
+            'acts.*.price.min'               => "Le prix de l'acte ne peut pas être négatif.",
+            'acts.*.price.max'               => "Le prix saisi est trop élevé.",
+            'acts.*.teeth.*.integer'         => 'Le numéro de dent est invalide.',
+            'acts.*.teeth.*.min'             => 'Le numéro de dent est invalide.',
+            'acts.*.teeth.*.max'             => 'Le numéro de dent est invalide.',
         ]);
 
         $consultation = DB::transaction(function () use ($request) {

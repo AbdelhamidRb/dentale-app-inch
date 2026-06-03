@@ -156,6 +156,14 @@ class PaymentController extends Controller
             'amount' => 'required|numeric|min:0.01|max:999999',
             'date'   => 'required|date',
             'notes'  => 'nullable|string|max:500',
+        ], [
+            'amount.required' => 'Le montant est obligatoire.',
+            'amount.numeric'  => 'Le montant doit être un nombre.',
+            'amount.min'      => 'Le montant doit être supérieur à 0.',
+            'amount.max'      => 'Le montant saisi est trop élevé.',
+            'date.required'   => 'La date du versement est obligatoire.',
+            'date.date'       => 'La date du versement est invalide.',
+            'notes.max'       => 'La note ne peut pas dépasser 500 caractères.',
         ]);
 
         $transaction = PaymentTransaction::create([
