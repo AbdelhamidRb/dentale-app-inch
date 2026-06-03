@@ -224,7 +224,7 @@ class ConsultationController extends Controller
 
         if ($consultation->status !== 'EN_COURS') {
             return response()->json([
-                'message' => 'Seules les consultations EN_COURS peuvent recevoir une nouvelle séance.',
+                'message' => 'Cette consultation doit être en cours pour pouvoir ajouter une séance.',
             ], 422);
         }
 
