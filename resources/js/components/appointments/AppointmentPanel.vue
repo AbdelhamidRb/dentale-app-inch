@@ -338,9 +338,9 @@
                 </div>
             </div>
 
-            <!-- Supprimer — dentiste uniquement -->
+            <!-- Supprimer — dentiste toujours, assistant uniquement si c'est son RDV -->
             <button
-                v-if="isDentist"
+                v-if="canDelete"
                 @click="confirmDelete"
                 class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
                        text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
@@ -578,11 +578,20 @@ function onConsultationCreated(event) {
     emit("status-changed", props.appointment.id, "TERMINE");
 }
 
-// isDentist manquant — à ajouter ici
 const isDentist = computed(() => {
     try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         return user.role === "DENTIST";
+    } catch {
+        return false;
+    }
+});
+
+const canDelete = computed(() => {
+    if (isDentist.value) return true;
+    try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        return props.appointment?.created_by?.id === user.id;
     } catch {
         return false;
     }

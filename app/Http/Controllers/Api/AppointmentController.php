@@ -258,6 +258,12 @@ class AppointmentController extends Controller
     // ═══════════════════════════════════════════════════════════════
     public function destroy(Appointment $appointment)
     {
+        $user = auth()->user();
+
+        if ($user->role === 'ASSISTANT' && $appointment->created_by !== $user->id) {
+            return response()->json(['message' => 'Vous ne pouvez supprimer que les rendez-vous que vous avez créés.'], 403);
+        }
+
         $appointment->delete();
 
         cache()->forget('dashboard_stats_v4_' . now()->format('Y-m'));

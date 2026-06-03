@@ -54,9 +54,10 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::get('/catalog-acts', [AppointmentController::class, 'catalogActs']);
 
         // RDV du jour
-        Route::get('/appointments',              [AppointmentController::class, 'index']);
-        Route::post('/appointments',             [AppointmentController::class, 'store']);
+        Route::get('/appointments',               [AppointmentController::class, 'index']);
+        Route::post('/appointments',              [AppointmentController::class, 'store']);
         Route::put('/appointments/{appointment}', [AppointmentController::class, 'update']);
+        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
 
         // Changer le statut uniquement
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus']);
@@ -108,8 +109,7 @@ Route::middleware(['auth:sanctum', 'license'])->group(function () {
         Route::delete('/patients/{patient}/alerts/{alert}',       [PatientController::class, 'destroyAlert']);
         Route::delete('/patients/{patient}/documents/{document}', [PatientController::class, 'destroyDocument']);
 
-        // RDV
-        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+        // RDV (delete déplacé dans le groupe assistant — voir plus bas)
 
         // Consultations
         Route::get('/consultations',                              [ConsultationController::class, 'index']);
