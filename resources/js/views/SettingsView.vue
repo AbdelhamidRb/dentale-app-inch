@@ -578,10 +578,9 @@
                         <XCircle v-else class="w-4 h-4 shrink-0 mt-0.5" />
                         {{ updateResult.message }}
                     </div>
-                    <div v-if="updateResult.log?.length" class="bg-slate-900 rounded-xl p-3 text-xs font-mono text-slate-300 space-y-0.5">
-                        <p v-for="line in updateResult.log" :key="line">{{ line }}</p>
-                        <p v-for="line in updateResult.errors" :key="line" class="text-red-400">⚠ {{ line }}</p>
-                    </div>
+                    <p v-if="updateResult.errors?.length" class="text-xs text-red-500 mt-2">
+                        {{ updateResult.errors[0] }}
+                    </p>
                     <p v-if="updateResult.success && !updateResult.already_up_to_date"
                        class="text-xs text-slate-400 mt-2">
                         Rechargement automatique dans 3 secondes…
