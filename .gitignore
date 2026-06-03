@@ -3,6 +3,7 @@
 /private.pem
 /dental-app.lic
 /generate-license.php
+/scripts/dental-app-token.txt
 /scripts/DentalApp.exe
 .DS_Store
 .env

@@ -16,6 +16,17 @@ popd
 set GIT=%LARAGON_ROOT%\bin\git\bin\git.exe
 set PATH=%LARAGON_ROOT%\bin\git\bin;%LARAGON_ROOT%\bin\git\usr\bin;%PATH%
 
+:: Lire GITHUB_TOKEN depuis .env pour depot prive
+set GITHUB_TOKEN=
+for /f "usebackq tokens=1,2 delims==" %%a in ("%APP%\.env") do (
+    if "%%a"=="GITHUB_TOKEN" set GITHUB_TOKEN=%%b
+)
+if not "%GITHUB_TOKEN%"=="" (
+    set REPO_URL=https://%GITHUB_TOKEN%@github.com/AbdelhamidRb/dentale-app-inch.git
+) else (
+    set REPO_URL=https://github.com/AbdelhamidRb/dentale-app-inch.git
+)
+
 :: Detecter PHP
 for /d %%d in ("%LARAGON_ROOT%\bin\php\php-8.*") do set PHP=%%d\php.exe
 
@@ -30,7 +41,7 @@ if not exist "%GIT%" ( echo [ERREUR] Git introuvable : %GIT% & pause & exit 1 )
 if not exist "%PHP%" ( echo [ERREUR] PHP introuvable & pause & exit 1 )
 
 echo [1/4] Telechargement des mises a jour...
-"%GIT%" -C "%APP%" fetch origin main
+"%GIT%" -C "%APP%" fetch "%REPO_URL%" main:refs/remotes/origin/main
 if errorlevel 1 ( echo [ERREUR] fetch echoue - verifiez internet & pause & exit 1 )
 "%GIT%" -C "%APP%" reset --hard origin/main
 if errorlevel 1 ( echo [ERREUR] reset echoue & pause & exit 1 )

@@ -19,6 +19,18 @@ $APP_ROOT   = $APP_DIR
 $BACKUP_DIR = "$(Split-Path $LARAGON_ROOT -Qualifier)\backups\dental-app"
 $GITHUB_REPO = "AbdelhamidRb/dentale-app-inch"
 $BRANCH      = "main"
+
+# Token GitHub (depot prive) — lu depuis dental-app-token.txt si present
+$GITHUB_TOKEN = ""
+$tokenFile = Join-Path $PSScriptRoot "dental-app-token.txt"
+if (Test-Path $tokenFile) {
+    $GITHUB_TOKEN = (Get-Content $tokenFile -Raw -Encoding UTF8).Trim()
+}
+$CLONE_URL = if ($GITHUB_TOKEN) {
+    "https://$GITHUB_TOKEN@github.com/$GITHUB_REPO.git"
+} else {
+    "https://github.com/$GITHUB_REPO.git"
+}
 $DB_NAME     = "dental_db_inch"
 $DB_USER     = "root"
 $DB_PASS     = ""
@@ -130,7 +142,7 @@ if (Test-Path $APP_ROOT) {
     if ($overwrite -ne 'oui') { Write-Host "Installation annulee."; exit 0 }
     Remove-Item $APP_ROOT -Recurse -Force
 }
-& $GIT clone "https://github.com/$GITHUB_REPO.git" $APP_ROOT --branch $BRANCH --depth 1 2>&1 | Out-Null
+& $GIT clone "$CLONE_URL" $APP_ROOT --branch $BRANCH --depth 1 2>&1 | Out-Null
 if (-not (Test-Path "$APP_ROOT\artisan")) { ERR "Clonage GitHub echoue. Verifiez connexion internet." }
 & $GIT config --global --add safe.directory ($APP_ROOT -replace '\\', '/')
 Copy-Item $licFile "$APP_ROOT\dental-app.lic" -Force
@@ -172,6 +184,8 @@ SESSION_LIFETIME=480
 CACHE_STORE=file
 QUEUE_CONNECTION=database
 BCRYPT_ROUNDS=10
+
+GITHUB_TOKEN=$GITHUB_TOKEN
 "@
 Set-Content -Path "$APP_ROOT\.env" -Value $envContent -Encoding utf8
 OK ".env cree"
