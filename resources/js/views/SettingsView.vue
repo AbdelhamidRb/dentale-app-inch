@@ -594,7 +594,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { updateAvailable } from '../stores/update';
+
+const route = useRoute();
 import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
          Plus, Pencil, Trash2, X, Stethoscope, Archive } from 'lucide-vue-next';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
@@ -930,6 +933,10 @@ async function runUpdate() {
 }
 
 onMounted(() => {
+    // Ouvrir directement l'onglet demandé via ?tab=xxx
+    if (route.query.tab && tabs.find(t => t.id === route.query.tab)) {
+        activeTab.value = route.query.tab;
+    }
     loadBackups();
     loadTemplate();
     loadActs();

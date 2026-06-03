@@ -28,9 +28,7 @@
                         <component :is="item.icon" class="w-5 h-5 transition-colors"
                             :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'" />
                         <span>{{ item.label }}</span>
-                        <span v-if="item.route === 'parametres' && updateAvailable"
-                              class="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        <span v-else-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                        <span v-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
                     </RouterLink>
                 </template>
             </nav>
@@ -95,6 +93,24 @@
                 </div>
             </header>
 
+            <!-- Bannière mise à jour disponible -->
+            <div v-if="updateAvailable && authStore.isDentist()"
+                 class="flex items-center justify-between gap-3 px-4 lg:px-6 py-2.5
+                        bg-blue-600 text-white shrink-0">
+                <div class="flex items-center gap-2 text-sm font-medium">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Une mise à jour est disponible
+                </div>
+                <button @click="goToUpdate"
+                        class="shrink-0 px-3 py-1 bg-white text-blue-600 text-xs font-semibold
+                               rounded-lg hover:bg-blue-50 transition-colors">
+                    Mettre à jour
+                </button>
+            </div>
+
             <!-- Contenu -->
             <main class="flex-1 min-h-0 overflow-hidden flex flex-col">
                 <RouterView v-slot="{ Component }">
@@ -115,11 +131,7 @@
                     class="flex flex-col items-center gap-0.5 py-2 px-0.5 flex-1 transition-colors min-w-0 relative"
                     :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400'"
                 >
-                    <div class="relative">
-                        <component :is="item.icon" class="w-[18px] h-[18px]" />
-                        <span v-if="item.route === 'parametres' && updateAvailable"
-                              class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    </div>
+                    <component :is="item.icon" class="w-[18px] h-[18px]" />
                     <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
                 </RouterLink>
             </div>
@@ -129,7 +141,7 @@
 
 <script setup>
 import { computed, markRaw, onMounted } from "vue";
-import { RouterLink, RouterView, useRoute } from "vue-router";
+import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import { authStore } from "../stores/auth";
 import { updateAvailable } from "../stores/update";
 import {
@@ -192,7 +204,13 @@ const mobileNavItems = computed(() => {
     ];
 });
 
-const route = useRoute();
+const route  = useRoute();
+const router = useRouter();
+
+function goToUpdate() {
+    updateAvailable.value = false;
+    router.push({ name: 'parametres', query: { tab: 'system' } });
+}
 
 const currentPageTitle = computed(() => {
     const item = navItems.find((i) => i.route === route.name);
