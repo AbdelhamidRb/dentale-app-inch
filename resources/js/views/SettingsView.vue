@@ -27,12 +27,7 @@
             <!-- Dernier backup -->
             <div class="bg-white rounded-2xl border border-slate-200 p-5">
                 <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <p class="font-semibold text-slate-800">Sauvegarde manuelle</p>
-                        <p class="text-xs text-slate-400 mt-0.5">
-                            BDD + images patients → <code class="bg-slate-100 px-1 rounded">{{ backupDir || 'X:\\backups\\dental-app\\' }}</code>
-                        </p>
-                    </div>
+                    <p class="font-semibold text-slate-800">Sauvegarde manuelle</p>
                     <button
                         @click="runBackup"
                         :disabled="backing"
@@ -57,11 +52,6 @@
                     {{ backupMsg }}
                 </div>
 
-                <!-- Info planification -->
-                <div class="mt-3 text-xs text-slate-400 flex items-center gap-1.5">
-                    <Clock class="w-3.5 h-3.5" />
-                    Automatique : Lun–Ven 18h00 · Samedi 12h30
-                </div>
             </div>
 
             <!-- Liste des backups -->
@@ -92,10 +82,6 @@
                                     Le plus récent
                                 </span>
                             </div>
-                            <p class="text-xs text-slate-400 mt-0.5">
-                                BDD {{ formatSize(b.db_size) }}
-                                <span v-if="b.has_images"> · Images {{ formatSize(b.img_size) }}</span>
-                            </p>
                         </div>
 
                         <!-- Bouton restaurer -->
