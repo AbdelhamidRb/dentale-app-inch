@@ -31,41 +31,13 @@ $artisan = "$APP_ROOT\artisan"
 $sysPrincipal  = New-ScheduledTaskPrincipal -UserId "SYSTEM" -RunLevel Highest -LogonType ServiceAccount
 $userPrincipal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 
-# ═══════════════════════════════════════════════════════════════
-#  TÂCHE 1 : Backup automatique (Lun-Ven 18h, Sam 12h30)
-#  Utilisateur connecte via wscript.exe — aucun flash, acces OneDrive
-# ═══════════════════════════════════════════════════════════════
-$taskBackup  = "DentalApp-Backup"
+# Supprimer l'ancienne tâche backup planifiée (remplacée par backup au démarrage)
+Unregister-ScheduledTask -TaskName "DentalApp-Backup" -Confirm:$false -ErrorAction SilentlyContinue
+
 $vbsLauncher = "$SCRIPTS_DIR\run-hidden.vbs"
-Unregister-ScheduledTask -TaskName $taskBackup -Confirm:$false -ErrorAction SilentlyContinue
-
-$trigWeek = New-ScheduledTaskTrigger -Weekly `
-    -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At "18:00"
-$trigSat  = New-ScheduledTaskTrigger -Weekly `
-    -DaysOfWeek Saturday -At "12:30"
-$actBackup = New-ScheduledTaskAction `
-    -Execute "wscript.exe" `
-    -Argument "//B //NoLogo `"$vbsLauncher`" `"$backupScript`""
-$setsBackup = New-ScheduledTaskSettingsSet `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 30) `
-    -MultipleInstances IgnoreNew
-
-Register-ScheduledTask `
-    -TaskName $taskBackup `
-    -Action $actBackup `
-    -Trigger $trigWeek,$trigSat `
-    -Settings $setsBackup `
-    -Principal $userPrincipal `
-    -Force | Out-Null
-
-Write-Host "  OK  $taskBackup" -ForegroundColor Green
-Write-Host "      Lundi au Vendredi  18h00"
-Write-Host "      Samedi             12h30"
-Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
-#  TÂCHE 2 : Sync USB (branchement USB, interactif pour MessageBox)
+#  TÂCHE 1 : Sync USB (branchement USB, interactif pour MessageBox)
 # ═══════════════════════════════════════════════════════════════
 $taskUSB = "DentalApp-USBSync"
 Unregister-ScheduledTask -TaskName $taskUSB -Confirm:$false -ErrorAction SilentlyContinue
@@ -142,9 +114,6 @@ Write-Host ""
 
 # ═══════════════════════════════════════════════════════════════
 Write-Host "Toutes les taches sont configurees !" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Pour tester le backup maintenant :"
-Write-Host "  Start-ScheduledTask -TaskName '$taskBackup'"
 Write-Host ""
 Write-Host "Pour tester la sync USB (branchez d'abord la cle DENTAL-BKP) :"
 Write-Host "  Start-ScheduledTask -TaskName '$taskUSB'"
