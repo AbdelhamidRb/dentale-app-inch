@@ -237,8 +237,13 @@ async function checkForUpdates() {
     } catch {}
 }
 
+function localToday() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 async function silentBackup() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
 
     // Vérification rapide via localStorage — évite les doublons si la page est rechargée
     if (localStorage.getItem('backup_date') === today) return;
@@ -259,7 +264,7 @@ async function silentBackup() {
 }
 
 async function silentAutoArchive() {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localToday();
     if (localStorage.getItem('auto_archive_date') === today) return;
     try {
         await fetch('/api/patients/auto-archive', { method: 'POST', headers: authHeaders() });
