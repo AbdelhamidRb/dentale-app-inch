@@ -238,13 +238,22 @@ async function checkForUpdates() {
 }
 
 async function silentBackup() {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Vérification rapide via localStorage — évite les doublons si la page est rechargée
+    if (localStorage.getItem('backup_date') === today) return;
+
     try {
         const res  = await fetch('/api/backup/list', { headers: authHeaders() });
         const data = await res.json();
-        const today = new Date().toISOString().slice(0, 10);
         const doneToday = (data.backups ?? []).some(b => b.name?.startsWith(today));
-        if (!doneToday) {
+
+        if (doneToday) {
+            // Une sauvegarde existe déjà aujourd'hui — mémoriser pour éviter de re-vérifier
+            localStorage.setItem('backup_date', today);
+        } else {
             await fetch('/api/backup/run', { method: 'POST', headers: authHeaders() });
+            localStorage.setItem('backup_date', today);
         }
     } catch {}
 }
