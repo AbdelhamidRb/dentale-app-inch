@@ -602,7 +602,7 @@
                     </div>
                     <p v-if="updateResult.success && !updateResult.already_up_to_date"
                        class="text-xs text-slate-400 mt-2">
-                        Rechargez la page pour voir les changements (Ctrl+Shift+R).
+                        Rechargement automatique dans 3 secondes…
                     </p>
                 </div>
             </div>
@@ -938,6 +938,9 @@ async function runUpdate() {
         updateResult.value = await api('/api/update/run', 'POST');
         if (updateResult.value.success) {
             await checkUpdate();
+            if (!updateResult.value.already_up_to_date) {
+                setTimeout(() => window.location.reload(), 3000);
+            }
         }
     } catch (e) {
         updateResult.value = { success: false, message: e.message, log: [], errors: [] };
