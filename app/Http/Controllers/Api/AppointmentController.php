@@ -150,6 +150,7 @@ class AppointmentController extends Controller
     public function update(Request $request, Appointment $appointment)
     {
         $request->validate([
+            'patient_id'     => 'sometimes|exists:patients,id',
             'scheduled_date' => 'required|date',
             'start_time'     => 'required|date_format:H:i|after_or_equal:09:00|before:18:00',
             'end_time'       => ['required', 'date_format:H:i', 'after:start_time', 'before_or_equal:18:00',
@@ -180,12 +181,13 @@ class AppointmentController extends Controller
             ], 409);
         }
 
-        $appointment->update([
+        $appointment->update(array_filter([
+            'patient_id'     => $request->patient_id,
             'scheduled_date' => $request->scheduled_date,
             'start_time'     => $request->start_time,
             'end_time'       => $request->end_time,
             'notes'          => $request->notes,
-        ]);
+        ], fn($v) => $v !== null));
 
         // ─── Met à jour les actes (sync remplace tout) ────────────
         if ($request->has('act_ids')) {
