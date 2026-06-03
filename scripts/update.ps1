@@ -113,7 +113,15 @@ if ($httpdPath) {
 }
 
 # ── Nettoyage taches planifiees obsoletes ─────────────────────
-Unregister-ScheduledTask -TaskName "DentalApp-Scheduler" -Confirm:$false -ErrorAction SilentlyContinue
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (Get-ScheduledTask -TaskName "DentalApp-Scheduler" -ErrorAction SilentlyContinue) {
+    if ($isAdmin) {
+        Unregister-ScheduledTask -TaskName "DentalApp-Scheduler" -Confirm:$false -ErrorAction SilentlyContinue
+    } else {
+        Start-Process powershell -Verb RunAs -ArgumentList "-Command `"Unregister-ScheduledTask -TaskName 'DentalApp-Scheduler' -Confirm:`$false -ErrorAction SilentlyContinue`"" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
+    }
+    OK "Tache DentalApp-Scheduler supprimee"
+}
 
 # ── Resume ────────────────────────────────────────────────────
 Write-Host ""
