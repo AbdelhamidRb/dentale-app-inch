@@ -17,7 +17,7 @@
                             <ChevronLeft class="w-4 h-4" />
                         </button>
 
-                        <div>
+                        <div class="w-52 text-center">
                             <h1 class="text-base font-semibold text-slate-800 capitalize">
                                 {{ formattedDate }}
                             </h1>
@@ -45,7 +45,7 @@
                             <ChevronLeft class="w-4 h-4" />
                         </button>
 
-                        <div>
+                        <div class="w-52 text-center">
                             <h1 class="text-base font-semibold text-slate-800 capitalize">
                                 {{ formattedWeekRange }}
                             </h1>
