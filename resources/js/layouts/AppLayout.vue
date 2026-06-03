@@ -207,15 +207,34 @@ async function handleLogout() {
     await authStore.logout();
 }
 
-onMounted(async () => {
-    if (!authStore.isDentist()) return;
+function authHeaders() {
+    return { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' };
+}
+
+async function checkForUpdates() {
     try {
-        const res = await fetch('/api/update/status', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' }
-        });
+        const res  = await fetch('/api/update/status', { headers: authHeaders() });
         const data = await res.json();
         updateAvailable.value = !data.up_to_date;
     } catch {}
+}
+
+async function silentBackup() {
+    try {
+        const res  = await fetch('/api/backup/list', { headers: authHeaders() });
+        const data = await res.json();
+        const today = new Date().toISOString().slice(0, 10);
+        const doneToday = (data.backups ?? []).some(b => b.name?.startsWith(today));
+        if (!doneToday) {
+            await fetch('/api/backup/run', { method: 'POST', headers: authHeaders() });
+        }
+    } catch {}
+}
+
+onMounted(() => {
+    if (!authStore.isDentist()) return;
+    checkForUpdates();
+    silentBackup();
 });
 </script>
 

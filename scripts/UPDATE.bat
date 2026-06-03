@@ -48,6 +48,7 @@ echo [3/4] Optimisation Laravel...
 "%PHP%" "%APP%\artisan" config:cache
 "%PHP%" "%APP%\artisan" view:cache
 "%PHP%" "%APP%\artisan" cache:clear
+schtasks /Delete /TN "DentalApp-Backup" /F >nul 2>&1
 echo   OK
 
 echo.
