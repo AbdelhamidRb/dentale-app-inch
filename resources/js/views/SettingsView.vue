@@ -726,10 +726,12 @@ async function api(url, method = 'GET', body = null) {
         if (res.status === 401) throw new Error('Session expirée. Veuillez vous reconnecter.');
         if (res.status === 403) throw new Error('Accès refusé. Cette action est réservée au dentiste.');
         if (res.status === 422 && data.errors) {
-            const err = new Error('Données invalides.');
-            err.fields = Object.fromEntries(
+            const fields = Object.fromEntries(
                 Object.entries(data.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
             );
+            const first = Object.values(fields)[0];
+            const err = new Error(first || 'Données invalides.');
+            err.fields = fields;
             throw err;
         }
         if (res.status === 500) throw new Error(data.error ?? data.message ?? 'Erreur serveur. Vérifiez que Laragon est bien démarré.');

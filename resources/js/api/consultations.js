@@ -12,7 +12,13 @@ function headers() {
 
 async function handle(res) {
   const data = await res.json()
-  if (!res.ok) throw new Error(data.message || 'Erreur serveur')
+  if (!res.ok) {
+    if (res.status === 422 && data.errors) {
+      const first = Object.values(data.errors)[0]
+      throw new Error(Array.isArray(first) ? first[0] : first)
+    }
+    throw new Error(data.message || data.error || 'Erreur serveur')
+  }
   return data
 }
 
