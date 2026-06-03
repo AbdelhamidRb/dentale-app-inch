@@ -539,10 +539,7 @@
         <div v-if="activeTab === 'system'" class="space-y-4 max-w-2xl">
             <div class="bg-white rounded-2xl border border-slate-200 p-5">
                 <p class="font-semibold text-slate-800 mb-1">Mise à jour du logiciel</p>
-                <p class="text-xs text-slate-400 mb-5">
-                    Gardez votre logiciel à jour pour bénéficier des dernières améliorations et corrections.<br>
-                    Vos données sont automatiquement sauvegardées avant chaque mise à jour.
-                </p>
+                <p class="text-xs text-slate-400 mb-5">Vos données sont conservées lors de chaque mise à jour.</p>
 
                 <!-- Version actuelle -->
                 <div v-if="updateStatus && !updateStatus.error" class="mb-4 flex items-center gap-4 text-sm">
