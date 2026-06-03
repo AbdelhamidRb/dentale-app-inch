@@ -28,7 +28,9 @@
                         <component :is="item.icon" class="w-5 h-5 transition-colors"
                             :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'" />
                         <span>{{ item.label }}</span>
-                        <span v-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
+                        <span v-if="item.route === 'parametres' && updateAvailable"
+                              class="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span v-else-if="isActive(item.route)" class="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full" />
                     </RouterLink>
                 </template>
             </nav>
@@ -113,7 +115,11 @@
                     class="flex flex-col items-center gap-0.5 py-2 px-0.5 flex-1 transition-colors min-w-0 relative"
                     :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400'"
                 >
-                    <component :is="item.icon" class="w-[18px] h-[18px]" />
+                    <div class="relative">
+                        <component :is="item.icon" class="w-[18px] h-[18px]" />
+                        <span v-if="item.route === 'parametres' && updateAvailable"
+                              class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    </div>
                     <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
                 </RouterLink>
             </div>
@@ -125,6 +131,7 @@
 import { computed, markRaw, onMounted } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { authStore } from "../stores/auth";
+import { updateAvailable } from "../stores/update";
 import {
     LayoutDashboard, CalendarDays, Users, Stethoscope,
     CreditCard, LogOut, Activity, UserCircle, Settings,
@@ -200,7 +207,16 @@ async function handleLogout() {
     await authStore.logout();
 }
 
-onMounted(async () => {});
+onMounted(async () => {
+    if (!authStore.isDentist()) return;
+    try {
+        const res = await fetch('/api/update/status', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, Accept: 'application/json' }
+        });
+        const data = await res.json();
+        updateAvailable.value = !data.up_to_date;
+    } catch {}
+});
 </script>
 
 <style scoped>

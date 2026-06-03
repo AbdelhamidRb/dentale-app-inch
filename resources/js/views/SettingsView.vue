@@ -538,10 +538,10 @@
         <!-- ══ Onglet Système ════════════════════════════════════════ -->
         <div v-if="activeTab === 'system'" class="space-y-4 max-w-2xl">
             <div class="bg-white rounded-2xl border border-slate-200 p-5">
-                <p class="font-semibold text-slate-800 mb-1">Mise à jour de l'application</p>
+                <p class="font-semibold text-slate-800 mb-1">Mise à jour du logiciel</p>
                 <p class="text-xs text-slate-400 mb-5">
-                    Télécharge et applique la dernière version depuis GitHub.<br>
-                    Une sauvegarde automatique est créée avant toute mise à jour.
+                    Gardez votre logiciel à jour pour bénéficier des dernières améliorations et corrections.<br>
+                    Vos données sont automatiquement sauvegardées avant chaque mise à jour.
                 </p>
 
                 <!-- Version actuelle -->
@@ -612,7 +612,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { updateAvailable } from '../stores/update';
 import { DatabaseBackup, CheckCircle, XCircle, Clock, RotateCcw, TriangleAlert,
          Plus, Pencil, Trash2, X, Stethoscope, Archive } from 'lucide-vue-next';
 import ConfirmModal from '../components/ui/ConfirmModal.vue';
@@ -908,6 +909,9 @@ function copyNetwork() {
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 2000);
 }
+
+// ── Effacer le badge quand l'onglet Système est ouvert ───────────
+watch(activeTab, (tab) => { if (tab === 'system') updateAvailable.value = false; });
 
 // ── Système / Mise à jour ────────────────────────────────────────
 const updateStatus   = ref(null);   // { current, latest, up_to_date }
