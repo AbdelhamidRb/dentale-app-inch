@@ -32,3 +32,6 @@ Thumbs.db
 /database/seeders/DemoDataSeeder.php
 /database/seeders/TestDataSeeder.php
 /database/seeders/UserSeeder.php
+
+# Documentation locale uniquement
+/INSTALLATION.md
