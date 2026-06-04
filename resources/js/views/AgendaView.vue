@@ -5,65 +5,46 @@
          ══════════════════════════════════════════════════════════ -->
         <div class="flex flex-col flex-1 min-w-0">
             <!-- ── En-tête ───────────────────────────────────────────── -->
-            <div class="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-3">
-                    <!-- Navigation jour -->
-                    <template v-if="viewMode === 'day'">
-                        <button
-                            @click="previousDay"
-                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                        >
-                            <ChevronLeft class="w-4 h-4" />
-                        </button>
+            <div class="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0 space-y-3">
 
-                        <div class="w-52 text-center">
-                            <h1 class="text-base font-semibold text-slate-800 capitalize">
-                                {{ formattedDate }}
-                            </h1>
-                            <p class="text-xs text-slate-400 mt-0.5">
+                <!-- Ligne 1 : navigation date -->
+                <div class="flex items-center justify-between">
+                    <!-- Flèche gauche -->
+                    <button
+                        @click="viewMode === 'day' ? previousDay() : previousWeek()"
+                        class="p-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-500 transition-colors"
+                    >
+                        <ChevronLeft class="w-4 h-4" />
+                    </button>
+
+                    <!-- Date / période centrée -->
+                    <div class="text-center flex-1 mx-2">
+                        <h1 class="text-base font-semibold text-slate-800 capitalize leading-tight">
+                            {{ viewMode === 'day' ? formattedDate : formattedWeekRange }}
+                        </h1>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            <template v-if="viewMode === 'day'">
                                 {{ stats.total }} rendez-vous
                                 <span v-if="stats.termine > 0"> · {{ stats.termine }} terminés</span>
                                 <span v-if="stats.en_cours > 0"> · {{ stats.en_cours }} en cours</span>
-                            </p>
-                        </div>
+                            </template>
+                            <template v-else>Vue semaine</template>
+                        </p>
+                    </div>
 
-                        <button
-                            @click="nextDay"
-                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                        >
-                            <ChevronRight class="w-4 h-4" />
-                        </button>
-                    </template>
-
-                    <!-- Navigation semaine -->
-                    <template v-else>
-                        <button
-                            @click="previousWeek"
-                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                        >
-                            <ChevronLeft class="w-4 h-4" />
-                        </button>
-
-                        <div class="w-52 text-center">
-                            <h1 class="text-base font-semibold text-slate-800 capitalize">
-                                {{ formattedWeekRange }}
-                            </h1>
-                            <p class="text-xs text-slate-400 mt-0.5">Vue semaine</p>
-                        </div>
-
-                        <button
-                            @click="nextWeek"
-                            class="p-2 border border-slate-200 hover:bg-white rounded-lg text-slate-500 transition-colors"
-                        >
-                            <ChevronRight class="w-4 h-4" />
-                        </button>
-                    </template>
+                    <!-- Flèche droite -->
+                    <button
+                        @click="viewMode === 'day' ? nextDay() : nextWeek()"
+                        class="p-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-500 transition-colors"
+                    >
+                        <ChevronRight class="w-4 h-4" />
+                    </button>
                 </div>
 
+                <!-- Ligne 2 : actions -->
                 <div class="flex items-center gap-2">
-                    <!-- Toggle Jour / Semaine (desktop uniquement) -->
-                    <div class="hidden sm:flex border border-slate-300 rounded-lg overflow-hidden text-xs">
+                    <!-- Toggle Jour / Semaine -->
+                    <div class="flex border border-slate-300 rounded-lg overflow-hidden text-xs">
                         <button
                             @click="viewMode = 'day'"
                             :class="['px-3 py-1.5 transition-colors', viewMode === 'day' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50']"
@@ -80,35 +61,37 @@
                         type="date"
                         v-model="selectedDate"
                         @change="fetchAppointments(selectedDate)"
-                        class="px-2 py-1.5 sm:px-3 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="flex-1 px-2 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+
+                    <!-- Aujourd'hui -->
                     <button
                         @click="viewMode === 'day' ? goToToday() : goToTodayWeek()"
-                        class="hidden sm:block px-3 py-1.5 border border-slate-300 rounded-lg text-xs text-slate-600 hover:bg-white transition-colors"
+                        class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs text-slate-600 hover:bg-slate-50 transition-colors whitespace-nowrap"
                     >
                         Aujourd'hui
                     </button>
-                    <!-- Nouveau RDV : texte sur desktop, icône seule sur mobile -->
+
+                    <!-- Nouveau RDV -->
                     <button
                         @click="openModal(null)"
-                        class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
                     >
                         <Plus class="w-3.5 h-3.5" />
                         <span class="hidden sm:inline">Nouveau RDV</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- ── Légende statuts (desktop uniquement) ────────────── -->
-            <div class="hidden sm:flex items-center gap-4 px-1">
-                <span class="text-[11px] text-slate-400 font-medium">Statuts :</span>
-                <div v-for="s in statusLegend" :key="s.label" class="flex items-center gap-1.5">
-                    <div :class="`w-2 h-2 rounded-full ${s.dot}`"></div>
-                    <span class="text-[11px] text-slate-500">{{ s.label }}</span>
+                <!-- Légende statuts -->
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="text-[11px] text-slate-400 font-medium">Statuts :</span>
+                    <div v-for="s in statusLegend" :key="s.label" class="flex items-center gap-1.5">
+                        <div :class="`w-2 h-2 rounded-full ${s.dot}`"></div>
+                        <span class="text-[11px] text-slate-500">{{ s.label }}</span>
+                    </div>
                 </div>
-            </div>
 
-            </div><!-- fin px-4 header -->
+            </div><!-- fin header -->
 
             <!-- ── Erreur ─────────────────────────────────────────────── -->
             <div
