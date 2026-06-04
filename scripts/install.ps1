@@ -292,6 +292,31 @@ OK "DentalApp.exe cree sur le Bureau"
 
 OK "Apache demarre (dental-app-inch.test + http://$localIP)"
 
+# ── IP fixe ────────────────────────────────────────────────────
+if ($localIP -and $localIP -ne "127.0.0.1" -and $isAdmin) {
+    try {
+        $iface    = (Get-NetIPAddress -AddressFamily IPv4 |
+                     Where-Object { $_.IPAddress -eq $localIP } |
+                     Select-Object -First 1).InterfaceAlias
+        $gateway  = (Get-NetRoute -InterfaceAlias $iface -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
+                     Select-Object -First 1).NextHop
+
+        if ($iface -and $gateway) {
+            Remove-NetIPAddress -InterfaceAlias $iface -IPAddress $localIP -Confirm:$false -ErrorAction SilentlyContinue
+            Remove-NetRoute     -InterfaceAlias $iface -DestinationPrefix "0.0.0.0/0" -Confirm:$false -ErrorAction SilentlyContinue
+            New-NetIPAddress    -InterfaceAlias $iface -IPAddress $localIP -PrefixLength 24 -DefaultGateway $gateway | Out-Null
+            Set-DnsClientServerAddress -InterfaceAlias $iface -ServerAddresses ("8.8.8.8","8.8.4.4")
+            OK "IP fixee : $localIP (ne changera plus)"
+        }
+    } catch {
+        WARN "IP fixe non appliquee — a faire manuellement (voir INSTALLATION.md)"
+    }
+}
+
+# ── Veille desactivee ──────────────────────────────────────────
+powercfg /change standby-timeout-ac 0 | Out-Null
+OK "Veille desactivee (PC toujours disponible pour l'assistante)"
+
 # ── Resume final ───────────────────────────────────────────────
 Write-Host ""
 Write-Host "=================================================="
