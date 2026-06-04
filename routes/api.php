@@ -12,10 +12,14 @@ use App\Http\Controllers\Api\CatalogActController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UpdateController;
+use App\Http\Controllers\Api\LicenseController;
 
 
 // Routes publiques
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+
+// Upload licence — authentifié mais sans vérification de licence (permet d'activer depuis la page licence)
+Route::middleware('auth:sanctum')->post('/license/upload', [LicenseController::class, 'upload']);
 
 // Routes authentifiées
 Route::middleware(['auth:sanctum', 'license'])->group(function () {

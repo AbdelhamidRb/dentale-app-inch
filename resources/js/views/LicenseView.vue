@@ -34,22 +34,33 @@
                     </div>
                     <div class="flex items-start gap-2.5 text-sm text-slate-600">
                         <span class="w-5 h-5 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
-                        Envoyez-la avec votre email à votre fournisseur
+                        Envoyez-la à votre fournisseur pour recevoir le fichier de licence
                     </div>
                     <div class="flex items-start gap-2.5 text-sm text-slate-600">
                         <span class="w-5 h-5 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
-                        Placez le fichier <code class="bg-slate-100 px-1 rounded">dental-app.lic</code> reçu dans le dossier de l'application
-                    </div>
-                    <div class="flex items-start gap-2.5 text-sm text-slate-600">
-                        <span class="w-5 h-5 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
-                        Rechargez la page
+                        Uploadez le fichier <code class="bg-slate-100 px-1 rounded">dental-app.lic</code> reçu ci-dessous
                     </div>
                 </div>
             </div>
 
-            <button @click="reload"
-                    class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
-                Vérifier la licence
+            <!-- Erreur upload -->
+            <div v-if="uploadError"
+                 class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                {{ uploadError }}
+            </div>
+
+            <!-- Upload licence -->
+            <input ref="fileInput" type="file" accept=".lic" class="hidden" @change="handleFile" />
+
+            <button @click="fileInput.click()"
+                    :disabled="uploading"
+                    class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+                <svg v-if="uploading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                <Upload v-else class="w-4 h-4" />
+                {{ uploading ? 'Activation en cours...' : 'Uploader la licence' }}
             </button>
 
             <button @click="logout"
@@ -62,10 +73,13 @@
 
 <script setup>
 import { ref } from 'vue';
-import { ShieldX, Copy, Check } from 'lucide-vue-next';
+import { ShieldX, Copy, Check, Upload } from 'lucide-vue-next';
 import { authStore } from '../stores/auth';
 
-const copied = ref(false);
+const copied      = ref(false);
+const uploading   = ref(false);
+const uploadError = ref(null);
+const fileInput   = ref(null);
 
 const reason = authStore.licenseReason;
 const mac    = authStore.licenseMac;
@@ -77,7 +91,40 @@ function copyMac() {
     setTimeout(() => { copied.value = false; }, 2000);
 }
 
-function reload() { window.location.reload(); }
+async function handleFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    uploading.value   = true;
+    uploadError.value = null;
+
+    try {
+        const form = new FormData();
+        form.append('license', file);
+
+        const res  = await fetch('/api/license/upload', {
+            method:  'POST',
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            body:    form,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            const first = data.errors ? Object.values(data.errors)[0]?.[0] : null;
+            uploadError.value = first || data.message || 'Erreur lors de l\'upload.';
+            return;
+        }
+
+        window.location.reload();
+
+    } catch {
+        uploadError.value = 'Impossible de contacter le serveur. Vérifiez que Laragon est démarré.';
+    } finally {
+        uploading.value = false;
+        if (fileInput.value) fileInput.value.value = '';
+    }
+}
 
 async function logout() { await authStore.logout(); }
 </script>
