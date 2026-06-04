@@ -19,7 +19,17 @@
                 class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8"
             >
                 <div
-                    v-if="error"
+                    v-if="retrying"
+                    class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2"
+                >
+                    <svg class="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                    Service en cours de démarrage, nouvelle tentative...
+                </div>
+                <div
+                    v-else-if="error"
                     class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
                 >
                     {{ error }}
@@ -112,20 +122,25 @@ import { authStore } from "../stores/auth";
 import { Activity, Eye, EyeOff } from "lucide-vue-next";
 
 const form = reactive({ email: "", password: "" });
-const loading = ref(false);
-const error = ref(null);
+const loading  = ref(false);
+const retrying = ref(false);
+const error    = ref(null);
 const showPassword = ref(false);
 
 async function handleLogin() {
-    loading.value = true;
-    error.value = null;
+    loading.value  = true;
+    retrying.value = false;
+    error.value    = null;
 
     try {
+        authStore._onRetry = () => { retrying.value = true; };
         await authStore.login(form.email, form.password);
     } catch (e) {
         error.value = e.message;
     } finally {
-        loading.value = false;
+        loading.value  = false;
+        retrying.value = false;
+        authStore._onRetry = null;
     }
 }
 </script>

@@ -8,7 +8,7 @@ export const authStore = reactive({
   licenseReason:  null,
   licenseMac:     null,
 
-  async login(email, password) {
+  async login(email, password, _retry = false) {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -18,7 +18,16 @@ export const authStore = reactive({
     const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.message || 'Identifiants incorrects')
+      if (res.status >= 500 && !_retry) {
+        // Laragon démarre encore — prévenir l'UI et réessayer après 3 secondes
+        if (typeof this._onRetry === 'function') this._onRetry()
+        await new Promise(r => setTimeout(r, 3000))
+        return this.login(email, password, true)
+      }
+      if (res.status >= 500) {
+        throw new Error('Service indisponible. Vérifiez que Laragon est bien démarré.')
+      }
+      throw new Error(data.message || 'Identifiants incorrects.')
     }
 
     this.token = data.token
