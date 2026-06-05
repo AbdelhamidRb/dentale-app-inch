@@ -913,8 +913,13 @@ function copyNetwork() {
     setTimeout(() => { copied.value = false; }, 2000);
 }
 
-// ── Effacer le badge quand l'onglet Système est ouvert ───────────
-watch(activeTab, (tab) => { if (tab === 'system') updateAvailable.value = false; });
+// ── Onglet Système : effacer le badge + vérifier la version auto ─
+watch(activeTab, (tab) => {
+    if (tab === 'system') {
+        updateAvailable.value = false;
+        if (!updateStatus.value && !checkingUpdate.value) checkUpdate();
+    }
+});
 
 // ── Système / Mise à jour ────────────────────────────────────────
 const updateStatus   = ref(null);   // { current, latest, up_to_date }
@@ -956,6 +961,8 @@ onMounted(() => {
     if (route.query.tab && tabs.find(t => t.id === route.query.tab)) {
         activeTab.value = route.query.tab;
     }
+    // Vérifier la version immédiatement si on arrive sur l'onglet système
+    if (activeTab.value === 'system') checkUpdate();
     loadBackups();
     loadTemplate();
     loadActs();
