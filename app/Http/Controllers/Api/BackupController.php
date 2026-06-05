@@ -25,19 +25,8 @@ class BackupController extends Controller
     }
 
     private function backupDir(): string {
-        // Priorité 1 : variable OneDrive définie par Windows
-        foreach (['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial'] as $env) {
-            $od = getenv($env);
-            if ($od && is_dir($od)) {
-                return rtrim($od, '\\/') . '\\backups\\dental-app';
-            }
-        }
-        // Priorité 2 : USERPROFILE\OneDrive
-        $profile = getenv('USERPROFILE');
-        if ($profile && is_dir($profile . '\\OneDrive')) {
-            return $profile . '\\OneDrive\\backups\\dental-app';
-        }
-        // Fallback : C:\backups\dental-app
+        // Même chemin que backup.ps1 : {lecteur}:\backups\dental-app
+        // OneDrive/USB sont des copies secondaires gérées par le script PS uniquement
         $drive = substr(base_path(), 0, 2);
         return $drive . '\\backups\\dental-app';
     }
