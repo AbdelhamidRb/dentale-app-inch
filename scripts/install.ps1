@@ -327,6 +327,13 @@ Write-Host ""
 Write-Host "  CHANGEZ LES MOTS DE PASSE APRES LA PREMIERE CONNEXION !" -ForegroundColor Yellow
 Write-Host ""
 
+# Supprimer le token GitHub (sensible — ne doit pas rester sur le PC du dentiste)
+$tokenFileToDelete = Join-Path $PSScriptRoot "dental-app-token.txt"
+if (Test-Path $tokenFileToDelete) {
+    Remove-Item $tokenFileToDelete -Force
+    Write-Host "  Token GitHub supprime (securite)" -ForegroundColor Gray
+}
+
 if ($needRestart) {
     Write-Host "  Un redemarrage est necessaire pour activer dental.local" -ForegroundColor Yellow
     Write-Host ""
