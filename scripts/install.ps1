@@ -292,26 +292,20 @@ OK "DentalApp.exe cree sur le Bureau"
 
 OK "Apache demarre (dental-app-inch.test + http://$localIP)"
 
-# ── IP fixe ────────────────────────────────────────────────────
-if ($localIP -and $localIP -ne "127.0.0.1" -and $isAdmin) {
-    try {
-        $iface    = (Get-NetIPAddress -AddressFamily IPv4 |
-                     Where-Object { $_.IPAddress -eq $localIP } |
-                     Select-Object -First 1).InterfaceAlias
-        $gateway  = (Get-NetRoute -InterfaceAlias $iface -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
-                     Select-Object -First 1).NextHop
-
-        if ($iface -and $gateway) {
-            Remove-NetIPAddress -InterfaceAlias $iface -IPAddress $localIP -Confirm:$false -ErrorAction SilentlyContinue
-            Remove-NetRoute     -InterfaceAlias $iface -DestinationPrefix "0.0.0.0/0" -Confirm:$false -ErrorAction SilentlyContinue
-            New-NetIPAddress    -InterfaceAlias $iface -IPAddress $localIP -PrefixLength 24 -DefaultGateway $gateway | Out-Null
-            Set-DnsClientServerAddress -InterfaceAlias $iface -ServerAddresses ("8.8.8.8","8.8.4.4")
-            OK "IP fixee : $localIP (ne changera plus)"
-        }
-    } catch {
-        WARN "IP fixe non appliquee — a faire manuellement (voir INSTALLATION.md)"
-    }
-}
+# ── IP fixe via reservation DHCP (routeur) ─────────────────────
+$macAddress = (Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.InterfaceDescription -notmatch 'Virtual|Loopback' } |
+               Select-Object -First 1).MacAddress
+Write-Host ""
+Write-Host "  ACTION REQUISE : Fixer l'IP dans le routeur" -ForegroundColor Yellow
+Write-Host "  ─────────────────────────────────────────────────────"
+Write-Host "  1. Ouvrez http://192.168.1.1 dans un navigateur"
+Write-Host "  2. Allez dans DHCP > Reservations (ou Adresses statiques)"
+Write-Host "  3. Ajoutez une reservation avec ces informations :"
+Write-Host "       Adresse MAC : $macAddress" -ForegroundColor Cyan
+Write-Host "       Adresse IP  : $localIP" -ForegroundColor Cyan
+Write-Host "  4. Sauvegardez et redemarrez le routeur si demande"
+Write-Host "  ─────────────────────────────────────────────────────"
+Write-Host "  Cela garantit que ce PC aura toujours la meme IP." -ForegroundColor Gray
 
 # ── Veille desactivee ──────────────────────────────────────────
 powercfg /change standby-timeout-ac 0 | Out-Null
