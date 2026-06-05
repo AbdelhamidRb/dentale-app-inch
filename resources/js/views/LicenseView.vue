@@ -43,6 +43,16 @@
                 </div>
             </div>
 
+            <!-- Succès upload -->
+            <div v-if="uploadSuccess"
+                 class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+                <CheckCircle class="w-5 h-5 text-green-600 shrink-0" />
+                <div class="text-left">
+                    <p class="text-sm font-medium text-green-700">Licence activée avec succès !</p>
+                    <p class="text-xs text-green-600">Redirection vers la connexion...</p>
+                </div>
+            </div>
+
             <!-- Erreur upload -->
             <div v-if="uploadError"
                  class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
@@ -53,7 +63,7 @@
             <input ref="fileInput" type="file" accept=".lic" class="hidden" @change="handleFile" />
 
             <button @click="fileInput.click()"
-                    :disabled="uploading"
+                    :disabled="uploading || uploadSuccess"
                     class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
                 <svg v-if="uploading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -73,12 +83,15 @@
 
 <script setup>
 import { ref } from 'vue';
-import { ShieldX, Copy, Check, Upload } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { ShieldX, Copy, Check, Upload, CheckCircle } from 'lucide-vue-next';
 import { authStore } from '../stores/auth';
 
+const router      = useRouter();
 const copied      = ref(false);
 const uploading   = ref(false);
 const uploadError = ref(null);
+const uploadSuccess = ref(false);
 const fileInput   = ref(null);
 
 const reason = authStore.licenseReason;
@@ -116,7 +129,8 @@ async function handleFile(event) {
             return;
         }
 
-        window.location.reload();
+        uploadSuccess.value = true;
+        setTimeout(() => router.push('/login'), 2500);
 
     } catch {
         uploadError.value = 'Impossible de contacter le serveur. Vérifiez que Laragon est démarré.';
