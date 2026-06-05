@@ -523,18 +523,32 @@
 
         <!-- ══ Onglet Système ════════════════════════════════════════ -->
         <div v-if="activeTab === 'system'" class="space-y-4 max-w-2xl">
-            <div class="bg-white rounded-2xl border border-slate-200 p-5">
-                <p class="font-semibold text-slate-800 mb-5">Mise à jour du logiciel</p>
+            <div :class="['bg-white rounded-2xl border p-5 transition-all duration-300',
+                          updateStatus && !updateStatus.up_to_date && !updateStatus.error
+                              ? 'border-blue-300 shadow-md shadow-blue-100'
+                              : 'border-slate-200']">
+
+                <!-- Bannière mise à jour disponible -->
+                <div v-if="updateStatus && !updateStatus.up_to_date && !updateStatus.error"
+                     class="mb-5 flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+                    <span class="relative flex h-2.5 w-2.5 shrink-0">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                    </span>
+                    <span class="text-sm font-semibold text-blue-700 flex-1">Nouvelle version disponible</span>
+                    <code class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg text-xs font-bold">
+                        v{{ updateStatus.latest }}
+                    </code>
+                </div>
+
+                <p class="font-semibold text-slate-800 mb-4">Mise à jour du logiciel</p>
 
                 <!-- Version actuelle -->
-                <div v-if="updateStatus && !updateStatus.error" class="mb-4 flex items-center gap-4 text-sm">
+                <div v-if="updateStatus && !updateStatus.error" class="mb-5 flex items-center gap-3 text-sm">
                     <span class="text-slate-500">Version actuelle :
                         <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ updateStatus.current }}</code>
                     </span>
-                    <span v-if="!updateStatus.up_to_date" class="text-slate-500">→ Disponible :
-                        <code class="bg-blue-50 px-1.5 py-0.5 rounded text-blue-700">{{ updateStatus.latest }}</code>
-                    </span>
-                    <span v-else class="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                    <span v-if="updateStatus.up_to_date" class="flex items-center gap-1 text-emerald-600 text-xs font-medium">
                         <CheckCircle class="w-3.5 h-3.5" /> À jour
                     </span>
                 </div>
@@ -544,7 +558,7 @@
                 </div>
 
                 <!-- Boutons -->
-                <div class="flex gap-3 flex-wrap">
+                <div class="flex gap-3 flex-wrap items-center">
                     <button @click="checkUpdate" :disabled="checkingUpdate || updating"
                         class="flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50
                                disabled:opacity-50 text-slate-600 text-sm font-medium rounded-xl transition-colors">
@@ -552,12 +566,15 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
-                        {{ checkingUpdate ? 'Vérification…' : 'Vérifier les mises à jour' }}
+                        {{ checkingUpdate ? 'Vérification…' : 'Vérifier' }}
                     </button>
 
+                    <!-- Bouton principal — proéminent si MAJ disponible -->
                     <button @click="runUpdate" :disabled="updating || checkingUpdate"
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
-                               disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors">
+                        :class="['flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-50',
+                                 updateStatus && !updateStatus.up_to_date && !updateStatus.error
+                                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 ring-2 ring-blue-400 ring-offset-2 scale-105'
+                                     : 'bg-slate-100 hover:bg-slate-200 text-slate-500']">
                         <svg v-if="updating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
