@@ -136,7 +136,7 @@ class BackupController extends Controller
 
         // ─── Compresser les images ────────────────────────────────
         $zipFile    = $dest . '\\images.zip';
-        $imgPath    = storage_path('app/public/patients');
+        $imgPath    = storage_path('app/public');
         $imgSizeKB  = 0;
 
         if (is_dir($imgPath)) {
@@ -227,7 +227,7 @@ class BackupController extends Controller
         // ─── Restaurer les images ─────────────────────────────────
         $zipFile = $path . '\\images.zip';
         if (file_exists($zipFile)) {
-            $imgPath = storage_path('app/public/patients');
+            $imgPath = storage_path('app/public');
 
             // Vérifier le ZIP avant de toucher aux images existantes
             $zip = new ZipArchive();
@@ -235,7 +235,7 @@ class BackupController extends Controller
                 return response()->json(['error' => 'Fichier ZIP des images corrompu ou illisible.'], 500);
             }
 
-            // Supprimer les images actuelles seulement si le ZIP est valide
+            // Vider le contenu mais garder le dossier (la junction public/storage pointe dessus)
             if (is_dir($imgPath)) {
                 $it = new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator($imgPath, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -244,9 +244,8 @@ class BackupController extends Controller
                 foreach ($it as $f) {
                     $f->isDir() ? rmdir($f->getRealPath()) : unlink($f->getRealPath());
                 }
-                rmdir($imgPath);
             }
-            mkdir($imgPath, 0755, true);
+            if (!is_dir($imgPath)) { mkdir($imgPath, 0755, true); }
             $zip->extractTo($imgPath);
             $zip->close();
         }

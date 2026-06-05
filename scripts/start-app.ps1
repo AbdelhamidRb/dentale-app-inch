@@ -30,11 +30,22 @@ $localIP = (Get-NetIPAddress -AddressFamily IPv4 |
 if (-not $localIP) { $localIP = "127.0.0.1" }
 
 # Ecrire le VirtualHost avec l'IP actuelle (avant de demarrer Apache)
+# L'Alias /storage evite le probleme de junction Windows (Apache ne suit pas les junctions
+# dans mod_rewrite, ce qui ferait rediriger les PDF/images vers l'app au lieu de les servir)
+$storagePath = ($APP_ROOT -replace '\\', '/') + "/storage/app/public"
 @"
 <VirtualHost *:80>
     ServerName dental-app-inch.test
     ServerAlias dental.local dental $localIP
     DocumentRoot "$LARAGON_ROOT/www/dental-app-inch/public"
+
+    Alias /storage "$storagePath"
+    <Directory "$storagePath">
+        AllowOverride None
+        Require all granted
+        Options FollowSymLinks
+    </Directory>
+
     <Directory "$LARAGON_ROOT/www/dental-app-inch/public">
         AllowOverride All
         Require all granted

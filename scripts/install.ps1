@@ -240,7 +240,8 @@ OK "Base de donnees initialisee"
 Step 8 8 "Configuration reseau et demarrage..."
 
 # VirtualHost initial (l'IP sera ajoutee dynamiquement par start-app.ps1 a chaque demarrage)
-$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"$LARAGON_ROOT/www/dental-app-inch/public`"`n    <Directory `"$LARAGON_ROOT/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
+$storagePath = ($APP_ROOT -replace '\\', '/') + "/storage/app/public"
+$vh = "<VirtualHost *:80>`n    ServerName dental-app-inch.test`n    ServerAlias dental.local dental`n    DocumentRoot `"$LARAGON_ROOT/www/dental-app-inch/public`"`n`n    Alias /storage `"$storagePath`"`n    <Directory `"$storagePath`">`n        AllowOverride None`n        Require all granted`n        Options FollowSymLinks`n    </Directory>`n`n    <Directory `"$LARAGON_ROOT/www/dental-app-inch/public`">`n        AllowOverride All`n        Require all granted`n    </Directory>`n</VirtualHost>"
 Set-Content "$LARAGON_ROOT\etc\apache2\sites-enabled\dental-app-inch.conf" -Value $vh -Encoding utf8
 
 # Supprimer les anciens fichiers si existants

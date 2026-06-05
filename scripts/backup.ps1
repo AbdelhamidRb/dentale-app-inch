@@ -85,7 +85,7 @@ Write-Host "  OK  database.sql  ($sizeMB MB)" -ForegroundColor Green
 
 # ─── [2/4] Compresser les images ───────────────────────────────
 Write-Host "[2/4] Compression des images patients..."
-$imagesPath = Join-Path $APP_ROOT "storage\app\public\patients"
+$imagesPath = Join-Path $APP_ROOT "storage\app\public"
 $zipFile    = Join-Path $dest "images.zip"
 
 if (Test-Path $imagesPath) {
