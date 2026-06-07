@@ -559,17 +559,17 @@ function syncWeekApptAfterSave(appt, isEdit) {
         weekAppointments.value[date].sort((a, b) => a.start_time.localeCompare(b.start_time));
     } else {
         // Date hors semaine → navigate vers la semaine de la nouvelle date
-        const newMonday = getWeekStartLocal(new Date(date + "T00:00:00"));
+        const newMonday = getWeekStartLocal(date);
         weekStartDate.value = newMonday;
         fetchWeek(newMonday);
     }
 }
 
-function getWeekStartLocal(date) {
-    const d = new Date(date);
-    const day = d.getDay();
+function getWeekStartLocal(dateOrStr) {
+    const d = new Date(typeof dateOrStr === "string" ? dateOrStr : dateOrStr.toISOString().split("T")[0]);
+    const day = d.getUTCDay();
     const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
+    d.setUTCDate(d.getUTCDate() + diff);
     return d.toISOString().split("T")[0];
 }
 
@@ -653,9 +653,9 @@ function isToday(dateStr) {
 }
 
 function onDateInputChange() {
-    const d = new Date(selectedDate.value + "T00:00:00");
-    if (d.getDay() === 0) { // dimanche → lundi
-        d.setDate(d.getDate() + 1);
+    const d = new Date(selectedDate.value); // UTC minuit
+    if (d.getUTCDay() === 0) {
+        d.setUTCDate(d.getUTCDate() + 1);
         selectedDate.value = d.toISOString().split("T")[0];
     }
     fetchAppointments(selectedDate.value);

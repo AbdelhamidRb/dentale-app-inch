@@ -2,19 +2,29 @@ import { ref, computed } from "vue";
 import { appointmentsApi } from "../api/appointments";
 import { invalidateDashboard } from "../stores/dashboard";
 
-// Retourne le lundi de la semaine contenant `date`
-function getWeekStart(date) {
-    const d = new Date(date);
-    const day = d.getDay(); // 0=dim, 1=lun...
+// Date locale du jour (YYYY-MM-DD) — évite le décalage UTC lors d'un new Date().toISOString()
+function localToday() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Retourne le lundi de la semaine en UTC pur
+// Accepte un objet Date (→ converti en date locale) ou une chaîne "YYYY-MM-DD"
+function getWeekStart(dateOrStr) {
+    const str = dateOrStr instanceof Date
+        ? `${dateOrStr.getFullYear()}-${String(dateOrStr.getMonth() + 1).padStart(2, "0")}-${String(dateOrStr.getDate()).padStart(2, "0")}`
+        : dateOrStr;
+    const d = new Date(str); // UTC minuit
+    const day = d.getUTCDay();
     const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
+    d.setUTCDate(d.getUTCDate() + diff);
     return d.toISOString().split("T")[0];
 }
 
-// Retourne le dimanche (6 jours après lundi)
+// Retourne le samedi (5 jours après lundi) — borne de fetchWeek
 function getWeekEnd(mondayStr) {
-    const d = new Date(mondayStr + "T00:00:00");
-    d.setDate(d.getDate() + 6);
+    const d = new Date(mondayStr); // UTC minuit
+    d.setUTCDate(d.getUTCDate() + 5);
     return d.toISOString().split("T")[0];
 }
 
@@ -27,10 +37,10 @@ export function useAppointments() {
     const weekLoading = ref(false);
     const error = ref(null);
 
-    // ─── Date sélectionnée (aujourd'hui par défaut, jamais dimanche) ─
-    const _initDate = new Date();
-    if (_initDate.getDay() === 0) _initDate.setDate(_initDate.getDate() + 1);
-    const selectedDate = ref(_initDate.toISOString().split("T")[0]);
+    // ─── Date sélectionnée (date locale du jour, jamais dimanche) ────
+    const _initD = new Date(localToday()); // UTC minuit de la date locale
+    if (_initD.getUTCDay() === 0) _initD.setUTCDate(_initD.getUTCDate() + 1);
+    const selectedDate = ref(_initD.toISOString().split("T")[0]);
 
     // ─── Semaine : RDV groupés par date { "YYYY-MM-DD": [...] } ───
     const weekAppointments = ref({});
@@ -73,26 +83,26 @@ export function useAppointments() {
         }
     }
 
-    // ─── Navigation jour précédent / suivant ──────────────────────
+    // ─── Navigation jour — tout en UTC pour éviter le décalage UTC+1 ─
     function previousDay() {
-        const d = new Date(selectedDate.value + "T00:00:00");
-        d.setDate(d.getDate() - 1);
-        if (d.getDay() === 0) d.setDate(d.getDate() - 1); // dim → sam
+        const d = new Date(selectedDate.value); // "YYYY-MM-DD" → UTC minuit
+        d.setUTCDate(d.getUTCDate() - 1);
+        if (d.getUTCDay() === 0) d.setUTCDate(d.getUTCDate() - 1); // dim → sam
         selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
 
     function nextDay() {
-        const d = new Date(selectedDate.value + "T00:00:00");
-        d.setDate(d.getDate() + 1);
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // dim → lun
+        const d = new Date(selectedDate.value);
+        d.setUTCDate(d.getUTCDate() + 1);
+        if (d.getUTCDay() === 0) d.setUTCDate(d.getUTCDate() + 1); // dim → lun
         selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
 
     function goToToday() {
-        const d = new Date();
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // dim → lun
+        const d = new Date(localToday());
+        if (d.getUTCDay() === 0) d.setUTCDate(d.getUTCDate() + 1);
         selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
@@ -145,21 +155,15 @@ export function useAppointments() {
         invalidateDashboard();
     }
 
-    // ─── Les 6 jours lun–sam (toujours normalisé au lundi) ───────
+    // ─── Lun–Sam en UTC pur (normalisé même si weekStartDate ≠ lundi) ─
     const weekDays = computed(() => {
-        const days = [];
-        const ref = new Date(weekStartDate.value + "T00:00:00");
-        // Normalise au lundi, même si weekStartDate n'est pas un lundi
-        const dayOfWeek = ref.getDay();
-        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-        const monday = new Date(ref);
-        monday.setDate(ref.getDate() + diff);
-        for (let i = 0; i < 6; i++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + i);
-            days.push(d.toISOString().split("T")[0]);
-        }
-        return days;
+        const ref = new Date(weekStartDate.value); // UTC minuit
+        const day = ref.getUTCDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        const mondayMs = ref.getTime() + diff * 86400000;
+        return Array.from({ length: 6 }, (_, i) =>
+            new Date(mondayMs + i * 86400000).toISOString().split("T")[0]
+        );
     });
 
     // ─── Charge les RDV d'une semaine ────────────────────────────
@@ -178,15 +182,15 @@ export function useAppointments() {
     }
 
     function previousWeek() {
-        const d = new Date(weekStartDate.value + "T00:00:00");
-        d.setDate(d.getDate() - 7);
+        const d = new Date(weekStartDate.value);
+        d.setUTCDate(d.getUTCDate() - 7);
         weekStartDate.value = d.toISOString().split("T")[0];
         fetchWeek(weekStartDate.value);
     }
 
     function nextWeek() {
-        const d = new Date(weekStartDate.value + "T00:00:00");
-        d.setDate(d.getDate() + 7);
+        const d = new Date(weekStartDate.value);
+        d.setUTCDate(d.getUTCDate() + 7);
         weekStartDate.value = d.toISOString().split("T")[0];
         fetchWeek(weekStartDate.value);
     }
