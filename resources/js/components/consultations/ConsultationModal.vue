@@ -140,6 +140,16 @@
                                 </div>
                             </div>
 
+                            <!-- Date de consultation -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">Date</label>
+                                <input
+                                    v-model="form.date"
+                                    type="date"
+                                    class="w-full border border-slate-200 rounded-xl px-3 py-2 sm:py-2.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                            </div>
+
                             <!-- Lien RDV (optionnel) -->
                             <div v-if="!appointmentPatient">
                                 <label
@@ -514,11 +524,17 @@ function handleClickOutside(e) {
 onMounted(() => document.addEventListener("click", handleClickOutside));
 onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 
+function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 const defaultForm = () => ({
     id: null,
     patient_id: props.appointmentPatient?.id ?? "",
     appointment_id: props.appointmentId ?? null,
     status: "EN_COURS",
+    date: today(),
     notes: "",
     acts: [],
 });
@@ -554,6 +570,7 @@ watch(
             patient_id: c.patient?.id ?? "",
             appointment_id: c.appointment_id,
             status: c.status,
+            date: c.session_dates?.[0] ?? today(),
             notes: c.notes ?? "",
             acts: (c.acts ?? []).map((a) => ({
                 catalog_act_id: a.catalog_act?.id,
@@ -650,6 +667,7 @@ async function submit() {
             patient_id: form.value.patient_id,
             appointment_id: form.value.appointment_id,
             status: form.value.status,
+            date: form.value.date,
             notes: form.value.notes,
             acts: form.value.acts.map((a) => ({
                 catalog_act_id: a.catalog_act_id ?? a.catalog_act?.id,

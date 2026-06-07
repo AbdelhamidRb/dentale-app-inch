@@ -94,6 +94,19 @@
                     </div>
                 </div>
 
+                <!-- Date -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">
+                        Date <span class="text-red-400">*</span>
+                    </label>
+                    <input
+                        v-model="form.scheduled_date"
+                        type="date"
+                        required
+                        class="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 border border-slate-300 focus:ring-blue-500"
+                    />
+                </div>
+
                 <!-- Heure début + fin -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -332,7 +345,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onClickOutside))
 
 // ─── Formulaire ───────────────────────────────────────────────────
 const form = reactive({
-    scheduled_date: "",
+    scheduled_date: props.selectedDate,
     start_time: "",
     end_time: "",
     act_ids: [],

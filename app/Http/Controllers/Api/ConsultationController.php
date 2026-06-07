@@ -79,6 +79,7 @@ class ConsultationController extends Controller
                 },
             ],
             'status'            => 'nullable|in:EN_COURS,TERMINE',
+            'date'              => 'nullable|date',
             'notes'             => 'nullable|string',
             'acts'              => 'nullable|array',
             'acts.*.catalog_act_id' => 'required|exists:catalog_acts,id',
@@ -109,7 +110,7 @@ class ConsultationController extends Controller
                 'created_by'     => auth()->id(),
                 'status'         => $request->status ?? 'EN_COURS',
                 'notes'          => $request->notes,
-                'session_dates'  => [now()->toDateString()],
+                'session_dates'  => [$request->date ?? now()->toDateString()],
             ]);
 
             // ─── Ajout des actes (batch insert) ──────────────────
@@ -173,6 +174,7 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'status'            => 'nullable|in:EN_COURS,TERMINE',
+            'date'              => 'nullable|date',
             'notes'             => 'nullable|string',
             'acts'              => 'nullable|array',
             'acts.*.id'         => 'nullable|exists:consultation_acts,id',
@@ -183,10 +185,16 @@ class ConsultationController extends Controller
             'acts.*.notes'      => 'nullable|string',
         ]);
 
-        $consultation->update([
+        $updateData = [
             'status' => $request->status ?? $consultation->status,
             'notes'  => $request->notes,
-        ]);
+        ];
+        if ($request->filled('date')) {
+            $dates = $consultation->session_dates ?? [];
+            $dates[0] = $request->date;
+            $updateData['session_dates'] = array_values($dates);
+        }
+        $consultation->update($updateData);
 
         // ─── Sync des actes (remplace tout — batch insert) ───────
         if ($request->has('acts')) {
