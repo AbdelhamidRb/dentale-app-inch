@@ -60,7 +60,7 @@
                         v-if="viewMode === 'day'"
                         type="date"
                         v-model="selectedDate"
-                        @change="fetchAppointments(selectedDate)"
+                        @change="onDateInputChange"
                         class="flex-1 px-2 py-1.5 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
 
@@ -650,6 +650,15 @@ function formatDayHeader(dateStr) {
 // Vérifie si une date est aujourd'hui
 function isToday(dateStr) {
     return dateStr === new Date().toISOString().split("T")[0];
+}
+
+function onDateInputChange() {
+    const d = new Date(selectedDate.value + "T00:00:00");
+    if (d.getDay() === 0) { // dimanche → lundi
+        d.setDate(d.getDate() + 1);
+        selectedDate.value = d.toISOString().split("T")[0];
+    }
+    fetchAppointments(selectedDate.value);
 }
 
 // Plage de la semaine affichée : "19 – 25 mai 2026"

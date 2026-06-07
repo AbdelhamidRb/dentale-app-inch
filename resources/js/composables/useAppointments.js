@@ -27,8 +27,10 @@ export function useAppointments() {
     const weekLoading = ref(false);
     const error = ref(null);
 
-    // ─── Date sélectionnée (aujourd'hui par défaut) ────────────────
-    const selectedDate = ref(new Date().toISOString().split("T")[0]);
+    // ─── Date sélectionnée (aujourd'hui par défaut, jamais dimanche) ─
+    const _initDate = new Date();
+    if (_initDate.getDay() === 0) _initDate.setDate(_initDate.getDate() + 1);
+    const selectedDate = ref(_initDate.toISOString().split("T")[0]);
 
     // ─── Semaine : RDV groupés par date { "YYYY-MM-DD": [...] } ───
     const weekAppointments = ref({});
@@ -73,21 +75,25 @@ export function useAppointments() {
 
     // ─── Navigation jour précédent / suivant ──────────────────────
     function previousDay() {
-        const d = new Date(selectedDate.value);
+        const d = new Date(selectedDate.value + "T00:00:00");
         d.setDate(d.getDate() - 1);
+        if (d.getDay() === 0) d.setDate(d.getDate() - 1); // dim → sam
         selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
 
     function nextDay() {
-        const d = new Date(selectedDate.value);
+        const d = new Date(selectedDate.value + "T00:00:00");
         d.setDate(d.getDate() + 1);
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // dim → lun
         selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
 
     function goToToday() {
-        selectedDate.value = new Date().toISOString().split("T")[0];
+        const d = new Date();
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // dim → lun
+        selectedDate.value = d.toISOString().split("T")[0];
         fetchAppointments(selectedDate.value);
     }
 
