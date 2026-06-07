@@ -554,7 +554,6 @@ const patient = computed(() => props.data.patient);
 // ─── Solde patient — fourni par GET /api/patients/{id}, pas d'appel séparé ──
 const balance = computed(() => props.data.balance ?? null);
 
-// Reset onglet au changement de patient
 watch(() => props.data?.patient?.id, () => { activeTab.value = "fiche"; });
 
 const balanceColor = computed(

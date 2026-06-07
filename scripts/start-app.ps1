@@ -33,11 +33,12 @@ if (-not $localIP) { $localIP = "127.0.0.1" }
 # L'Alias /storage evite le probleme de junction Windows (Apache ne suit pas les junctions
 # dans mod_rewrite, ce qui ferait rediriger les PDF/images vers l'app au lieu de les servir)
 $storagePath = ($APP_ROOT -replace '\\', '/') + "/storage/app/public"
+$docRoot     = ($LARAGON_ROOT -replace '\\', '/') + "/www/dental-app-inch/public"
 @"
 <VirtualHost *:80>
     ServerName dental-app-inch.test
     ServerAlias dental.local dental $localIP
-    DocumentRoot "$LARAGON_ROOT/www/dental-app-inch/public"
+    DocumentRoot "$docRoot"
 
     Alias /storage "$storagePath"
     <Directory "$storagePath">
@@ -46,7 +47,7 @@ $storagePath = ($APP_ROOT -replace '\\', '/') + "/storage/app/public"
         Options FollowSymLinks
     </Directory>
 
-    <Directory "$LARAGON_ROOT/www/dental-app-inch/public">
+    <Directory "$docRoot">
         AllowOverride All
         Require all granted
     </Directory>

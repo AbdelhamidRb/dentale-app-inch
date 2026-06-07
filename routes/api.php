@@ -14,7 +14,6 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UpdateController;
 use App\Http\Controllers\Api\LicenseController;
 
-
 // Routes publiques
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 

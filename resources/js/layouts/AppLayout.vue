@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { computed, markRaw, onMounted } from "vue";
+import { computed, markRaw, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import { authStore } from "../stores/auth";
 import { updateAvailable } from "../stores/update";
@@ -151,7 +151,8 @@ import {
     CreditCard, LogOut, Activity, UserCircle, Settings,
 } from "lucide-vue-next";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
-import ToastNotification from "../components/ui/ToastNotification.vue";
+import ToastNotification  from "../components/ui/ToastNotification.vue";
+import { showToast } from "../stores/toast.js";
 const user = computed(() => authStore.user);
 
 const userInitials = computed(() => {

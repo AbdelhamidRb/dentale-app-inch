@@ -115,6 +115,13 @@ class AppointmentController extends Controller
             'act_ids.*.exists'             => 'Un acte sélectionné est invalide.',
         ]);
 
+        // ─── Jour fermé : mardi ───────────────────────────────────
+        if (\Carbon\Carbon::parse($request->scheduled_date)->isSunday()) {
+            return response()->json([
+                'message' => 'Le cabinet est fermé le dimanche. Veuillez choisir un autre jour.',
+            ], 422);
+        }
+
         // ─── Vérification chevauchement ───────────────────────────
         if (Appointment::hasConflict(
             $request->scheduled_date,
@@ -195,6 +202,13 @@ class AppointmentController extends Controller
             'end_time.before_or_equal'     => "L'heure de fin ne peut pas dépasser 18h00.",
             'act_ids.*.exists'             => 'Un acte sélectionné est invalide.',
         ]);
+
+        // ─── Jour fermé : mardi ───────────────────────────────────
+        if (\Carbon\Carbon::parse($request->scheduled_date)->isSunday()) {
+            return response()->json([
+                'message' => 'Le cabinet est fermé le dimanche. Veuillez choisir un autre jour.',
+            ], 422);
+        }
 
         // ─── Vérification chevauchement (exclut le RDV actuel) ────
         if (Appointment::hasConflict(

@@ -303,8 +303,9 @@ const {
 const showForm        = ref(false);
 const editingPatient  = ref(null);
 const patientFormError = ref(null);
-
-onMounted(() => fetchPatients());
+onMounted(async () => {
+    await fetchPatients();
+});
 
 function openForm(patient) {
     editingPatient.value  = patient;

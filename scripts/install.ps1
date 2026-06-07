@@ -291,7 +291,7 @@ if ($isAdmin -and $env:COMPUTERNAME -ne "dental") {
 powershell -ExecutionPolicy Bypass -File "$APP_ROOT\scripts\build-exe.ps1" | Out-Null
 OK "DentalApp.exe cree sur le Bureau"
 
-OK "Apache demarre (dental-app-inch.test + http://$localIP)"
+OK "Apache demarre (http://dental-app-inch.test + http://$localIP)"
 
 # ── IP fixe via reservation DHCP (routeur) ─────────────────────
 $macAddress = (Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.InterfaceDescription -notmatch 'Virtual|Loopback' } |

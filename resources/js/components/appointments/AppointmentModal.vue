@@ -393,6 +393,12 @@ async function handleSubmit() {
         return;
     }
 
+    const effectiveDate = form.scheduled_date || props.selectedDate;
+    if (effectiveDate && new Date(effectiveDate + 'T12:00:00').getDay() === 0) {
+        error.value = "Le cabinet est fermé le dimanche. Veuillez choisir un autre jour.";
+        return;
+    }
+
     if (!form.start_time || !form.end_time) {
         error.value = "Les heures de début et de fin sont obligatoires.";
         return;

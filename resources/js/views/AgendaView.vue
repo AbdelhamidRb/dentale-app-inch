@@ -428,6 +428,7 @@ const selectedAppointment = ref(null);
 
 onMounted(async () => {
     if (window.innerWidth < 640) viewMode.value = 'day';
+
     await Promise.all([fetchAppointments(), fetchWeek()]);
     fetchCatalogActs();
 });
@@ -507,10 +508,20 @@ function apptDuration(appt) {
 const appointmentsWithLayout = computed(() => computeLayout(appointments.value));
 
 // ─── Ouvrir modal ─────────────────────────────────────────────────
+function isTuesdayDate(dateStr) {
+    if (!dateStr) return false;
+    return new Date(dateStr + 'T12:00:00').getDay() === 0;
+}
+
 function openModal(slot, appointment = null, date = null) {
+    const targetDate = date || selectedDate.value;
+    // Bloquer la création (pas l'édition) le mardi
+    if (!appointment && isTuesdayDate(targetDate)) {
+        showToast('Le cabinet est fermé le dimanche. Choisissez un autre jour.', 'error');
+        return;
+    }
     modalSlot.value = slot;
     editingAppointment.value = appointment;
-    // En vue semaine, pré-sélectionne la date de la colonne cliquée
     if (date) selectedDate.value = date;
     showModal.value = true;
 }
