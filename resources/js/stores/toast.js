@@ -5,8 +5,10 @@ let nextId = 0
 
 export function showToast(message, type = 'success', duration = 3500) {
     const id = ++nextId
-    toasts.value.push({ id, message, type })
-    setTimeout(() => {
-        toasts.value = toasts.value.filter(t => t.id !== id)
-    }, duration)
+    toasts.value.push({ id, message, type, duration })
+    setTimeout(() => dismissToast(id), duration)
+}
+
+export function dismissToast(id) {
+    toasts.value = toasts.value.filter(t => t.id !== id)
 }
