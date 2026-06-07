@@ -175,7 +175,7 @@
                                 !form.total_amount ||
                                 loading
                             "
-                            class="px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed flex items-center gap-2"
+                            class="px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             <svg
                                 v-if="loading"

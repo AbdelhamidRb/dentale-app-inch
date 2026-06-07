@@ -121,6 +121,8 @@
             </main>
         </div>
 
+        <ToastNotification />
+
         <!-- ── Navigation mobile — barre fixe en bas ──────────────── -->
         <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden">
             <div class="flex items-center">
@@ -149,6 +151,7 @@ import {
     CreditCard, LogOut, Activity, UserCircle, Settings,
 } from "lucide-vue-next";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
+import ToastNotification from "../components/ui/ToastNotification.vue";
 const user = computed(() => authStore.user);
 
 const userInitials = computed(() => {

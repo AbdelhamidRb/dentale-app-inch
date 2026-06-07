@@ -63,11 +63,13 @@
                                             "
                                             :class="[
                                                 'w-full border rounded-xl px-3 py-2 sm:py-2.5 text-sm',
-                                                'focus:outline-none focus:ring-2 focus:ring-blue-300',
+                                                'focus:outline-none focus:ring-2',
                                                 'disabled:bg-slate-50 disabled:text-slate-400',
-                                                form.patient_id
-                                                    ? 'border-blue-300 bg-blue-50'
-                                                    : 'border-slate-200 bg-white',
+                                                submitAttempted && !form.patient_id
+                                                    ? 'border-red-400 bg-white focus:ring-red-300'
+                                                    : form.patient_id
+                                                        ? 'border-blue-300 bg-blue-50 focus:ring-blue-300'
+                                                        : 'border-slate-200 bg-white focus:ring-blue-300',
                                             ]"
                                         />
                                         <button
@@ -301,7 +303,7 @@
                                             !newAct.catalog_act_id ||
                                             newAct.price < 0
                                         "
-                                        class="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:text-blue-400 disabled:cursor-not-allowed"
+                                        class="w-full py-2 rounded-lg text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                                     >
                                         + Ajouter cette intervention
                                     </button>
@@ -394,7 +396,7 @@
                                 <button
                                     @click="submit"
                                     :disabled="!form.patient_id || loading"
-                                    class="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    class="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-xl transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     <svg v-if="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -452,9 +454,10 @@ function filterAppointmentsForPatient(patientId) {
 const { createConsultation, updateConsultation } = useConsultations();
 
 // ─── État du formulaire ───────────────────────────────────────────
-const loading = ref(false);
-const error = ref(null);
-const showChartPanel = ref(false);
+const loading         = ref(false);
+const error           = ref(null);
+const showChartPanel  = ref(false);
+const submitAttempted = ref(false);
 
 // ─── Recherche patient ────────────────────────────────────────────
 const patientSearch = ref("");
@@ -638,6 +641,7 @@ function addAct() {
 
 // ─── Soumettre ───────────────────────────────────────────────────
 async function submit() {
+    submitAttempted.value = true;
     if (!form.value.patient_id) return;
     loading.value = true;
     error.value = null;

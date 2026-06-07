@@ -171,7 +171,7 @@
                     <button
                         type="submit"
                         :disabled="infoLoading"
-                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
                     >
                         <svg
                             v-if="infoLoading"

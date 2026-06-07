@@ -387,6 +387,7 @@ import {
 import { useAppointments } from "../composables/useAppointments";
 import AppointmentPanel from "../components/appointments/AppointmentPanel.vue";
 import AppointmentModal from "../components/appointments/AppointmentModal.vue";
+import { showToast } from "../stores/toast.js";
 
 const {
     appointments,
@@ -530,6 +531,7 @@ async function handleSaved(data, isEdit) {
         if (isEdit) saved = await updateAppointment(data.id, data);
         else saved = await createAppointment(data);
         showModal.value = false;
+        showToast(isEdit ? 'Rendez-vous modifié' : 'Rendez-vous créé');
         const appt = saved.appointment;
         syncWeekApptAfterSave(appt, isEdit);
         // Rafraîchit le panneau ouvert si c'était ce RDV

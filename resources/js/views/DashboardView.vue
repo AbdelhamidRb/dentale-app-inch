@@ -167,9 +167,9 @@
                         <!-- Gauge -->
                         <div class="relative w-20 h-20 lg:w-24 lg:h-24 shrink-0 lg:mb-4">
                             <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fca5a5" stroke-width="3.2"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" class="stroke-red-300" stroke-width="3.2"/>
                                 <circle cx="18" cy="18" r="15.9" fill="none"
-                                        stroke="#34d399" stroke-width="3.2"
+                                        class="stroke-emerald-400" stroke-width="3.2"
                                         stroke-dasharray="100"
                                         :stroke-dashoffset="Math.min(data.absence_rate.rate, 100)"/>
                             </svg>
@@ -283,7 +283,7 @@
                                     </span>
                                 </div>
                                 <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div class="h-full bg-violet-400 rounded-full transition-all duration-500"
+                                    <div class="h-full bg-blue-300 rounded-full transition-all duration-500"
                                          :style="`width:${a.pct}%`"/>
                                 </div>
                             </div>

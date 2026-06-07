@@ -27,7 +27,7 @@
       </div>
 
       <!-- ── Formulaire ──────────────────────────────────────────── -->
-      <form @submit.prevent="handleSubmit" class="p-5 space-y-4">
+      <form @submit.prevent="handleSubmit" novalidate class="p-5 space-y-4">
 
         <!-- Nom + Prénom sur la même ligne -->
         <div class="grid grid-cols-2 gap-3">
@@ -36,14 +36,16 @@
               Prénom <span class="text-red-400">*</span>
             </label>
             <input v-model="form.first_name" required
-              class="input" placeholder="Mohammed" />
+              class="input" :class="submitAttempted && !form.first_name ? 'error-border' : ''"
+              placeholder="Mohammed" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1.5">
               Nom <span class="text-red-400">*</span>
             </label>
             <input v-model="form.last_name" required
-              class="input" placeholder="Alami" />
+              class="input" :class="submitAttempted && !form.last_name ? 'error-border' : ''"
+              placeholder="Alami" />
           </div>
         </div>
 
@@ -53,7 +55,8 @@
             Téléphone <span class="text-red-400">*</span>
           </label>
           <input v-model="form.phone" required type="tel"
-            class="input" placeholder="06 XX XX XX XX" />
+            class="input" :class="submitAttempted && !form.phone ? 'error-border' : ''"
+            placeholder="06 XX XX XX XX" />
         </div>
 
         <!-- Date de naissance + Sexe -->
@@ -114,7 +117,7 @@
             Annuler
           </button>
           <button type="submit" :disabled="loading"
-            class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+            class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400
                    text-white text-sm font-medium rounded-xl transition-colors
                    flex items-center justify-center gap-2">
             <svg v-if="loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -140,9 +143,10 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'saved'])
 
-const isEdit  = computed(() => !!props.patient)
-const loading = ref(false)
-const error   = ref(null)
+const isEdit         = computed(() => !!props.patient)
+const loading        = ref(false)
+const error          = ref(null)
+const submitAttempted = ref(false)
 const modalEl = ref(null)
 
 watch(() => props.formError, (val) => {
@@ -172,6 +176,8 @@ watch(() => props.patient, (p) => {
 }, { immediate: true })
 
 async function handleSubmit() {
+  submitAttempted.value = true
+  if (!form.first_name || !form.last_name || !form.phone) return
   loading.value = true
   error.value   = null
   try {
@@ -189,5 +195,8 @@ async function handleSubmit() {
 .input {
   @apply w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm
          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+.input.error-border {
+  @apply border-red-400 focus:ring-red-300;
 }
 </style>

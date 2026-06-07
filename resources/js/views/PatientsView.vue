@@ -277,6 +277,7 @@ import {
 import { usePatients } from "../composables/usePatients";
 import PatientPanel from "../components/patients/PatientPanel.vue";
 import PatientFormModal from "../components/patients/PatientFormModal.vue";
+import { showToast } from "../stores/toast.js";
 
 const {
     patients,
@@ -320,6 +321,7 @@ async function handleSaved(data, isEdit) {
         }
         patientFormError.value = null;
         showForm.value = false;
+        showToast(isEdit ? 'Patient modifié avec succès' : 'Patient créé avec succès');
     } catch (e) {
         patientFormError.value = e.message;
     }

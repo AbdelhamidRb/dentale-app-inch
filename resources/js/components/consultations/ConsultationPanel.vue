@@ -117,7 +117,7 @@
                         <button @click="submitAddSession"
                                 :disabled="!newSessionDate || addingSession"
                                 class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg
-                                       hover:bg-blue-700 disabled:bg-blue-200 transition-colors">
+                                       hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 transition-colors">
                             OK
                         </button>
                         <button @click="showAddSession = false; newSessionDate = ''"

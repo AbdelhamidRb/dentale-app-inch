@@ -82,7 +82,7 @@
                     <button
                         type="submit"
                         :disabled="loading"
-                        class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 rounded-lg text-sm transition-colors duration-150 flex items-center justify-center gap-2"
+                        class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-medium py-2.5 rounded-lg text-sm transition-colors duration-150 flex items-center justify-center gap-2"
                     >
                         <svg
                             v-if="loading"

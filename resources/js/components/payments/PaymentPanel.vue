@@ -186,7 +186,7 @@
                             <button
                                 @click="handleAddTransaction"
                                 :disabled="!newTx.amount || !newTx.date || adding"
-                                class="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                class="w-full py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                             >
                                 <svg v-if="adding" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -349,6 +349,7 @@ import { ref, computed, watch } from "vue";
 import PaymentStatusBadge from "./PaymentStatusBadge.vue";
 import ConfirmModal from "../ui/ConfirmModal.vue";
 import { usePayments } from "../../composables/usePayments";
+import { showToast } from "../../stores/toast.js";
 
 const props = defineProps({
     patient: { type: Object, default: null },
@@ -434,6 +435,7 @@ async function handleAddTransaction() {
             })
         }
         newTx.value = { amount: null, date: today, notes: '' }
+        showToast('Paiement enregistré')
         emit('updated')
     } catch (e) {
         txError.value = e.message

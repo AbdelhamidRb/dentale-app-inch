@@ -60,7 +60,10 @@
                             @input="searchPatients"
                             @focus="searchPatients"
                             autocomplete="off"
-                            class="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2"
+                            :class="submitAttempted && !selectedPatient
+                                ? 'border border-red-400 focus:ring-red-300'
+                                : 'border border-slate-300 focus:ring-blue-500'"
                         />
 
                         <!-- Dropdown résultats (absolu, ne déplace pas le contenu) -->
@@ -104,7 +107,10 @@
                             type="time"
                             required
                             @change="autoEndTime"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2"
+                            :class="submitAttempted && !form.start_time
+                                ? 'border border-red-400 focus:ring-red-300'
+                                : 'border border-slate-300 focus:ring-blue-500'"
                         />
                     </div>
                     <div>
@@ -117,7 +123,10 @@
                             v-model="form.end_time"
                             type="time"
                             required
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2"
+                            :class="submitAttempted && !form.end_time
+                                ? 'border border-red-400 focus:ring-red-300'
+                                : 'border border-slate-300 focus:ring-blue-500'"
                         />
                     </div>
                 </div>
@@ -210,7 +219,7 @@
                     <button
                         type="submit"
                         :disabled="loading || !selectedPatient"
-                        class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                        class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
                     >
                         <svg
                             v-if="loading"
@@ -259,9 +268,10 @@ const props = defineProps({
 });
 const emit = defineEmits(["close", "saved"]);
 
-const isEdit = computed(() => !!props.appointment);
-const loading = ref(false);
-const error = ref(null);
+const isEdit          = computed(() => !!props.appointment);
+const loading         = ref(false);
+const error           = ref(null);
+const submitAttempted = ref(false);
 
 // ─── Recherche patient ────────────────────────────────────────────
 const patientSearch = ref("");
@@ -374,6 +384,7 @@ function toggleAct(id) {
 
 // ─── Soumission ───────────────────────────────────────────────────
 async function handleSubmit() {
+    submitAttempted.value = true;
     error.value = null;
 
     // ─── Validations côté client ──────────────────────────────────

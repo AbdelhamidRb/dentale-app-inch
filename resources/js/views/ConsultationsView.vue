@@ -246,6 +246,7 @@ import { appointmentsApi } from "../api/appointments";
 
 // ─── Auth ─────────────────────────────────────────────────────────
 import { authStore } from "../stores/auth";
+import { showToast } from "../stores/toast.js";
 const isDentist = computed(() => authStore.isDentist());
 
 // ─── Données ──────────────────────────────────────────────────────
@@ -396,7 +397,8 @@ async function loadAppointments() {
 async function onSaved() {
     consultationCache.clear();
     invalidateCache();
-    await fetchConsultations({}, true); // force refresh
+    await fetchConsultations({}, true);
+    showToast('Consultation enregistrée');
 }
 
 async function onUpdated() {
