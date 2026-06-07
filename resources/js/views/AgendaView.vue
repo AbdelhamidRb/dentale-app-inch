@@ -656,7 +656,7 @@ function isToday(dateStr) {
 const formattedWeekRange = computed(() => {
     if (!weekDays.value.length) return "";
     const first = new Date(weekDays.value[0] + "T00:00:00");
-    const last  = new Date(weekDays.value[6] + "T00:00:00");
+    const last  = new Date(weekDays.value[weekDays.value.length - 1] + "T00:00:00");
     const opts  = { day: "numeric", month: "long" };
     const optsY = { day: "numeric", month: "long", year: "numeric" };
     return `${first.toLocaleDateString("fr-FR", opts)} – ${last.toLocaleDateString("fr-FR", optsY)}`;

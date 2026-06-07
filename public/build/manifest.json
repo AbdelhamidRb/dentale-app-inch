@@ -1,35 +1,35 @@
 {
-  "_ConfirmModal-lFKZTcrA.js": {
-    "file": "assets/ConfirmModal-lFKZTcrA.js",
+  "_ConfirmModal-kqNXls3w.js": {
+    "file": "assets/ConfirmModal-kqNXls3w.js",
     "name": "ConfirmModal",
     "imports": [
       "resources/js/app.js"
+    ]
+  },
+  "_ConsultationModal-BLUqMMvr.js": {
+    "file": "assets/ConsultationModal-BLUqMMvr.js",
+    "name": "ConsultationModal",
+    "imports": [
+      "resources/js/app.js",
+      "_ToothChart-CiWnzEZT.js",
+      "_useConsultations-BPHwk27R.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_x-D-mOfmh-.js"
+    ],
+    "css": [
+      "assets/ConsultationModal-CwZBS1if.css"
     ]
   },
   "_ConsultationModal-CwZBS1if.css": {
     "file": "assets/ConsultationModal-CwZBS1if.css",
     "src": "_ConsultationModal-CwZBS1if.css"
   },
-  "_ConsultationModal-DYR8V-rt.js": {
-    "file": "assets/ConsultationModal-DYR8V-rt.js",
-    "name": "ConsultationModal",
-    "imports": [
-      "resources/js/app.js",
-      "_ToothChart-DF8RT4Yn.js",
-      "_useConsultations-DO8PVNQ5.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_x-DJFn10oO.js"
-    ],
-    "css": [
-      "assets/ConsultationModal-CwZBS1if.css"
-    ]
-  },
-  "_ToothChart-DF8RT4Yn.js": {
-    "file": "assets/ToothChart-DF8RT4Yn.js",
+  "_ToothChart-CiWnzEZT.js": {
+    "file": "assets/ToothChart-CiWnzEZT.js",
     "name": "ToothChart",
     "imports": [
       "resources/js/app.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js"
+      "__plugin-vue_export-helper-rPjjubsw.js"
     ],
     "css": [
       "assets/ToothChart-Dd8KUWaE.css"
@@ -39,128 +39,128 @@
     "file": "assets/ToothChart-Dd8KUWaE.css",
     "src": "_ToothChart-Dd8KUWaE.css"
   },
-  "__plugin-vue_export-helper-B0fPUNR1.js": {
-    "file": "assets/_plugin-vue_export-helper-B0fPUNR1.js",
+  "__plugin-vue_export-helper-rPjjubsw.js": {
+    "file": "assets/_plugin-vue_export-helper-rPjjubsw.js",
     "name": "_plugin-vue_export-helper",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_check-NRPt-X_o.js": {
-    "file": "assets/check-NRPt-X_o.js",
+  "_check-Czr7jn6C.js": {
+    "file": "assets/check-Czr7jn6C.js",
     "name": "check",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_chevron-right-FSyLWU35.js": {
-    "file": "assets/chevron-right-FSyLWU35.js",
+  "_chevron-right-CWFchP2c.js": {
+    "file": "assets/chevron-right-CWFchP2c.js",
     "name": "chevron-right",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_circle-alert-DEynUsIN.js": {
-    "file": "assets/circle-alert-DEynUsIN.js",
+  "_circle-alert-z-V7Nu5l.js": {
+    "file": "assets/circle-alert-z-V7Nu5l.js",
     "name": "circle-alert",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_circle-check-big-CkUuWJ7A.js": {
-    "file": "assets/circle-check-big-CkUuWJ7A.js",
+  "_circle-check-big-BDXJfULJ.js": {
+    "file": "assets/circle-check-big-BDXJfULJ.js",
     "name": "circle-check-big",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_circle-user-I5QeIsue.js": {
-    "file": "assets/circle-user-I5QeIsue.js",
+  "_circle-user-BMnyh6_y.js": {
+    "file": "assets/circle-user-BMnyh6_y.js",
     "name": "circle-user",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_clock-CCIuq5Ko.js": {
-    "file": "assets/clock-CCIuq5Ko.js",
+  "_clock-CmKP4bu0.js": {
+    "file": "assets/clock-CmKP4bu0.js",
     "name": "clock",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_dashboard-D0bYTGdH.js": {
-    "file": "assets/dashboard-D0bYTGdH.js",
+  "_dashboard-CPJZv2IA.js": {
+    "file": "assets/dashboard-CPJZv2IA.js",
     "name": "dashboard",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_pencil-CDfCp8d5.js": {
-    "file": "assets/pencil-CDfCp8d5.js",
+  "_pencil-DOPeEaTM.js": {
+    "file": "assets/pencil-DOPeEaTM.js",
     "name": "pencil",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_rotate-ccw-BcRRyW-3.js": {
-    "file": "assets/rotate-ccw-BcRRyW-3.js",
+  "_rotate-ccw-RU_xd3zw.js": {
+    "file": "assets/rotate-ccw-RU_xd3zw.js",
     "name": "rotate-ccw",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_search-QThqxVsL.js": {
-    "file": "assets/search-QThqxVsL.js",
+  "_search-Cx7fEHX7.js": {
+    "file": "assets/search-Cx7fEHX7.js",
     "name": "search",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_stethoscope-Dj32ViCZ.js": {
-    "file": "assets/stethoscope-Dj32ViCZ.js",
+  "_stethoscope-c2jvJBEX.js": {
+    "file": "assets/stethoscope-c2jvJBEX.js",
     "name": "stethoscope",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_trash-2-Dbuffkse.js": {
-    "file": "assets/trash-2-Dbuffkse.js",
+  "_trash-2-CR3bzTaB.js": {
+    "file": "assets/trash-2-CR3bzTaB.js",
     "name": "trash-2",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_update-Dk6TJvpe.js": {
-    "file": "assets/update-Dk6TJvpe.js",
+  "_update-DMBGpIe8.js": {
+    "file": "assets/update-DMBGpIe8.js",
     "name": "update",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_upload-DV9SENAm.js": {
-    "file": "assets/upload-DV9SENAm.js",
+  "_upload-DELhc54Z.js": {
+    "file": "assets/upload-DELhc54Z.js",
     "name": "upload",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_useConsultations-DO8PVNQ5.js": {
-    "file": "assets/useConsultations-DO8PVNQ5.js",
+  "_useConsultations-BPHwk27R.js": {
+    "file": "assets/useConsultations-BPHwk27R.js",
     "name": "useConsultations",
     "imports": [
-      "_dashboard-D0bYTGdH.js",
+      "_dashboard-CPJZv2IA.js",
       "resources/js/app.js"
     ]
   },
-  "_x-DJFn10oO.js": {
-    "file": "assets/x-DJFn10oO.js",
+  "_x-D-mOfmh-.js": {
+    "file": "assets/x-D-mOfmh-.js",
     "name": "x",
     "imports": [
       "resources/js/app.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DFtyyg2R.css",
+    "file": "assets/app-DLSYHrrg.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -169,7 +169,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-tI9SJoJY.js",
+    "file": "assets/app-kqMLqLDZ.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -185,182 +185,182 @@
       "resources/js/views/LicenseView.vue"
     ],
     "css": [
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/layouts/AppLayout.vue": {
-    "file": "assets/AppLayout-CYXAbdQh.js",
+    "file": "assets/AppLayout-Cft3Ku12.js",
     "name": "AppLayout",
     "src": "resources/js/layouts/AppLayout.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_update-Dk6TJvpe.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_circle-check-big-CkUuWJ7A.js",
-      "_circle-alert-DEynUsIN.js",
-      "_stethoscope-Dj32ViCZ.js",
-      "_circle-user-I5QeIsue.js"
+      "_update-DMBGpIe8.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_circle-check-big-BDXJfULJ.js",
+      "_circle-alert-z-V7Nu5l.js",
+      "_stethoscope-c2jvJBEX.js",
+      "_circle-user-BMnyh6_y.js"
     ],
     "css": [
-      "assets/AppLayout-CzftDTE0.css",
-      "assets/app-DFtyyg2R.css"
+      "assets/AppLayout-CujOopS2.css",
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/AgendaView.vue": {
-    "file": "assets/AgendaView-DhMNetjT.js",
+    "file": "assets/AgendaView-BvxShx9R.js",
     "name": "AgendaView",
     "src": "resources/js/views/AgendaView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_dashboard-D0bYTGdH.js",
-      "_ConsultationModal-DYR8V-rt.js",
-      "_pencil-CDfCp8d5.js",
-      "_x-DJFn10oO.js",
-      "_stethoscope-Dj32ViCZ.js",
-      "_trash-2-Dbuffkse.js",
-      "_search-QThqxVsL.js",
-      "_check-NRPt-X_o.js",
-      "_circle-alert-DEynUsIN.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_chevron-right-FSyLWU35.js",
-      "_clock-CCIuq5Ko.js",
-      "_ToothChart-DF8RT4Yn.js",
-      "_useConsultations-DO8PVNQ5.js"
+      "_dashboard-CPJZv2IA.js",
+      "_ConsultationModal-BLUqMMvr.js",
+      "_pencil-DOPeEaTM.js",
+      "_x-D-mOfmh-.js",
+      "_stethoscope-c2jvJBEX.js",
+      "_trash-2-CR3bzTaB.js",
+      "_search-Cx7fEHX7.js",
+      "_check-Czr7jn6C.js",
+      "_circle-alert-z-V7Nu5l.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_chevron-right-CWFchP2c.js",
+      "_clock-CmKP4bu0.js",
+      "_ToothChart-CiWnzEZT.js",
+      "_useConsultations-BPHwk27R.js"
     ],
     "css": [
-      "assets/AgendaView-BfEcuAdt.css",
-      "assets/app-DFtyyg2R.css"
+      "assets/AgendaView-Dfa3Hxxk.css",
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/ConsultationsView.vue": {
-    "file": "assets/ConsultationsView-D8bdf8Q3.js",
+    "file": "assets/ConsultationsView-Cze-cdWU.js",
     "name": "ConsultationsView",
     "src": "resources/js/views/ConsultationsView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ToothChart-DF8RT4Yn.js",
-      "_ConfirmModal-lFKZTcrA.js",
-      "_useConsultations-DO8PVNQ5.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_ConsultationModal-DYR8V-rt.js",
-      "_x-DJFn10oO.js",
-      "_trash-2-Dbuffkse.js",
-      "_search-QThqxVsL.js",
-      "_dashboard-D0bYTGdH.js"
+      "_ToothChart-CiWnzEZT.js",
+      "_ConfirmModal-kqNXls3w.js",
+      "_useConsultations-BPHwk27R.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_ConsultationModal-BLUqMMvr.js",
+      "_x-D-mOfmh-.js",
+      "_trash-2-CR3bzTaB.js",
+      "_search-Cx7fEHX7.js",
+      "_dashboard-CPJZv2IA.js"
     ],
     "css": [
       "assets/ConsultationsView-C8_goikF.css",
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/DashboardView.vue": {
-    "file": "assets/DashboardView-KSN1Yz6K.js",
+    "file": "assets/DashboardView-CvBqs_4D.js",
     "name": "DashboardView",
     "src": "resources/js/views/DashboardView.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dashboard-D0bYTGdH.js",
+      "_dashboard-CPJZv2IA.js",
       "resources/js/app.js",
-      "_circle-alert-DEynUsIN.js"
+      "_circle-alert-z-V7Nu5l.js"
     ],
     "css": [
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/LicenseView.vue": {
-    "file": "assets/LicenseView-Q2MYKYL0.js",
+    "file": "assets/LicenseView-D3iCO5I5.js",
     "name": "LicenseView",
     "src": "resources/js/views/LicenseView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_check-NRPt-X_o.js",
-      "_circle-check-big-CkUuWJ7A.js",
-      "_upload-DV9SENAm.js"
+      "_check-Czr7jn6C.js",
+      "_circle-check-big-BDXJfULJ.js",
+      "_upload-DELhc54Z.js"
     ],
     "css": [
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/PaiementsView.vue": {
-    "file": "assets/PaiementsView-CXTsMmOO.js",
+    "file": "assets/PaiementsView-pJjk8BOx.js",
     "name": "PaiementsView",
     "src": "resources/js/views/PaiementsView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ConfirmModal-lFKZTcrA.js",
-      "_dashboard-D0bYTGdH.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_search-QThqxVsL.js",
-      "_circle-user-I5QeIsue.js"
+      "_ConfirmModal-kqNXls3w.js",
+      "_dashboard-CPJZv2IA.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_search-Cx7fEHX7.js",
+      "_circle-user-BMnyh6_y.js"
     ],
     "css": [
       "assets/PaiementsView-rz1cyiON.css",
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/PatientsView.vue": {
-    "file": "assets/PatientsView-CWeqokia.js",
+    "file": "assets/PatientsView-D_fIFU-J.js",
     "name": "PatientsView",
     "src": "resources/js/views/PatientsView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ConfirmModal-lFKZTcrA.js",
-      "_dashboard-D0bYTGdH.js",
-      "_ToothChart-DF8RT4Yn.js",
-      "_pencil-CDfCp8d5.js",
-      "_rotate-ccw-BcRRyW-3.js",
-      "_x-DJFn10oO.js",
-      "_upload-DV9SENAm.js",
-      "__plugin-vue_export-helper-B0fPUNR1.js",
-      "_search-QThqxVsL.js",
-      "_chevron-right-FSyLWU35.js"
+      "_ConfirmModal-kqNXls3w.js",
+      "_dashboard-CPJZv2IA.js",
+      "_ToothChart-CiWnzEZT.js",
+      "_pencil-DOPeEaTM.js",
+      "_rotate-ccw-RU_xd3zw.js",
+      "_x-D-mOfmh-.js",
+      "_upload-DELhc54Z.js",
+      "__plugin-vue_export-helper-rPjjubsw.js",
+      "_search-Cx7fEHX7.js",
+      "_chevron-right-CWFchP2c.js"
     ],
     "css": [
       "assets/PatientsView-JsFrkypY.css",
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/ProfileView.vue": {
-    "file": "assets/ProfileView-CRRLbFGM.js",
+    "file": "assets/ProfileView-7B-ONegL.js",
     "name": "ProfileView",
     "src": "resources/js/views/ProfileView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_useConsultations-DO8PVNQ5.js",
-      "_upload-DV9SENAm.js",
-      "_circle-check-big-CkUuWJ7A.js",
-      "_dashboard-D0bYTGdH.js"
+      "_useConsultations-BPHwk27R.js",
+      "_upload-DELhc54Z.js",
+      "_circle-check-big-BDXJfULJ.js",
+      "_dashboard-CPJZv2IA.js"
     ],
     "css": [
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   },
   "resources/js/views/SettingsView.vue": {
-    "file": "assets/SettingsView-CdCnwtIC.js",
+    "file": "assets/SettingsView-CQ7thquj.js",
     "name": "SettingsView",
     "src": "resources/js/views/SettingsView.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_update-Dk6TJvpe.js",
-      "_ConfirmModal-lFKZTcrA.js",
-      "_circle-check-big-CkUuWJ7A.js",
-      "_x-DJFn10oO.js",
-      "_stethoscope-Dj32ViCZ.js",
-      "_clock-CCIuq5Ko.js",
-      "_rotate-ccw-BcRRyW-3.js",
-      "_pencil-CDfCp8d5.js",
-      "_trash-2-Dbuffkse.js"
+      "_update-DMBGpIe8.js",
+      "_ConfirmModal-kqNXls3w.js",
+      "_circle-check-big-BDXJfULJ.js",
+      "_x-D-mOfmh-.js",
+      "_stethoscope-c2jvJBEX.js",
+      "_clock-CmKP4bu0.js",
+      "_rotate-ccw-RU_xd3zw.js",
+      "_pencil-DOPeEaTM.js",
+      "_trash-2-CR3bzTaB.js"
     ],
     "css": [
-      "assets/app-DFtyyg2R.css"
+      "assets/app-DLSYHrrg.css"
     ]
   }
 }

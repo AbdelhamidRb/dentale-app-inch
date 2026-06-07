@@ -139,11 +139,11 @@ export function useAppointments() {
         invalidateDashboard();
     }
 
-    // ─── Les 7 jours de la semaine courante ───────────────────────
+    // ─── Les 6 jours de la semaine courante (lun–sam) ────────────
     const weekDays = computed(() => {
         const days = [];
         const start = new Date(weekStartDate.value + "T00:00:00");
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 6; i++) {
             const d = new Date(start);
             d.setDate(d.getDate() + i);
             days.push(d.toISOString().split("T")[0]);
