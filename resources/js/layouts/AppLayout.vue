@@ -13,7 +13,7 @@
             <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
                 <template v-for="item in filteredNavItems" :key="item.name">
                     <div v-if="item.divider" class="pt-4 pb-2 px-2">
-                        <span class="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                        <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">
                             {{ item.divider }}
                         </span>
                     </div>
@@ -77,13 +77,13 @@
 
                     <div class="w-px h-6 bg-slate-200"></div>
 
-                    <div class="flex items-center gap-2">
+                    <RouterLink :to="{ name: 'profil' }" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                         <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
                             <img v-if="user?.avatar" :src="user.avatar" class="w-full h-full object-cover" alt="Avatar" />
                             <span v-else class="text-xs font-bold text-white">{{ userInitials }}</span>
                         </div>
                         <span class="text-sm font-medium text-slate-700 hidden sm:block">{{ user?.name }}</span>
-                    </div>
+                    </RouterLink>
 
                     <!-- Déconnexion mobile -->
                     <button @click="handleLogout"
@@ -132,7 +132,7 @@
                     :class="isActive(item.route) ? 'text-blue-600' : 'text-slate-400'"
                 >
                     <component :is="item.icon" class="w-[18px] h-[18px]" />
-                    <span class="text-[9px] font-medium truncate w-full text-center">{{ item.label }}</span>
+                    <span class="text-xs font-medium truncate w-full text-center">{{ item.label }}</span>
                 </RouterLink>
             </div>
         </nav>
@@ -186,13 +186,11 @@ const mobileNavItems = computed(() => {
     const role = user.value?.role;
     if (role === "DENTIST") {
         return [
-            { route: "dashboard",     label: "Accueil",     icon: markRaw(LayoutDashboard) },
-            { route: "agenda",        label: "Agenda",      icon: markRaw(CalendarDays) },
-            { route: "patients",      label: "Patients",    icon: markRaw(Users) },
-            { route: "consultations", label: "Soins",       icon: markRaw(Stethoscope) },
-            { route: "paiements",     label: "Paiements",   icon: markRaw(CreditCard) },
-            { route: "profil",        label: "Profil",      icon: markRaw(UserCircle) },
-            { route: "parametres",    label: "Réglages",    icon: markRaw(Settings) },
+            { route: "dashboard",     label: "Accueil",   icon: markRaw(LayoutDashboard) },
+            { route: "agenda",        label: "Agenda",    icon: markRaw(CalendarDays) },
+            { route: "patients",      label: "Patients",  icon: markRaw(Users) },
+            { route: "consultations", label: "Soins",     icon: markRaw(Stethoscope) },
+            { route: "paiements",     label: "Paiements", icon: markRaw(CreditCard) },
         ];
     }
     return [

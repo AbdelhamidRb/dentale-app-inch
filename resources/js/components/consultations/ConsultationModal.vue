@@ -31,9 +31,7 @@
                             @click="close"
                             class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
+                            <X class="w-5 h-5" />
                         </button>
                     </div>
 
@@ -415,10 +413,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
-// APRÈS
-import ConsultationActRow from "./ConsultationActRow.vue"; // ✅ même dossier
-import ToothChart from "./ToothChart.vue"; // ✅ même dossier
-import { useConsultations } from "../../composables/useConsultations"; // ⬆️ 2 niveaux
+import { X } from "lucide-vue-next";
+import ConsultationActRow from "./ConsultationActRow.vue";
+import ToothChart from "./ToothChart.vue";
+import { useConsultations } from "../../composables/useConsultations";
 
 // ─── Props ────────────────────────────────────────────────────────
 const props = defineProps({

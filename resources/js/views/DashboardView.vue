@@ -33,7 +33,7 @@
             <!-- ═══════════════════════════════════════════════════════
                  BLOC 1 — 4 cartes stats (2×2 mobile, 4×1 desktop)
             ═══════════════════════════════════════════════════════ -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
 
                 <!-- Nouveaux patients -->
                 <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col justify-between min-h-[6.5rem]">
@@ -41,14 +41,14 @@
                         <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
                             <UserPlus class="w-5 h-5 text-emerald-600" />
                         </div>
-                        <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                             Ce mois
                         </span>
                     </div>
                     <div>
                         <p class="text-2xl font-bold text-slate-800">{{ data.patients.new_this_month }}</p>
                         <p class="text-xs text-slate-400 mt-0.5">Nouveaux patients</p>
-                        <p class="text-[11px] text-slate-300 mt-0.5">{{ data.patients.total }} au total</p>
+                        <p class="text-xs text-slate-400 mt-0.5">{{ data.patients.total }} au total</p>
                     </div>
                 </div>
 
@@ -58,7 +58,7 @@
                         <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
                             <Banknote class="w-5 h-5 text-emerald-600" />
                         </div>
-                        <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                             {{ data.payments_today.count }} pmt{{ data.payments_today.count !== 1 ? 's' : '' }}
                         </span>
                     </div>
@@ -78,7 +78,7 @@
                             <TrendingUp class="w-5 h-5 text-blue-600" />
                         </div>
                         <span v-if="data.revenue.variation_pct !== null"
-                              :class="['text-[10px] font-semibold px-2 py-0.5 rounded-full',
+                              :class="['text-xs font-semibold px-2 py-0.5 rounded-full',
                                        data.revenue.variation_pct >= 0
                                          ? 'text-emerald-600 bg-emerald-50'
                                          : 'text-red-500 bg-red-50']">
@@ -91,7 +91,7 @@
                             <span class="text-xs font-normal text-slate-400">MAD</span>
                         </p>
                         <p class="text-xs text-slate-400 mt-0.5">Encaissé ce mois</p>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Préc. : {{ fmt(data.revenue.prev_month) }}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Préc. : {{ fmt(data.revenue.prev_month) }}</p>
                     </div>
                 </div>
 
@@ -106,7 +106,7 @@
                             <span class="text-xs font-normal text-slate-400">MAD</span>
                         </p>
                         <p class="text-xs text-slate-400 mt-0.5">Reste à encaisser</p>
-                        <p class="text-[11px] text-slate-300 mt-0.5">Consultations non soldées</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Consultations non soldées</p>
                     </div>
                 </div>
             </div>
@@ -114,7 +114,7 @@
             <!-- ═══════════════════════════════════════════════════════
                  BLOC 2 — Graphique + Absentéisme
             ═══════════════════════════════════════════════════════ -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">
 
                 <!-- Graphique revenus -->
                 <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-4 sm:p-5">
@@ -126,12 +126,12 @@
                              class="relative flex-1 flex flex-col items-center gap-1 group cursor-default">
                             <!-- Tooltip -->
                             <div class="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex
-                                        bg-slate-800 text-white text-[10px] font-medium px-2 py-1 rounded-lg
+                                        bg-slate-800 text-white text-xs font-medium px-2 py-1 rounded-lg
                                         whitespace-nowrap z-10 shadow-lg pointer-events-none">
                                 {{ m.revenue > 0 ? fmt(m.revenue) + ' MAD' : 'Aucun encaissement' }}
                             </div>
                             <!-- Valeur au-dessus -->
-                            <span class="text-[10px] font-medium leading-none"
+                            <span class="text-xs font-medium leading-none"
                                   :class="m.revenue > 0 ? (m.isCurrent ? 'text-blue-600' : 'text-slate-400') : 'text-slate-200'">
                                 {{ m.revenue > 0 ? fmtK(m.revenue) : '–' }}
                             </span>
@@ -142,7 +142,7 @@
                                      :style="`height:${barH(m.revenue)}px; min-height:${m.revenue > 0 ? 4 : 0}px`"/>
                             </div>
                             <!-- Label mois -->
-                            <span class="text-[10px] font-medium leading-none w-full text-center"
+                            <span class="text-xs font-medium leading-none w-full text-center"
                                   :class="m.isCurrent ? 'text-blue-600' : 'text-slate-400'">
                                 {{ m.month }}
                             </span>
@@ -202,7 +202,7 @@
                                          :style="`width:${pct(data.absence_rate.total - data.absence_rate.absences, data.absence_rate.total)}%`"/>
                                 </div>
                             </div>
-                            <p class="text-[10px] text-slate-400">Sur {{ data.absence_rate.total }} RDV ce mois</p>
+                            <p class="text-xs text-slate-400">Sur {{ data.absence_rate.total }} RDV ce mois</p>
                         </div>
                     </div>
                 </div>
@@ -211,7 +211,7 @@
             <!-- ═══════════════════════════════════════════════════════
                  BLOC 3 — Top 5 actes par revenu
             ═══════════════════════════════════════════════════════ -->
-            <div class="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 mb-4">
+            <div class="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 mb-6">
                 <h3 class="text-sm font-semibold text-slate-700 mb-0.5">Top 5 actes — Revenus</h3>
                 <p class="text-xs text-slate-400 mb-4">Consultations en cours et terminées</p>
 

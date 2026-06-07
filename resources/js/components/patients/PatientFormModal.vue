@@ -4,7 +4,7 @@
     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
     @click.self="$emit('close')"
   >
-    <div ref="modalEl" class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div ref="modalEl" class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
       <!-- ── En-tête modal ───────────────────────────────────────── -->
       <div class="flex items-center justify-between p-5 border-b border-slate-100">
@@ -109,13 +109,13 @@
         <!-- Boutons -->
         <div class="flex gap-2 pt-1">
           <button type="button" @click="$emit('close')"
-            class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm
+            class="flex-1 py-2.5 border border-slate-300 rounded-xl text-sm
                    text-slate-600 hover:bg-slate-50 transition-colors">
             Annuler
           </button>
           <button type="submit" :disabled="loading"
             class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-                   text-white text-sm font-medium rounded-lg transition-colors
+                   text-white text-sm font-medium rounded-xl transition-colors
                    flex items-center justify-center gap-2">
             <svg v-if="loading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -187,7 +187,7 @@ async function handleSubmit() {
 
 <style scoped>
 .input {
-  @apply w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm
+  @apply w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm
          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
 }
 </style>

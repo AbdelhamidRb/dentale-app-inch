@@ -11,7 +11,7 @@
             <span
                 v-if="pendingCount > 0"
                 class="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] bg-red-500 text-white
-                       text-[10px] font-bold rounded-full flex items-center justify-center px-0.5"
+                       text-xs font-bold rounded-full flex items-center justify-center px-0.5"
             >
                 {{ pendingCount }}
             </span>
@@ -76,7 +76,7 @@
                     <!-- Liste RDV -->
                     <div v-else class="divide-y divide-slate-50">
                         <div
-                            v-for="appt in appointments"
+                            v-for="appt in visibleAppointments"
                             :key="appt.id"
                             :class="['flex items-center gap-3 px-4 py-3 transition-colors',
                                      appt.whatsapp_notified_at ? 'bg-green-50/50' : 'hover:bg-slate-50']"
@@ -100,7 +100,7 @@
                                         {{ appt.patient?.phone }}
                                     </a>
                                     <span v-if="appt.whatsapp_notified_at"
-                                          class="text-[10px] text-green-600 font-medium shrink-0">
+                                          class="text-xs text-green-600 font-medium shrink-0">
                                         · ✓ Notifié
                                     </span>
                                 </div>
@@ -134,10 +134,15 @@
 
                 <!-- Footer -->
                 <div v-if="appointments.length > 0"
-                     class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60">
-                    <p class="text-[11px] text-slate-400 text-center">
-                        Cliquez <strong>Envoyer</strong> → WhatsApp s'ouvre avec le message pré-rempli
+                     class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
+                    <p class="text-xs text-slate-400">
+                        Cliquez <strong>Envoyer</strong> → WhatsApp s'ouvre
                     </p>
+                    <button v-if="appointments.length > 5"
+                            @click="showAll = !showAll"
+                            class="text-xs font-medium text-blue-500 hover:text-blue-700 shrink-0 transition-colors">
+                        {{ showAll ? 'Réduire' : `Voir tout (${appointments.length})` }}
+                    </button>
                 </div>
             </div>
         </Transition>
@@ -152,6 +157,11 @@ import { Bell } from 'lucide-vue-next';
 const open          = ref(false);
 const loading       = ref(false);
 const appointments  = ref([]);
+const showAll       = ref(false);
+
+const visibleAppointments = computed(() =>
+    showAll.value ? appointments.value : appointments.value.slice(0, 5)
+);
 const template      = ref('Bonjour {nom}, nous vous rappelons votre rendez-vous demain {date} à {heure} au cabinet dentaire. Merci de confirmer votre présence. 🦷');
 const containerRef  = ref(null);
 const dropdownRef   = ref(null);

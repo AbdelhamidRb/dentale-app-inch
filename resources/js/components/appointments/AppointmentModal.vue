@@ -4,7 +4,7 @@
         @click.self="$emit('close')"
     >
         <div
-            class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
         >
             <!-- En-tête -->
             <div
@@ -60,13 +60,13 @@
                             @input="searchPatients"
                             @focus="searchPatients"
                             autocomplete="off"
-                            class="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
 
                         <!-- Dropdown résultats (absolu, ne déplace pas le contenu) -->
                         <div
                             v-if="dropdownOpen"
-                            class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-52 overflow-y-auto"
+                            class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-52 overflow-y-auto"
                         >
                             <!-- Chargement -->
                             <div v-if="searchLoading" class="px-3 py-3 text-xs text-slate-400 text-center">
@@ -104,7 +104,7 @@
                             type="time"
                             required
                             @change="autoEndTime"
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     <div>
@@ -117,11 +117,11 @@
                             v-model="form.end_time"
                             type="time"
                             required
-                            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                 </div>
-                <p class="text-[11px] text-slate-400 -mt-2">
+                <p class="text-xs text-slate-400 -mt-2">
                     Durée par défaut : 30 minutes. Modifiable si besoin.
                 </p>
 
@@ -133,7 +133,7 @@
                         Actes prévus
                     </label>
                     <div
-                        class="border border-slate-200 rounded-lg max-h-40 overflow-y-auto"
+                        class="border border-slate-200 rounded-xl max-h-40 overflow-y-auto"
                     >
                         <div
                             v-for="act in catalogActs"
@@ -192,7 +192,7 @@
                 <!-- Erreur locale (validation) ou externe (API Laravel) -->
                 <div
                     v-if="error || props.externalError"
-                    class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2"
+                    class="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2"
                 >
                     <AlertCircle class="w-4 h-4 shrink-0" />
                     {{ error || props.externalError }}
@@ -203,14 +203,14 @@
                     <button
                         type="button"
                         @click="$emit('close')"
-                        class="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                        class="flex-1 py-2.5 border border-slate-300 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                     >
                         Annuler
                     </button>
                     <button
                         type="submit"
                         :disabled="loading || !selectedPatient"
-                        class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                        class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
                     >
                         <svg
                             v-if="loading"
