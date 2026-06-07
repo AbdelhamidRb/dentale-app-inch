@@ -1,0 +1,1 @@
+import{m as r}from"./app-BcgwggbU.js";const c=r([]);let n=0;function f(t,e="success",s=3500){const o=++n;c.value.push({id:o,message:t,type:e}),setTimeout(()=>{c.value=c.value.filter(a=>a.id!==o)},s)}const i=(t,e)=>{const s=t.__vccOpts||t;for(const[o,a]of e)s[o]=a;return s};export{i as _,f as s,c as t};

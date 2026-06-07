@@ -139,13 +139,18 @@ export function useAppointments() {
         invalidateDashboard();
     }
 
-    // ─── Les 6 jours de la semaine courante (lun–sam) ────────────
+    // ─── Les 6 jours lun–sam (toujours normalisé au lundi) ───────
     const weekDays = computed(() => {
         const days = [];
-        const start = new Date(weekStartDate.value + "T00:00:00");
+        const ref = new Date(weekStartDate.value + "T00:00:00");
+        // Normalise au lundi, même si weekStartDate n'est pas un lundi
+        const dayOfWeek = ref.getDay();
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(ref);
+        monday.setDate(ref.getDate() + diff);
         for (let i = 0; i < 6; i++) {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
             days.push(d.toISOString().split("T")[0]);
         }
         return days;
