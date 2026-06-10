@@ -20,13 +20,19 @@
             >
                 <div
                     v-if="retrying"
-                    class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2"
+                    class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm"
                 >
-                    <svg class="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                    </svg>
-                    Service en cours de démarrage, nouvelle tentative...
+                    <div class="flex items-center gap-2 text-blue-700 font-medium">
+                        <svg class="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        Démarrage du service en cours...
+                    </div>
+                    <p class="text-blue-500 text-xs mt-1 ml-6">
+                        Connexion automatique dès que le service est prêt
+                        <span v-if="retryCount > 1">(tentative {{ retryCount }})</span>
+                    </p>
                 </div>
                 <div
                     v-else-if="error"
@@ -122,24 +128,29 @@ import { authStore } from "../stores/auth";
 import { Activity, Eye, EyeOff } from "lucide-vue-next";
 
 const form = reactive({ email: "", password: "" });
-const loading  = ref(false);
-const retrying = ref(false);
-const error    = ref(null);
+const loading     = ref(false);
+const retrying    = ref(false);
+const retryCount  = ref(0);
+const error       = ref(null);
 const showPassword = ref(false);
 
 async function handleLogin() {
-    loading.value  = true;
-    retrying.value = false;
-    error.value    = null;
+    loading.value    = true;
+    retrying.value   = false;
+    retryCount.value = 0;
+    error.value      = null;
 
     try {
-        authStore._onRetry = () => { retrying.value = true; };
+        authStore._onRetry = (attempt) => {
+            retrying.value   = true;
+            retryCount.value = attempt;
+        };
         await authStore.login(form.email, form.password);
     } catch (e) {
         error.value = e.message;
     } finally {
-        loading.value  = false;
-        retrying.value = false;
+        loading.value    = false;
+        retrying.value   = false;
         authStore._onRetry = null;
     }
 }

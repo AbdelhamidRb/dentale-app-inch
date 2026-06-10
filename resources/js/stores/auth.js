@@ -8,34 +8,48 @@ export const authStore = reactive({
   licenseReason:  null,
   licenseMac:     null,
 
-  async login(email, password, _retry = false) {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
+  async login(email, password) {
+    const MAX_ATTEMPTS = 15; // 15 × 3s = 45 secondes max
 
-    const data = await res.json()
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let res, data;
+      try {
+        res  = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        data = await res.json();
+      } catch {
+        // Erreur réseau : Laragon pas encore démarré
+        if (attempt < MAX_ATTEMPTS) {
+          if (typeof this._onRetry === 'function') this._onRetry(attempt);
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        throw new Error('Service indisponible. Vérifiez que Laragon est bien démarré.');
+      }
 
-    if (!res.ok) {
-      if (res.status >= 500 && !_retry) {
-        // Laragon démarre encore — prévenir l'UI et réessayer après 3 secondes
-        if (typeof this._onRetry === 'function') this._onRetry()
-        await new Promise(r => setTimeout(r, 3000))
-        return this.login(email, password, true)
+      if (!res.ok) {
+        if (res.status >= 500 && attempt < MAX_ATTEMPTS) {
+          // Laragon démarre encore — réessayer automatiquement
+          if (typeof this._onRetry === 'function') this._onRetry(attempt);
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        if (res.status >= 500) {
+          throw new Error('Service indisponible. Vérifiez que Laragon est bien démarré.');
+        }
+        throw new Error(data.message || 'Identifiants incorrects.');
       }
-      if (res.status >= 500) {
-        throw new Error('Service indisponible. Vérifiez que Laragon est bien démarré.')
-      }
-      throw new Error(data.message || 'Identifiants incorrects.')
+
+      this.token = data.token;
+      this.user  = data.user;
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      router.push({ name: 'dashboard' });
+      return;
     }
-
-    this.token = data.token
-    this.user  = data.user
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-
-    router.push({ name: 'dashboard' })
   },
 
   // ─── Logout : supprime le token et redirige vers login ─────────
