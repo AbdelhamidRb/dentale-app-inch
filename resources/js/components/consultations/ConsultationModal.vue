@@ -172,9 +172,7 @@
                                         :key="a.id"
                                         :value="a.id"
                                     >
-                                        {{ a.scheduled_date }}
-                                        {{ a.start_time?.slice(0, 5) }} →
-                                        {{ a.end_time?.slice(0, 5) }}
+                                        {{ appointmentLabel(a) }}
                                     </option>
                                 </select>
                             </div>
@@ -454,11 +452,26 @@ function filterAppointmentsForPatient(patientId) {
         filteredAppointments.value = [];
         return;
     }
-    filteredAppointments.value = props.availableAppointments.filter(
-        (a) =>
-            String(a.patient?.id) === String(patientId) ||
-            String(a.patient_id) === String(patientId),
-    );
+    const excluded = ['TERMINE', 'NO_SHOW', 'ANNULE'];
+    const todayStr = today();
+    filteredAppointments.value = props.availableAppointments
+        .filter(
+            (a) =>
+                (String(a.patient?.id) === String(patientId) ||
+                 String(a.patient_id) === String(patientId)) &&
+                !excluded.includes(a.status),
+        )
+        .sort((a, b) => {
+            const aToday = a.scheduled_date === todayStr ? 0 : 1;
+            const bToday = b.scheduled_date === todayStr ? 0 : 1;
+            if (aToday !== bToday) return aToday - bToday;
+            return (a.scheduled_date + a.start_time).localeCompare(b.scheduled_date + b.start_time);
+        });
+}
+
+function appointmentLabel(a) {
+    const dateLabel = a.scheduled_date === today() ? "Aujourd'hui" : a.scheduled_date;
+    return `${dateLabel}  ${a.start_time?.slice(0, 5)} → ${a.end_time?.slice(0, 5)}`;
 }
 
 const { createConsultation, updateConsultation } = useConsultations();
