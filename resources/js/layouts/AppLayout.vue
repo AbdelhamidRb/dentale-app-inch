@@ -256,11 +256,12 @@ async function silentBackup() {
         const doneToday = (data.backups ?? []).some(b => b.name?.startsWith(today));
 
         if (doneToday) {
-            // Une sauvegarde existe déjà aujourd'hui — mémoriser pour éviter de re-vérifier
             localStorage.setItem('backup_date', today);
         } else {
-            await fetch('/api/backup/run', { method: 'POST', headers: authHeaders() });
-            localStorage.setItem('backup_date', today);
+            const backupRes = await fetch('/api/backup/run', { method: 'POST', headers: authHeaders() });
+            if (backupRes.ok) {
+                localStorage.setItem('backup_date', today);
+            }
         }
     } catch {}
 }

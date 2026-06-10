@@ -1,1 +1,0 @@
-import{m as n}from"./app-BEvvLEsD.js";const a=n([]);let r=0;function f(s,t="success",o=3500){const e=++r;a.value.push({id:e,message:s,type:t,duration:o}),setTimeout(()=>i(e),o)}function i(s){a.value=a.value.filter(t=>t.id!==s)}const l=(s,t)=>{const o=s.__vccOpts||s;for(const[e,c]of t)o[e]=c;return o};export{l as _,i as d,f as s,a as t};
