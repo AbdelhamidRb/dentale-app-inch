@@ -318,13 +318,12 @@ const filteredConsultations = computed(() => {
     return list;
 });
 
-// Recharge depuis API quand les dates changent
-watch([() => filters.value.date_from, () => filters.value.date_to], () => {
+// Recharge depuis API quand les dates ou le statut changent
+watch([() => filters.value.date_from, () => filters.value.date_to, () => filters.value.status], () => {
     invalidateCache();
-    fetchConsultations(
-        { date_from: filters.value.date_from, date_to: filters.value.date_to },
-        true,
-    );
+    const params = { date_from: filters.value.date_from, date_to: filters.value.date_to };
+    if (filters.value.status) params.status = filters.value.status;
+    fetchConsultations(params, true);
 });
 
 // ─── Stats rapides ────────────────────────────────────────────────
