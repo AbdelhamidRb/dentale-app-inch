@@ -82,12 +82,13 @@ class CheckLicense
     public function getMac(): string
     {
         return cache()->remember('app_mac_address', 86400, function () {
-            exec('getmac /fo csv /nh 2>nul', $lines);
-            foreach ($lines as $line) {
-                if (preg_match('/"([0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2}[-:][0-9A-Fa-f]{2})"/', $line, $m)) {
-                    return strtolower(str_replace('-', ':', $m[1]));
-                }
+            $cmd = 'powershell -NoProfile -Command "Get-CimInstance -ClassName Win32_NetworkAdapter -Filter \"PhysicalAdapter=True and MACAddress is not null\" | Select-Object -ExpandProperty MACAddress -First 1"';
+            $mac = trim(shell_exec($cmd) ?? '');
+
+            if (!empty($mac)) {
+                return strtolower(str_replace('-', ':', $mac));
             }
+
             return '';
         });
     }
